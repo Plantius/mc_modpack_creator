@@ -1,4 +1,4 @@
-import Mod
+from . import Mod
 
 class modpack:
     def __init__(self, name, build_date, build_version,
@@ -10,6 +10,6 @@ class modpack:
         self.mod_loader = mod_loader
         self.mod_list = mod_list
     
-    def addMod(self, new_mod: Mod):
+    def add_mod(self, new_mod: Mod):
         if new_mod.mc_version is not self.mc_version:
             print("ERROR")
