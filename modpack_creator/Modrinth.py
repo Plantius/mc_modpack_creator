@@ -1,5 +1,5 @@
 import requests, json
-from . import *
+from . import SEARCH_PROJECT, DEPENDENCIES, GET_PROJECT, CHECK, VERSION
 
 class project:
     def __init__(self) -> None:
@@ -24,19 +24,19 @@ class project:
         return req.json()
 
 
-    def search_project(self, project_name, facets, index, offset, limit) -> json:
+    def search_project(self, project_name=None, facets=None, index=None, offset=None, limit=None) -> json:
         # Searches for a project using a name, facets, index, offset and limit
         if self.is_slug_valid(project_name) is None:
             return
 
         params = {'query': project_name, 'facets': json.dumps(facets), 'index': index, 'offset': offset, 'limit': limit}
-        req = requests.get(SEARCH_PROJECT, json=params)
+        req = requests.get(SEARCH_PROJECT, params==params)
         if req.reason != 'OK':
             return
         return req.json()
 
     def get_project(self, project_name) -> json:
-        # Returns 
+        # Returns the project information
         if self.is_slug_valid(project_name) is None:
             return
 
@@ -45,20 +45,13 @@ class project:
             return
         return req.json()
     
-    def get_projects(self, project_names) -> json:
-        # Returns 
-        for name in project_names:
-            if self.is_slug_valid(name) is None:
-                return
-        params = {'ids': json.dumps(project_names)}
-        print(params["ids"])
-        req = requests.get(GET_PROJECTS, json=params)
+    def get_versions(self, project_name, loaders="fabric", game_versions="1.21", featured=False):
+        # Returns a projects version list
+        if self.is_slug_valid(project_name) is None:
+            return
+        params = {'loaders': loaders, 'game_versions': game_versions, 'featured': featured}
+        req = requests.get(GET_PROJECT + project_name + VERSION, params=params)
         if req.reason != 'OK':
             return
         return req.json()
 
-
-
-
-# data = r.json()
-# print(data)

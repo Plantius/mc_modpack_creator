@@ -1,7 +1,7 @@
 class mod:
-    def __init__(self, mod_name, mod_version,
-                 mc_version, client_side, server_side, 
-                 mod_loader, url, author) -> None:
+    def __init__(self, mod_name="A Mod", mod_version="1.0",
+                 mc_version="1.21", client_side=True, server_side=True, 
+                 mod_loader="Fabric", url="", author="") -> None:
         self.mod_name = mod_name
         self.mod_version = mod_version
         self.mc_version = mc_version
