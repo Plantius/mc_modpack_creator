@@ -53,10 +53,9 @@ class project:
         if self.is_slug_valid(project_name) is None:
             return
         params = {'loaders': loaders, 'game_versions': game_versions, 'featured': featured}
-        params = f'{["?".join(f"{x}={params[x]}" for x in params.keys())]}'
-        params = params[1:-1]
+        print(json.dumps(params))
         print(params)
-        req = requests.get(API_BASE + '/project/' + project_name + '/version', params=params, headers=HEADERS)
+        req = requests.get(API_BASE + '/project/' + project_name + '/version', params=json.dumps(params), headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()

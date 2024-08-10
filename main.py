@@ -9,7 +9,7 @@
 from modpack_creator import Modrinth, Mod
 import sys
 
-args = sys.argv
+# args = sys.argv
 
 
 # mod_list = [Mod.mod("Mod", "0.1", "1.20.1", False, True, "Fabric", "AAA", "Plantius"),
@@ -17,11 +17,11 @@ args = sys.argv
 # p = Modrinth.project("First", build_version="0.1", mc_version="1.19", mod_loader="forge", mod_list=mod_list)
 
 p = Modrinth.project()
-p.mp.load_project("p1")
+# p.mp.load_project("p1")
 # p.mp.save_project(args[1])
 
 # print(p.search_project("graves"))
-# print(p.list_versions("sodium", loaders='forge'))
+print(p.list_versions("sodium", loaders=['fabric'], game_versions=['1.20']))
 # print(p.get_project("sodium"))
 
 # # mp = Modpack.modpack("First", DateTime("08-08-2024"), "0.1", "1.20.1", "Fabric", mod_list)
