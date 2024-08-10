@@ -1,12 +1,32 @@
+import json
+
+
 class mod:
     def __init__(self, mod_name="A Mod", mod_version="1.0",
                  mc_version="1.21", client_side=True, server_side=True, 
-                 mod_loader="Fabric", url="", author="") -> None:
+                 mod_loader="Fabric", id="", version="") -> None:
         self.mod_name = mod_name
         self.mod_version = mod_version
         self.mc_version = mc_version
         self.client_side = client_side
         self.server_side = server_side
         self.mod_loader = mod_loader
-        self.url = url
-        self.author = author
+        self.id = id
+        self.version = version
+
+    def export_json(self):
+        out_json = {"mod_name": self.mod_name, "mod_version": self.mod_version, "mc_version": self.mc_version,
+               "client_side": self.client_side, "server_side": self.server_side, "mod_loader": self.mod_loader, 
+               "id": self.id, "version": self.version}
+        return json.loads(json.dumps(out_json))
+    
+    def load_json(self, in_json):
+        self.mod_name = in_json["mod_name"]
+        self.mod_version = in_json["mod_version"]
+        self.mc_version = in_json["mc_version"]
+        self.client_side = in_json["client_side"]
+        self.server_side = in_json["server_side"]
+        self.mod_loader = in_json["mod_loader"]
+        self.id = in_json["id"]
+        self.version = in_json["version"]
+ 

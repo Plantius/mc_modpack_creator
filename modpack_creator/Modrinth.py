@@ -1,9 +1,12 @@
 import requests, json
+from . import Modpack
+from datetime import datetime
 from . import API_BASE, HEADERS
 
 class project:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+        self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
 
     def is_slug_valid(self, project_name) -> json:
         # Checks if the given project name (slug) exist
