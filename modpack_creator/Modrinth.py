@@ -3,6 +3,12 @@ from . import Modpack
 from datetime import datetime
 from . import API_BASE, HEADERS
 
+def join_list(ls) -> str:
+    return f'[{",".join(str(x) for x in ls)}]'
+
+def par_url(dic) -> str:
+    return '&'.join([f'{x}={dic[x]}' for x in dic.keys()]).replace('\'', '\"')
+
 class project:
     def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
@@ -28,11 +34,9 @@ class project:
 
     def search_project(self, name="", facets="", index="relevance", offset=0, limit=10) -> json:
         # Searches for a project using a name, facets, index, offset and limit
-        
-        params = {'query': name, 'facets': f'[{",".join([f"{x}" for x in facets])}]', 'index': index, 'offset': offset, 'limit': limit}
-        par_url = '&'.join([f'{x}={params[x]}' for x in params.keys()]).replace('\'', '\"')
-        print(par_url)
-        req = requests.get(API_BASE + '/search', params=par_url, headers=HEADERS)
+        params = {'query': name, 'facets': join_list(facets), 'index': index, 'offset': offset, 'limit': limit}
+
+        req = requests.get(API_BASE + '/search', params=par_url(params), headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()
@@ -47,16 +51,14 @@ class project:
             return
         return req.json()
     
-    def list_versions(self, project_name, loaders="", game_versions="", featured=True):
+    def list_versions(self, project_name, loaders="", game_versions="", featured="true"):
         # Returns a projects version list
         if self.is_slug_valid(project_name) is None:
             return
-        params = {'loaders': f'[{",".join([f"{x}" for x in loaders])}]', 'game_versions': f'[{",".join([f"{x}" for x in game_versions])}]', 'featured': featured}
-        par_url = '&'.join([f'{x}={params[x]}' for x in params.keys()]).replace('\'', '\"')
+        params = {'loaders': join_list(loaders), 'game_versions': join_list(game_versions), 'featured': featured}
 
-        print(json.dumps(params))
-        print(params)
-        req = requests.get(API_BASE + '/project/' + project_name + '/version', params=par_url, headers=HEADERS)
+        req = requests.get(API_BASE + '/project/' + project_name + '/version', params=par_url(params), headers=HEADERS)
+        print(req.url)
         if req.reason != 'OK':
             return
         return req.json()
