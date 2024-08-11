@@ -30,4 +30,4 @@ class modpack:
 
     def add_mod(self, new_mod: Mod):
         if new_mod.mc_version is not self.mc_version:
-            print("ERROR")
+            print("Error: this mod does not match the current minecraft version.")
