@@ -22,7 +22,8 @@ p = Modrinth.project()
 
 # print(p.search_project("graves"))
 # print(p.search_project("apple", [["categories:fabric"], ["versions:1.21"]]))
-print(p.list_versions("sodium", ["fabric"], ["1.21"]))
+# print(p.list_versions("sodium", ["fabric"], ["1.21"]))
+print(p.get_version("RncWhTxD"))
 # print(p.get_project("sodium"))
 
 # # mp = Modpack.modpack("First", DateTime("08-08-2024"), "0.1", "1.20.1", "Fabric", mod_list)

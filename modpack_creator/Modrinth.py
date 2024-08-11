@@ -51,15 +51,31 @@ class project:
             return
         return req.json()
     
-    def list_versions(self, project_name, loaders="", game_versions="", featured="true"):
+    def list_versions(self, project_name, loaders="", game_versions="", featured="true") -> json:
         # Returns a projects version list
         if self.is_slug_valid(project_name) is None:
             return
         params = {'loaders': join_list(loaders), 'game_versions': join_list(game_versions), 'featured': featured}
 
         req = requests.get(API_BASE + '/project/' + project_name + '/version', params=par_url(params), headers=HEADERS)
-        print(req.url)
         if req.reason != 'OK':
             return
         return req.json()
+    
+    def get_version(self, version_id) -> json:
+        # Returns the specified version 
+        req = requests.get(API_BASE + '/version/' + version_id, headers=HEADERS)
+        if req.reason != 'OK':
+            return
+        return req.json()
+    
+    def get_versions(self, version_ids) -> json:
+        # Returns the specified versions
+        params = {'ids': join_list(version_ids)}
+
+        req = requests.get(API_BASE + '/versions', params=par_url(params), headers=HEADERS)
+        if req.reason != 'OK':
+            return
+        return req.json()
+    
 
