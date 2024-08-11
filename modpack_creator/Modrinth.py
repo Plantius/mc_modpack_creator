@@ -26,14 +26,13 @@ class project:
             return
         return req.json()
 
-    # TODO: Not yet working
-    def search_project(self, project_name="", facets="", index="relevance", offset="", limit="") -> json:
+    def search_project(self, name="", facets="", index="relevance", offset=0, limit=10) -> json:
         # Searches for a project using a name, facets, index, offset and limit
-        if self.is_slug_valid(project_name) is None:
-            return
-
-        params = {'query': project_name, 'facets': facets, 'index': index, 'offset': offset, 'limit': limit}
-        req = requests.get(API_BASE + '/search', params=params, headers=HEADERS)
+        
+        params = {'query': name, 'facets': f'[{",".join([f"{x}" for x in facets])}]', 'index': index, 'offset': offset, 'limit': limit}
+        par_url = '&'.join([f'{x}={params[x]}' for x in params.keys()]).replace('\'', '\"')
+        print(par_url)
+        req = requests.get(API_BASE + '/search', params=par_url, headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()
@@ -52,10 +51,12 @@ class project:
         # Returns a projects version list
         if self.is_slug_valid(project_name) is None:
             return
-        params = {'loaders': loaders, 'game_versions': game_versions, 'featured': featured}
+        params = {'loaders': f'[{",".join([f"{x}" for x in loaders])}]', 'game_versions': f'[{",".join([f"{x}" for x in game_versions])}]', 'featured': featured}
+        par_url = '&'.join([f'{x}={params[x]}' for x in params.keys()]).replace('\'', '\"')
+
         print(json.dumps(params))
         print(params)
-        req = requests.get(API_BASE + '/project/' + project_name + '/version', params=json.dumps(params), headers=HEADERS)
+        req = requests.get(API_BASE + '/project/' + project_name + '/version', params=par_url, headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()
