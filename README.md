@@ -16,6 +16,11 @@ A python program to help with the creation of modpacks. Uses the Modrinth API to
 python3 main.py [] []
 ```
 
+## TODO
+- Fix API calls and add error handling
+- Add error handling for all functions which require input
+- Add CLI GUI for creating, editing and removing projects
+- Add command line arguments for all major project functions
 
 ## License
 

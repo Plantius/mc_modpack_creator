@@ -20,9 +20,9 @@ args = sys.argv
 p = Modrinth.project()
 # p.load_project("p1")
 # print(p.mp.build_date)
-print(p.search_project("grave"))
-# print(p.search_project("apple", [["categories:fabric"], ["versions:1.21"]]))
-# print(p.list_versions("sodium", ["fabric"], ["1.21"]))
+# print(p.search_project(name="grave"))
+print(p.search_project(query="apple", facets=[["categories:forge"], ["versions:1.17.1"]]))
+print(p.list_versions("sodium", loaders=["fabric"], game_versions=["1.21"]))
 # print(p.get_version("RncWhTxD"))
 # print(p.get_project("sodium"))
 

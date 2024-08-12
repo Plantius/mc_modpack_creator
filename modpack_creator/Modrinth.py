@@ -3,9 +3,6 @@ from . import Modpack
 from datetime import datetime
 from . import API_BASE, HEADERS
 
-def join_list(ls) -> str:
-    return f'[{",".join(str(x) for x in ls)}]'
-
 def par_url(dic) -> str:
     return '&'.join([f'{x}={dic[x]}' for x in dic.keys()]).replace('\'', '\"')
 
@@ -46,12 +43,15 @@ class project:
         return req.json()
 
     # TODO Fix that empty fields mess up API call
-    def search_project(self, name="", facets="", index="relevance", offset=0, limit=10) -> json:
+    def search_project(self, **kwargs) -> json:
         """
         Searches for a project using a name, facets, index, offset and limit
         """
-        params = {'query': name, 'facets': join_list(facets), 'index': index, 'offset': offset, 'limit': limit}
-
+        params = {}
+        for i in kwargs.items():
+            if i[-1] != None:
+                params[i[0]] = i[-1]
+        print(params)
         req = requests.get(API_BASE + '/search', params=par_url(params), headers=HEADERS)
         if req.reason != 'OK':
             return
@@ -69,13 +69,17 @@ class project:
             return
         return req.json()
     
-    def list_versions(self, project_name: str, loaders="", game_versions="", featured="true") -> json:
+    def list_versions(self, project_name: str, **kwargs) -> json:
         """
         Returns a projects version list
         """
+        params = {}
         if self.is_slug_valid(project_name) is None:
             return
-        params = {'loaders': join_list(loaders), 'game_versions': join_list(game_versions), 'featured': featured}
+        for i in kwargs.items():
+            if i[-1] != None:
+                params[i[0]] = i[-1]
+        # params = {'loaders': join_list(loaders), 'game_versions': join_list(game_versions), 'featured': featured}
 
         req = requests.get(API_BASE + '/project/' + project_name + '/version', params=par_url(params), headers=HEADERS)
         if req.reason != 'OK':
@@ -91,11 +95,11 @@ class project:
             return
         return req.json()
     
-    def get_versions(self, version_ids: str) -> json:
+    def get_versions(self, ids: str) -> json:
         """
         Returns the specified versions
         """
-        params = {'ids': join_list(version_ids)}
+        params = {'ids': ids}
 
         req = requests.get(API_BASE + '/versions', params=par_url(params), headers=HEADERS)
         if req.reason != 'OK':
