@@ -18,8 +18,9 @@ args = sys.argv
 # p.mp.save_project(args[1])
 
 p = Modrinth.project()
-p.load_project("p1")
-# print(p.search_project("graves"))
+# p.load_project("p1")
+# print(p.mp.build_date)
+print(p.search_project("grave"))
 # print(p.search_project("apple", [["categories:fabric"], ["versions:1.21"]]))
 # print(p.list_versions("sodium", ["fabric"], ["1.21"]))
 # print(p.get_version("RncWhTxD"))

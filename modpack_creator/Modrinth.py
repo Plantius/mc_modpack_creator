@@ -11,6 +11,7 @@ def par_url(dic) -> str:
 
 class project:
     mp: Modpack.modpack
+    
     def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
         self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
@@ -44,6 +45,7 @@ class project:
             return
         return req.json()
 
+    # TODO Fix that empty fields mess up API call
     def search_project(self, name="", facets="", index="relevance", offset=0, limit=10) -> json:
         """
         Searches for a project using a name, facets, index, offset and limit

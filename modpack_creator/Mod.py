@@ -2,6 +2,15 @@ import json
 
 
 class mod:
+    mod_name: str
+    mod_version: str
+    mc_version: str
+    client_side: bool
+    server_side: bool
+    mod_loader: str
+    id: str
+    version: str
+        
     def __init__(self, mod_name="A Mod", mod_version="1.0",
                  mc_version="1.21", client_side=True, server_side=True, 
                  mod_loader="Fabric", id="", version="") -> None:

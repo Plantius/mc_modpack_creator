@@ -10,6 +10,7 @@ class modpack:
     mc_version: str
     mod_loader: str
     mod_list: list
+    
     def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
         self.name = name
