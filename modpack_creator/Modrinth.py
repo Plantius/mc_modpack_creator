@@ -4,6 +4,7 @@ from datetime import datetime
 from . import API_BASE, HEADERS
 
 def par_url(dic) -> str:
+    """Parses a dictionary to a correct parameter string"""
     return '&'.join([f'{x}={dic[x]}' for x in dic.keys()]).replace('\'', '\"')
 
 class project:
@@ -14,26 +15,20 @@ class project:
         self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
 
     def load_project(self, filename: str) -> None:
-        """
-        Loads the given project file 
-        """
+        """Loads the given project file """
         with open(filename, 'r') as file:
             in_json = json.loads(file.read())
             self.mp =  Modpack.modpack(**in_json)
 
     def is_slug_valid(self, slug_or_id: str) -> json:
-        """
-        Checks if the given project name (slug) or ID exist on Modrinth
-        """
+        """Checks if the given project name (slug) or ID exist on Modrinth"""
         req = requests.get(API_BASE + '/project/' + slug_or_id + '/check', headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()
 
     def get_dependencies(self, project_name: str) -> json:
-        """
-        Returns all dependencies of a given project
-        """
+        """Returns all dependencies of a given project"""
         if self.is_slug_valid(project_name) is None:
             return
         
@@ -44,8 +39,13 @@ class project:
 
     # TODO Fix that empty fields mess up API call
     def search_project(self, **kwargs) -> json:
-        """
-        Searches for a project using a name, facets, index, offset and limit
+        """Searches for a project using a name, facets, index, offset and limit.
+        \nArguments are:\n
+            query: The query to search for
+            facets: Used to filter out results
+            index: The sorting method used for sorting search results ("relevance" "downloads" "follows" "newest" "updated")
+            offset: The offset into the search. Skips this number of results
+            limit: The number of results returned by the search
         """
         params = {}
         for i in kwargs.items():
@@ -58,9 +58,7 @@ class project:
         return req.json()
 
     def get_project(self, project_name: str) -> json:
-        """        
-        Returns the project information
-        """
+        """Returns the project information"""
         if self.is_slug_valid(project_name) is None:
             return
 
@@ -70,8 +68,11 @@ class project:
         return req.json()
     
     def list_versions(self, project_name: str, **kwargs) -> json:
-        """
-        Returns a projects version list
+        """Returns a projects version list
+        \n Arguments are:\n
+            loaders: The types of loaders to filter for
+            game_versions: The game versions to filter for
+            featured: Allows to filter for featured or non-featured versions only
         """
         params = {}
         if self.is_slug_valid(project_name) is None:

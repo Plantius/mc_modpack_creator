@@ -21,6 +21,9 @@ class modpack:
         self.mod_list = mod_list
     
     def export_json(self) -> json:
+        """
+        Exports all variables in the current modpack object as a JSON object
+        """
         out_json = {"name": self.name, "build_date": self.build_date, "build_version": self.build_version,
                "mc_version": self.mc_version, "mod_loader": self.mod_loader, "mod_list": [mod.export_json() for mod in self.mod_list]}
         return json.loads(json.dumps(out_json))
