@@ -1,5 +1,6 @@
 import requests, json
-from . import Modpack
+import modpack_creator.Modpack as Modpack
+import modpack_creator.standard as std
 from datetime import datetime
 from . import API_BASE, HEADERS
 
@@ -12,6 +13,7 @@ class project:
     
     def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+        """Constructor of project class"""
         self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
 
     def load_project(self, filename: str) -> None:

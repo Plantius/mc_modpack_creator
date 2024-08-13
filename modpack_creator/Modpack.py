@@ -1,6 +1,8 @@
-from . import Mod
+import modpack_creator.Mod as Mod
 from datetime import datetime
 import json
+import modpack_creator.standard as std
+
 
 
 class modpack:
@@ -13,6 +15,7 @@ class modpack:
     
     def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+        """Constructor of modpack class"""
         self.name = name
         self.build_date = build_date
         self.build_version = build_version
@@ -21,9 +24,7 @@ class modpack:
         self.mod_list = mod_list
     
     def export_json(self) -> json:
-        """
-        Exports all variables in the current modpack object as a JSON object
-        """
+        """Exports all variables in the current modpack object as a JSON object"""
         out_json = {"name": self.name, "build_date": self.build_date, "build_version": self.build_version,
                "mc_version": self.mc_version, "mod_loader": self.mod_loader, "mod_list": [mod.export_json() for mod in self.mod_list]}
         return json.loads(json.dumps(out_json))
