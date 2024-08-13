@@ -90,18 +90,14 @@ class project:
         return req.json()
     
     def get_version(self, version_id: str) -> json:
-        """
-        Returns the specified version 
-        """
+        """Returns the specified version"""
         req = requests.get(API_BASE + '/version/' + version_id, headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()
     
     def get_versions(self, ids: str) -> json:
-        """
-        Returns the specified versions
-        """
+        """Returns the specified versions"""
         params = {'ids': ids}
 
         req = requests.get(API_BASE + '/versions', params=par_url(params), headers=HEADERS)

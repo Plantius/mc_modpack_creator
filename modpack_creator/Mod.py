@@ -33,7 +33,7 @@ class mod:
         return json.loads(json.dumps(out_json))
     
     def load_json(self, in_json):
-        # self = mod(**in_json)
+        """Loads the given json into the class' variables"""
         self.mod_name = in_json["mod_name"]
         self.mod_version = in_json["mod_version"]
         self.mc_version = in_json["mc_version"]

@@ -11,7 +11,6 @@ import sys
 
 args = sys.argv
 
-
 # mod_list = [Mod.mod("Mod", "0.1", "1.20.1", False, True, "Fabric", "AAA", "Plantius"),
 #             Mod.mod("Mod", "0.1", "1.20.1", True, True, "Fabric", "BBB", "Plantius")]
 # p = Modrinth.project("First", build_version="0.1", mc_version="1.19", mod_loader="forge", mod_list=mod_list)
@@ -19,9 +18,9 @@ args = sys.argv
 
 p = Modrinth.project()
 p.load_project("p1")
-# md = Mod.mod()
-# md.load_json(p.mp.mod_list[0])
-# print(md.mc_version)
+md = Mod.mod()
+md.load_json(p.mp.mod_list[0])
+print(md.mc_version)
 # # print(p.search_project(name="grave"))
 # print(p.search_project())
 # p.load_project("a")
