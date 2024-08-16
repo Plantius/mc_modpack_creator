@@ -44,8 +44,9 @@ class project:
 
     def save_project(self, filename):
         with open(filename, 'w') as file:
-            out_json = {**self.mp.export_json() **{"loaded": self.loaded, "saved": self.saved, "valid": self.valid}}
-            file.write(json.dumps(out_json))
+            flags = {"loaded": self.loaded, "saved": self.saved, "valid": self.valid}
+            out_json = {**self.mp.export_json(), **flags}
+            file.write(json.dumps(out_json, indent=1))
 
     def is_slug_valid(self, slug_or_id: str) -> json:
         """Checks if the given project name (slug) or ID exist on Modrinth"""
