@@ -8,20 +8,23 @@
 
 from modpack_creator import Modrinth, Mod
 from args_parser import args_parser as args
-from main_menu import main_menu as menu
+from main_menu import main_menu
 
 flags = {"project_loaded": False, "project_saved": False, "project_valid": False, "compatibel": False}
 
 # Parse arguments
 arguments = args.parse_arguments()
 print(arguments)
-# Main Menu
-# menu.main_menu()
 
+# Project object
+p = Modrinth.project()
+
+# Main Menu
+menu = main_menu.menu(p)
+menu.main_menu()
 
 mod_list = [Mod.mod("Mod", "0.1", "1.20.1", False, True, "Fabric", "AAA", "Plantius"),
             Mod.mod("Mod", "0.1", "1.20.1", True, True, "Fabric", "BBB", "Plantius")]
-p = Modrinth.project()
 p.create_project("First", build_version="0.1", mc_version="1.19", mod_loader="forge", mod_list=mod_list)
 p.save_project(arguments.filename)
 # p.load_project("p1")

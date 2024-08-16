@@ -12,15 +12,18 @@ class project:
     loaded: bool
     saved: bool
     valid: bool
+    filename: str
     
     def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=True, valid=False, filename="project1.json") -> None:
         """Constructor of project class"""
-        pass
-        # self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
+        self.loaded = False
+        self.saved = True
+        self.valid = True
+        self.filename = "project1.json"
     
     def create_project(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=True, valid=False) -> None:
         """Create a new project"""
         self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
         self.loaded = True
@@ -38,13 +41,15 @@ class project:
             self.loaded = file_json["loaded"]
             self.saved = file_json["saved"]
             self.valid = file_json["valid"]
+            self.filename = filename
             if self.valid is not True:
                 print("Invalid project loaded.")
                 exit(1)
 
     def save_project(self, filename):
         with open(filename, 'w') as file:
-            flags = {"loaded": self.loaded, "saved": self.saved, "valid": self.valid}
+            self.filename = filename
+            flags = {"loaded": self.loaded, "saved": self.saved, "valid": self.valid, "filename": filename}
             out_json = {**self.mp.export_json(), **flags}
             file.write(json.dumps(out_json, indent=1))
 
