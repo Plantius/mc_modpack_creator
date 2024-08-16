@@ -1,6 +1,5 @@
 import requests, json
 import modpack_creator.Modpack as Modpack
-import modpack_creator.standard as std
 from datetime import datetime
 from . import API_BASE, HEADERS
 
@@ -10,17 +9,43 @@ def par_url(dic) -> str:
 
 class project:
     mp: Modpack.modpack
+    loaded: bool
+    saved: bool
+    valid: bool
     
     def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
         """Constructor of project class"""
+        pass
+        # self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
+    
+    def create_project(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+        """Create a new project"""
         self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
+        self.loaded = True
+        self.saved = True
+        self.valid = self.mp.check_compatibility()
+        if self.valid is not True:
+            print("Invalid project created.")
+            exit(1)
 
     def load_project(self, filename: str) -> None:
         """Loads the given project file """
         with open(filename, 'r') as file:
-            in_json = json.loads(file.read())
-            self.mp =  Modpack.modpack(**in_json)
+            file_json = json.loads(file.read())
+            self.mp =  Modpack.modpack(**file_json)
+            self.loaded = file_json["loaded"]
+            self.saved = file_json["saved"]
+            self.valid = file_json["valid"]
+            if self.valid is not True:
+                print("Invalid project loaded.")
+                exit(1)
+
+    def save_project(self, filename):
+        with open(filename, 'w') as file:
+            out_json = {**self.mp.export_json() **{"loaded": self.loaded, "saved": self.saved, "valid": self.valid}}
+            file.write(json.dumps(out_json))
 
     def is_slug_valid(self, slug_or_id: str) -> json:
         """Checks if the given project name (slug) or ID exist on Modrinth"""
@@ -39,7 +64,6 @@ class project:
             return
         return req.json()
 
-    # TODO Fix that empty fields mess up API call
     def search_project(self, **kwargs) -> json:
         """Searches for a project using a name, facets, index, offset and limit.
         \nArguments are:\n

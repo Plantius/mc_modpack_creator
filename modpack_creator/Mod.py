@@ -1,5 +1,4 @@
 import json
-import modpack_creator.standard as std
 
 class mod:
     mod_name: str
