@@ -18,14 +18,14 @@ print(arguments)
 
 # Project object
 p = Modrinth.project()
+mod_list = [Mod.mod("Mod", "0.1", "1.20.1", False, True, "Fabric", "AAA", "Plantius"),
+            Mod.mod("Mod", "0.1", "1.20.1", True, True, "Fabric", "BBB", "Plantius")]
+p.create_project("First", build_version="0.1", mc_version="1.19", mod_loader="forge", mod_list=mod_list)
 
 # Main Menu
 menu = main_menu.menu(p)
 menu.main_menu()
 
-mod_list = [Mod.mod("Mod", "0.1", "1.20.1", False, True, "Fabric", "AAA", "Plantius"),
-            Mod.mod("Mod", "0.1", "1.20.1", True, True, "Fabric", "BBB", "Plantius")]
-p.create_project("First", build_version="0.1", mc_version="1.19", mod_loader="forge", mod_list=mod_list)
 p.save_project(arguments.filename)
 # p.load_project("p1")
 # md = Mod.mod()
