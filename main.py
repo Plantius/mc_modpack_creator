@@ -7,14 +7,14 @@
 # Create project
 
 from modpack_creator import Modrinth, Mod
-import sys
-
-args = sys.argv
-
+from args_parser import args_parser as args
 # mod_list = [Mod.mod("Mod", "0.1", "1.20.1", False, True, "Fabric", "AAA", "Plantius"),
 #             Mod.mod("Mod", "0.1", "1.20.1", True, True, "Fabric", "BBB", "Plantius")]
 # p = Modrinth.project("First", build_version="0.1", mc_version="1.19", mod_loader="forge", mod_list=mod_list)
 # p.mp.save_project(args[1])
+
+# Parse arguments
+args.parse_arguments()
 
 p = Modrinth.project()
 p.load_project("p1")
