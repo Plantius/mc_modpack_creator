@@ -1,12 +1,13 @@
 import standard as std
 from modpack_creator import Modrinth
+from simple_term_menu import TerminalMenu
 
 OPT_PROJECT = [["load_project", "Load project"], ["create_project", "Create project"], 
                ["save_project", "Save project"]]
 OPT_MODPACK = [["add_mods", "Add mod(s)"], ["remove_mods", "Remove mod(s)"]]
 OPT_CONFIG = [["change_project_name", "Change project name"], ["change_project_version", "Change project version"], 
               ["change_project_loader", "Change mod loader"], ["change_project_version", "Change Minecraft version"]]
-
+OPT_EXIT = [["exit_program", "Exit program"]]
 
 class menu:
     project: Modrinth.project
@@ -30,23 +31,26 @@ class menu:
         print(f"{count}: Exit program")
 
     def main_menu(self) -> None:
-        done = False
-        opt = [f for f in std.get_functions(self) if not f.startswith('main')]
-        print(opt)
-
-        print("Modpack Creator.\n------------------------------------------------")
-        print("Please select an option from the following list:")
-        while not done:
-            self.main_menu_options()
-            inp = input("Please enter your selected option: ")
-            if not inp.isnumeric():
-                print("Selection contains non-numbers.")
-                continue
-            inp = int(inp)
-            if inp <= 0 or inp > len(opt):
-                print(f"Option {inp} is not a valid option.")
-                return
-            print(getattr(self, opt[inp-1]))
+        options = [i[1] for i in OPT_PROJECT]
+        if self.project.loaded:
+            options += [i[1] for i in OPT_MODPACK]
+        options += "Change project settings"
+        options += [i[1] for i in OPT_EXIT]
+        main_menu_exit = False
+        print(options)
+        main_menu = TerminalMenu(options, 
+                                 title="Modpack Creator",
+                                 clear_screen=True)
+        edit_menu = TerminalMenu(options, 
+                                 title="Modpack Creator",
+                                 clear_screen=True)
+        while not main_menu_exit:
+            main_index = main_menu.show()
+            if main_index == len(options)-2:
+                edit_index = ed
+            elif:
+                main_index >= len(options)-1 or main_index is None:
+                main_menu_exit = True
         
     def load_project(self) -> bool:
         """Loads a project"""
