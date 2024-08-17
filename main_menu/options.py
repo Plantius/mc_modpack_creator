@@ -27,8 +27,9 @@ def exit_program(project) -> bool:
     """Exits the program"""
     print("Exiting program.")
     if not project.saved:
-        input = bool(input("Do you want to save the project?"))
-        if input:
+        inp = str(input("Do you want to save the project? y/n"))
+        
+        if inp == 'y':
             project.save_project(project.filename)
             print("Project saved.")
     return True

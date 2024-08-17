@@ -8,7 +8,7 @@ OPT_PROJECT = [["load_project", "Load project"], ["create_project", "Create proj
 OPT_MODPACK = [["add_mods", "Add mod(s)"], ["remove_mods", "Remove mod(s)"]]
 OPT_CONFIG = [["change_project_name", "Change project name"], ["change_project_version", "Change project version"], 
               ["change_project_loader", "Change mod loader"], ["change_project_version", "Change Minecraft version"]]
-OPT_MISC = {"config": [[None, "Change project settings"]], "exit": [["exit_program", "Exit program"]]}
+OPT_MISC = {"config": [[None, "Change project settings"]], "exit": [["exit_program", "Exit menu"]]}
 
 def get_options_func(opt: list) -> list:
     return [x[0] for x in opt]
@@ -53,7 +53,6 @@ class menu:
         sub_menu_config = {"config_menu": self.create_config("Edit the current project's settings.", 
                                                        self.get_options(config_flags),
                                                        clear_screen=False)}
-        print([sub_menu_config[i] for i in sub_menu_config])
 
         main_menu = TerminalMenu(**main_menu_config)
         config_menu = TerminalMenu(**sub_menu_config["config_menu"])
@@ -64,7 +63,7 @@ class menu:
                 while True:
                     edit_index = config_menu.show()
 
-                    if edit_index >= len(self.get_options(config_flags))-1 or edit_index is None:
+                    if sub_menu_config["config_menu"]["menu_entries"][edit_index] in get_options_name(OPT_MISC["exit"]) or edit_index is None:
                         break
 
             elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_PROJECT)[0]: # Load project

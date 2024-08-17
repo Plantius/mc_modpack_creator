@@ -37,7 +37,7 @@ class project:
         """Loads the given project file """
         with open(filename, 'r') as file:
             file_json = json.loads(file.read())
-            self.mp =  Modpack.modpack(**file_json)
+            self.mp = Modpack.modpack(**file_json)
             self.loaded = file_json["loaded"]
             self.saved = file_json["saved"]
             self.valid = file_json["valid"]
@@ -49,7 +49,7 @@ class project:
     def save_project(self, filename):
         with open(filename, 'w') as file:
             self.filename = filename
-            flags = {"loaded": self.loaded, "saved": self.saved, "valid": self.valid, "filename": filename}
+            flags = {"loaded": self.loaded, "saved": True, "valid": self.valid, "filename": filename}
             out_json = {**self.mp.export_json(), **flags}
             file.write(json.dumps(out_json, indent=1))
 

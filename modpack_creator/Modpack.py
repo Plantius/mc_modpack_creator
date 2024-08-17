@@ -10,16 +10,20 @@ class modpack:
     mc_version: str
     mod_loader: str
     mod_list: list
+    loaded: bool
+    saved: bool
+    valid: bool
+    filename: str
     
     def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=False, valid=False, filename="project1.json") -> None:
         """Constructor of modpack class"""
         self.name = name
         self.build_date = build_date
         self.build_version = build_version
         self.mc_version = mc_version
         self.mod_loader = mod_loader
-        self.mod_list = mod_list
+        self.mod_list = [Mod.mod(**x) for x in mod_list]
     
     def export_json(self) -> json:
         """Exports all variables in the current modpack object as a JSON object"""
