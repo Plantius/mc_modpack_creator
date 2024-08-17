@@ -31,25 +31,34 @@ class menu:
         print(f"{count}: Exit program")
 
     def main_menu(self) -> None:
-        options = [i[1] for i in OPT_PROJECT]
+        main_options = [i[1] for i in OPT_PROJECT] 
         if self.project.loaded:
-            options += [i[1] for i in OPT_MODPACK]
-        options += "Change project settings"
-        options += [i[1] for i in OPT_EXIT]
+            main_options += [i[1] for i in OPT_MODPACK]
+        main_options += ["Change project settings"]
+        main_options += [i[1] for i in OPT_EXIT]
+        
+        edit_options = [i[1] for i in OPT_CONFIG]
+        edit_options += [i[1] for i in OPT_EXIT]  
+
+            
         main_menu_exit = False
-        print(options)
-        main_menu = TerminalMenu(options, 
-                                 title="Modpack Creator",
+        edit_menu_exit = False
+        print(main_options)
+        main_menu = TerminalMenu(main_options, 
+                                 title="Project Creator",
                                  clear_screen=True)
-        edit_menu = TerminalMenu(options, 
-                                 title="Modpack Creator",
+        edit_menu = TerminalMenu(edit_options, 
+                                 title="Project Editor",
                                  clear_screen=True)
         while not main_menu_exit:
             main_index = main_menu.show()
-            if main_index == len(options)-2:
-                edit_index = ed
-            elif:
-                main_index >= len(options)-1 or main_index is None:
+            if main_index == len(main_options)-2:
+                while not edit_menu_exit:
+                    edit_index = edit_menu.show()
+
+                    if edit_index >= len(edit_options)-1 or edit_index is None:
+                        edit_menu_exit = True
+            elif main_index >= len(main_options)-1 or main_index is None:
                 main_menu_exit = True
         
     def load_project(self) -> bool:
