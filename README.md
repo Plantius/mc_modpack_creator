@@ -18,6 +18,11 @@ python3 main.py [] []
 
 ## TODO
 - Restructure menu to make use of functions etc.
+- Add more menu options
+- Write tests
+- Add proper credit
+- Restructure Modpack and Mod classes, determine which data fields are necessary
+- Create modular menu structure for easy expansions
 - Check if project file is valid
 - Add arguments for CLI interface
 - Fix API calls and add error handling
