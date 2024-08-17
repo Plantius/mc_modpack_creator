@@ -57,7 +57,7 @@ class menu:
 
         main_menu = TerminalMenu(**main_menu_config)
         config_menu = TerminalMenu(**sub_menu_config["config_menu"])
-        print(std.get_functions(opt.options))
+        print(std.get_functions(opt))
         while True:
             main_index = main_menu.show()
             if self.get_options(main_flags)[main_index] in get_options_name(OPT_MISC["config"]):
@@ -68,14 +68,23 @@ class menu:
                         break
 
             elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_PROJECT)[0]: # Load project
-                print(getattr(opt.options, get_options_func(OPT_PROJECT)[0]))
+                func = getattr(opt, get_options_func(OPT_PROJECT)[0])
+                if func():
+                    print("SUCCES LOAD")
             elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_PROJECT)[1]: # Create project
-                print(getattr(opt.options, get_options_func(OPT_PROJECT)[1]))
+                func = getattr(opt, get_options_func(OPT_PROJECT)[1])
+                if func():
+                    print("SUCCES CREATE")
             elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_PROJECT)[2]: # Save project
-                print(getattr(opt.options, get_options_func(OPT_PROJECT)[2]))
+                func = getattr(opt, get_options_func(OPT_PROJECT)[2])
+                if func():
+                    print("SUCCES SAVE")
                                                                               
-            elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_MISC["exit"]) or main_index is None:
-                break
+            elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_MISC["exit"]) or main_index is None: # Exit
+                func = getattr(opt, get_options_func(OPT_MISC["exit"])[0])
+                if func(self.project):
+                    print("SUCCES EXIT")
+                    break
         
     
         
