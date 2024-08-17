@@ -25,6 +25,10 @@ python3 main.py [] []
 - Add CLI GUI for creating, editing and removing projects
 - Add command line arguments for all major project functions
 
+## Acknowledgements
+
+ - [Simple Terminal Menu](https://pypi.org/project/simple-term-menu/)
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
