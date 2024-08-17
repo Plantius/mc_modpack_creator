@@ -23,14 +23,12 @@ class menu:
     def __init__(self, project: Modrinth.project) -> None:
         self.project = project
     
-    def create_config(title="A Menu", options=["Exit"], cursor="> ", cursor_style=("fg_red", "bold"), 
-                      style=("bg_red", "fg_yellow"), clear_screen=True, ) -> dict:
-        return {"title": title}
+    def create_config(self, title="A Menu", menu_entries=["Exit"], clear_screen=True, multi_select=False, show_multi_select_hint=False) -> dict:
+        return {"title": title, "menu_entries": menu_entries, "clear_screen": clear_screen, "multi_select": multi_select, "show_multi_select_hint": show_multi_select_hint}
 
 
     def get_options(self, flags: dict) -> list:
         options = []
-        
         if flags["config"]:
             options += get_options_name(OPT_CONFIG)
         else:
@@ -46,18 +44,18 @@ class menu:
 
     # TODO Add generalization of common functions
     def main_menu(self) -> None:
-        main_menu_config = {"sub_menu": {"config_menu": {"options"}}}
-
         main_flags = {"loaded": self.project.loaded, "config": False}
         config_flags = {"loaded": self.project.loaded, "config": True}
+        main_menu_config = self.create_config("Load and edit or create a new project.", 
+                                              self.get_options(main_flags),
+                                              clear_screen=True)
+        sub_menu_config = {"config_menu": self.create_config("Edit the current project's settings.", 
+                                                       self.get_options(config_flags),
+                                                       clear_screen=True)}
+        print(main_menu_config)
 
-        print(self.get_options(main_flags))
-        main_menu = TerminalMenu(self.get_options(main_flags), 
-                                 title="Project Creator",
-                                 clear_screen=True)
-        config_menu = TerminalMenu(self.get_options(config_flags), 
-                                 title="Project Editor",
-                                 clear_screen=True)
+        main_menu = TerminalMenu(**main_menu_config)
+        config_menu = TerminalMenu(**sub_menu_config["config_menu"])
         while True:
             main_index = main_menu.show()
             if self.get_options(main_flags)[main_index] in get_options_name(OPT_MISC["config"]):
