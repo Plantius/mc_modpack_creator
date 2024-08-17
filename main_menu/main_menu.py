@@ -1,6 +1,7 @@
 import standard as std
 from modpack_creator import Modrinth
 from simple_term_menu import TerminalMenu
+from main_menu import options as opt
 
 OPT_PROJECT = [["load_project", "Load project"], ["create_project", "Create project"], 
                ["save_project", "Save project"]]
@@ -48,14 +49,15 @@ class menu:
         config_flags = {"loaded": self.project.loaded, "config": True}
         main_menu_config = self.create_config("Load and edit or create a new project.", 
                                               self.get_options(main_flags),
-                                              clear_screen=True)
+                                              clear_screen=False)
         sub_menu_config = {"config_menu": self.create_config("Edit the current project's settings.", 
                                                        self.get_options(config_flags),
-                                                       clear_screen=True)}
-        print(main_menu_config)
+                                                       clear_screen=False)}
+        print([sub_menu_config[i] for i in sub_menu_config])
 
         main_menu = TerminalMenu(**main_menu_config)
         config_menu = TerminalMenu(**sub_menu_config["config_menu"])
+        print(std.get_functions(opt.options))
         while True:
             main_index = main_menu.show()
             if self.get_options(main_flags)[main_index] in get_options_name(OPT_MISC["config"]):
@@ -64,7 +66,15 @@ class menu:
 
                     if edit_index >= len(self.get_options(config_flags))-1 or edit_index is None:
                         break
-            elif main_index >= len(self.get_options(main_flags))-1 or main_index is None:
+
+            elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_PROJECT)[0]: # Load project
+                print(getattr(opt.options, get_options_func(OPT_PROJECT)[0]))
+            elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_PROJECT)[1]: # Create project
+                print(getattr(opt.options, get_options_func(OPT_PROJECT)[1]))
+            elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_PROJECT)[2]: # Save project
+                print(getattr(opt.options, get_options_func(OPT_PROJECT)[2]))
+                                                                              
+            elif main_menu_config["menu_entries"][main_index] in get_options_name(OPT_MISC["exit"]) or main_index is None:
                 break
         
     

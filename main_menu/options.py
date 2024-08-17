@@ -1,8 +1,23 @@
 class options:
     def load_project(self) -> bool:
         """Loads a project"""
-        print("Please enter a project filename: ")
-        filename = str(input())
+        filename = str(input("Please enter a project filename: "))
+        if not filename.isalnum():
+            print("Filename contains non-ASCII characters.")
+            return False
+        
+        return True
+    def create_project(self) -> bool:
+        """Creates a project"""
+        name = str(input("Please enter a project name: "))
+        if not name.isalnum():
+            print("Filename contains non-ASCII characters.")
+            return False
+        
+        return True
+    def save_project(self) -> bool:
+        """Saves a project"""
+        filename = str(input("Please enter the filename to save to: "))
         if not filename.isalnum():
             print("Filename contains non-ASCII characters.")
             return False
