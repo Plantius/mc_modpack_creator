@@ -17,7 +17,7 @@ python3 main.py [] []
 ```
 
 ## TODO
-- Add main menu functionalities
+- Restructure menu to make use of functions etc.
 - Check if project file is valid
 - Add arguments for CLI interface
 - Fix API calls and add error handling

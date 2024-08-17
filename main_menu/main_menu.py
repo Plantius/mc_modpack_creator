@@ -9,6 +9,7 @@ OPT_CONFIG = [["change_project_name", "Change project name"], ["change_project_v
               ["change_project_loader", "Change mod loader"], ["change_project_version", "Change Minecraft version"]]
 OPT_EXIT = [["exit_program", "Exit program"]]
 
+# TODO Add functionalities, make use of functions and change option layout
 class menu:
     project: Modrinth.project
 
@@ -30,6 +31,7 @@ class menu:
 
         print(f"{count}: Exit program")
 
+    # TODO Add generalization of common functions
     def main_menu(self) -> None:
         main_options = [i[1] for i in OPT_PROJECT] 
         if self.project.loaded:
