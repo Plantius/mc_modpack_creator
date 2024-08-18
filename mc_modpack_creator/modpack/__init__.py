@@ -1,4 +1,4 @@
 API_BASE = 'https://api.modrinth.com/v2'
 HEADERS = {
-    'User-Agent': 'Modpack Helper'
+    'User-Agent': 'Plantius/mc_modpack_creator'
 }

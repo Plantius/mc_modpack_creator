@@ -1,5 +1,4 @@
 init:
 	pip install -r requirements.txt
 
-test:
-	p
+phony: init
