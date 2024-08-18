@@ -47,7 +47,9 @@ class menu:
         config_menu = TerminalMenu(**sub_menu_config["config_menu"])
         while True:
             main_index = main_menu.show() # Main menu
-
+            if main_index is None:
+                break
+            
             if main_menu_config["menu_entries"][main_index] in menu_options.get_options_name(main_options)[main_index]: 
                 option = menu_options.get_options_id(main_options)[main_index] # Get  corresponding to option
                 func = getattr(menu_func, menu_options.get_options_func(main_options)[main_index]) # Get function corresponding to option
@@ -55,6 +57,8 @@ class menu:
                 if option is menu_options.Option.CONFIG: # Config submenu
                     while True:
                         config_index = config_menu.show() # Config menu
+                        if config_index is None:
+                            break
 
                         if sub_menu_config["config_menu"]["menu_entries"][config_index] in menu_options.get_options_name(config_options)[config_index]: 
                             option = menu_options.get_options_id(config_options)[config_index]
