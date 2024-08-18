@@ -21,7 +21,7 @@ def main():
     # Project object
     p = project.Project()
     # mod_list = []
-    # for i in range(120):
+    # for i in range(25):
     #     mod_list.append(mod.Mod(f"{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}", 
     #                             f"{random.randint(1, 20)}.{random.randint(1, 25)}", 
     #                             f"1.{random.randint(1, 21)}.{random.randint(0, 6)}", 
