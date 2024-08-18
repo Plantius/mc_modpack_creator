@@ -1,9 +1,9 @@
-import modpack_creator.Mod as Mod
+import modpack.mod as mod
 from datetime import datetime
 import json
 
 
-class modpack:
+class Modpack:
     name: str
     build_date: datetime
     build_version: str
@@ -23,7 +23,7 @@ class modpack:
         self.build_version = build_version
         self.mc_version = mc_version
         self.mod_loader = mod_loader
-        self.mod_list = [Mod.mod(**x) for x in mod_list]
+        self.mod_list = [mod.Mod(**x) for x in mod_list]
     
     def export_json(self) -> json:
         """Exports all variables in the current modpack object as a JSON object"""
@@ -34,6 +34,6 @@ class modpack:
     def check_compatibility(self) -> bool:
         return True
 
-    def add_mod(self, new_mod: Mod):
+    def add_mod(self, new_mod: mod.Mod):
         if new_mod.mc_version is not self.mc_version:
             print("Error: this mod does not match the current minecraft version.")

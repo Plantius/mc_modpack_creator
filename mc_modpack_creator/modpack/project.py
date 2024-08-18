@@ -1,5 +1,5 @@
 import requests, json
-import modpack_creator.Modpack as Modpack
+import modpack.modpack as modpack
 from datetime import datetime
 from . import API_BASE, HEADERS
 
@@ -7,8 +7,8 @@ def par_url(dic) -> str:
     """Parses a dictionary to a correct parameter string"""
     return '&'.join([f'{x}={dic[x]}' for x in dic.keys()]).replace('\'', '\"')
 
-class project:
-    mp: Modpack.modpack
+class Project:
+    mp: modpack.Modpack
     loaded: bool
     saved: bool
     valid: bool
@@ -25,7 +25,7 @@ class project:
     def create_project(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=True, valid=False) -> None:
         """Create a new project"""
-        self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
+        self.mp = modpack.Modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
         self.loaded = True
         self.saved = True
         self.valid = self.mp.check_compatibility()
@@ -37,7 +37,7 @@ class project:
         """Loads the given project file """
         with open(filename, 'r') as file:
             file_json = json.loads(file.read())
-            self.mp = Modpack.modpack(**file_json)
+            self.mp = modpack.Modpack(**file_json)
             self.loaded = file_json["loaded"]
             self.saved = file_json["saved"]
             self.valid = file_json["valid"]

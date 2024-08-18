@@ -1,6 +1,6 @@
 import json
 
-class mod:
+class Mod:
     mod_name: str
     mod_version: str
     mc_version: str

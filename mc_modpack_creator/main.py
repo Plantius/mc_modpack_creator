@@ -6,9 +6,10 @@
 # Edit project
 # Create project
 
-from modpack_creator import Modrinth, Mod
+from modpack import mod
+from modpack import project
 from args_parser import args_parser as args
-from main_menu import main_menu
+from menu import main_menu
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
     print(arguments)
 
     # Project object
-    p = Modrinth.project()
+    p = project.Project()
     # mod_list = [Mod.mod("Mod", "0.1", "1.20.1", False, True, "Fabric", "AAA", "Plantius"),
     #             Mod.mod("Mod", "0.1", "1.20.1", True, True, "Fabric", "BBB", "Plantius")]
     # p.create_project("First", build_version="0.1", mc_version="1.19", mod_loader="forge", mod_list=mod_list)
