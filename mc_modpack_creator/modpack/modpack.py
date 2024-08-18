@@ -23,7 +23,7 @@ class Modpack:
         self.build_version = build_version
         self.mc_version = mc_version
         self.mod_loader = mod_loader
-        self.mod_list = [mod.Mod(**x) for x in mod_list]
+        self.mod_list = [mod.Mod(**x) if type(x) is not mod.Mod else x for x in mod_list]
     
     def export_json(self) -> json:
         """Exports all variables in the current modpack object as a JSON object"""
