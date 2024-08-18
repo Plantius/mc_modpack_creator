@@ -29,6 +29,7 @@ python3 main.py [] []
 - Add error handling for all functions which require input
 - Add CLI GUI for creating, editing and removing projects
 - Add command line arguments for all major project functions
+- Add support for JSON loading and Mod object loading
 
 ## Acknowledgements
 
