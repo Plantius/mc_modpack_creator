@@ -12,7 +12,7 @@ class Project:
     valid: bool
     filename: str
     
-    def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
+    def __init__(self, name="Modpack", description="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=True, valid=False, filename="project1.json") -> None:
         """Constructor of project class"""
         self.loaded = False
@@ -20,12 +20,12 @@ class Project:
         self.valid = True
         self.filename = "project1.json"
     
-    def create_project(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=True, valid=False) -> None:
+    def create_project(self, name="Modpack", description="My modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=True, saved=False, valid=False) -> None:
         """Create a new project"""
-        self.mp = modpack.Modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
-        self.loaded = True
-        self.saved = True
+        self.mp = modpack.Modpack(name, description, build_date, build_version, mc_version, mod_loader, mod_list)
+        self.loaded = loaded
+        self.saved = saved
         self.valid = self.mp.check_compatibility()
         if self.valid is not True:
             print("Invalid project created.")
