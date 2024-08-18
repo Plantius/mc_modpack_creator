@@ -28,93 +28,88 @@ class menu:
 
         return options + menu_options.OPT_MISC["exit"]    
             
+    def update_menu(self, config) -> TerminalMenu:
+        return TerminalMenu(**config)
+
 
     # TODO Add generalization of common functions
     def main_menu(self) -> None:
-        main_options = self.get_options({"loaded": self.proj.loaded, "config": False})
-        config_options = self.get_options({"loaded": self.proj.loaded, "config": True})
-        
-        main_menu_config = self.create_config("Load and edit or create a new project.", 
-                                              menu_options.get_options_name(main_options),
-                                              clear_screen=False)
-        sub_menu_config = {"config_menu": self.create_config("Edit the current project's settings.", 
-                                                       menu_options.get_options_name(config_options),
-                                                       clear_screen=False),
-                            "mod_menu": self.create_config("Select which mods to remove.",
-                                                           self.proj.mp.get_mod_list_names(),
-                                                           multi_select=True,
-                                                           clear_screen=False)}
-
-        main_menu = TerminalMenu(**main_menu_config)
-        config_menu = TerminalMenu(**sub_menu_config["config_menu"])
-        mod_menu = TerminalMenu(**sub_menu_config["mod_menu"])
         while True:
-            main_index = main_menu.show() # Main menu
+            main_options = self.get_options({"loaded": self.proj.loaded, "config": False})
+            config_options = self.get_options({"loaded": self.proj.loaded, "config": True})
+            main_menu = TerminalMenu(**self.create_config("Load and edit or create a new project.", 
+                                                     menu_options.get_options_name(main_options),
+                                                     clear_screen=False))
+            # Main menu
+            main_index = main_menu.show() 
             if main_index is None:
                 func = getattr(menu_func, menu_options.OPT_MISC["exit"][0][0])
-                if func(self.proj):
-                        print(f"SUCCES exit_program")
+                if not func(self.proj):
+                    print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
                 break
 
-            if main_menu_config["menu_entries"][main_index] in menu_options.get_options_name(main_options)[main_index]: 
-                option = menu_options.get_options_id(main_options)[main_index] # Get  corresponding to option
-                func = getattr(menu_func, menu_options.get_options_func(main_options)[main_index]) # Get function corresponding to option
-                
-                if option is menu_options.Option.CONFIG: # Config submenu
-                    while True:
-                        config_index = config_menu.show() # Config menu
-                        if config_index is None:
-                            break
-                        if sub_menu_config["mod_menu"]["menu_entries"][config_index] in menu_options.get_options_name(config_options)[config_index]: 
-                            option = menu_options.get_options_id(config_options)[config_index]
-                            func = getattr(menu_func, menu_options.get_options_func(config_options)[config_index]) # Get function corresponding to option
-    
-                            if option is menu_options.Option.SETTINGS: # Settings
-                                if func(self.proj):
-                                    print(f"SUCCES {sub_menu_config['config_menu']['menu_entries'][config_index]}")
-                            elif option is menu_options.Option.EXIT: # Exit
-                                if func(self.proj):
-                                    print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
-                                    break
-
-                elif option is menu_options.Option.PROJECT: # Project
-                    if func():
-                        print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
-
-                # TODO Add sub menu to select mods currently in the modpack if delete, or 
-                # search for new mods (e.i. search name or enter name, select version etc.) 
-                elif option is menu_options.Option.ADD_MODS: # Add mods
-                    if func(self.proj):
-                        print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
-                
-                elif option is menu_options.Option.RM_MODS: # Remove mods
-                    while True:
-                        mod_index = mod_menu.show() # Config menu
-                        if mod_index is None:
-                            break
-
-                        print(mod_index, mod_menu.chosen_menu_indices)
-                        for i in sorted(mod_index, reverse=True):
-                            del self.proj.mp.mod_list[i]
-
-                        # Update entries
-                        self.proj.saved = False
-                        mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
-                                                           self.proj.mp.get_mod_list_names(),
-                                                           multi_select=True,
-                                                           clear_screen=False))
-
-                    if func(self.proj):
-                        print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
-
-                elif option is menu_options.Option.EXIT: # Exit
-                    if func(self.proj):
-                        print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
+            option = menu_options.get_options_id(main_options)[main_index] # Get corresponding to option
+            func = getattr(menu_func, menu_options.get_options_func(main_options)[main_index]) # Get function corresponding to option
+            
+            # Config submenu
+            if option is menu_options.Option.CONFIG: 
+                while True:
+                    config_menu = TerminalMenu(**self.create_config("Edit project settings.", 
+                                                    menu_options.get_options_name(config_options),
+                                                    clear_screen=False))
+                    config_index = config_menu.show() # Config menu
+                    if config_index is None:
                         break
-            else:
-                func = getattr(menu_func, menu_options.get_options_func(menu_options.OPT_MISC["exit"]))
-                if func(self.proj):
-                        print(f"SUCCES exit_program")
+                
+                    option = menu_options.get_options_id(config_options)[config_index]
+                    func = getattr(menu_func, menu_options.get_options_func(config_options)[config_index]) # Get function corresponding to option
+
+                    if option is menu_options.Option.SETTINGS: # Settings
+                        if not func(self.proj):
+                            print(f"[ERROR] Could not execute {menu_options.get_options_func(config_options)[config_index]}")
+                    elif option is menu_options.Option.EXIT: # Exit
+                        if not func(self.proj):
+                            print(f"[ERROR] Could not execute {menu_options.get_options_func(config_options)[config_index]}")
+                        break
+            # Project
+            elif option is menu_options.Option.PROJECT: 
+                if not func(self.proj):
+                    print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
+
+            # TODO Add sub menu to select mods currently in the modpack if delete, or 
+            # search for new mods (e.i. search name or enter name, select version etc.) 
+
+            # Add mods
+            elif option is menu_options.Option.ADD_MODS: 
+                if not func(self.proj):
+                    print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
+
+            # Remove mods
+            elif option is menu_options.Option.RM_MODS: 
+                while True:
+                    mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
+                                                self.proj.mp.get_mod_list_names(),
+                                                multi_select=True,
+                                                clear_screen=False))
+                    # Config menu
+                    mod_index = mod_menu.show() 
+                    if mod_index is None:
+                        break
+
+                    print(mod_index, mod_menu.chosen_menu_indices)
+                    for i in sorted(mod_index, reverse=True):
+                        del self.proj.mp.mod_list[i]
+
+                    # Update entries
+                    self.proj.saved = False
+
+                if not func(self.proj):
+                    print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
+
+            # Exit
+            elif option is menu_options.Option.EXIT: 
+                if not func(self.proj):
+                    print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
                 break
     
         

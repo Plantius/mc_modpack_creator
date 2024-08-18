@@ -1,31 +1,42 @@
 # 
 # Project options
 # 
-def load_project() -> bool:
+def load_project(project) -> bool:
     """Loads a project"""
     filename = str(input("Please enter a project filename: "))
-    if not filename.isalnum():
+    if not filename.isascii():
         print("Filename contains non-ASCII characters.")
         return False
     
+    project.load_project(filename)
     return True
 
-def create_project() -> bool:
+def create_project(project) -> bool:
     """Creates a project"""
     name = str(input("Please enter a project name: "))
-    if not name.isalnum():
-        print("Filename contains non-ASCII characters.")
+    description = str(input("Please enter a description: "))
+    mc = str(input("Please enter the projects minecraft version: "))
+    modloader = str(input("Please enter the projects modloader: "))
+
+    if not (name.isascii() and description.isascii() and mc.isascii() and modloader.isascii()):
+        print("Input contains non-ASCII characters.")
         return False
-    
+    project.create_project(name=name, description=description, mc_version=mc, mod_loader=modloader)
     return True
 
-def save_project() -> bool:
+def save_project(project) -> bool:
     """Saves a project"""
-    filename = str(input("Please enter the filename to save to: "))
-    if not filename.isalnum():
-        print("Filename contains non-ASCII characters.")
-        return False
-    
+    if not project.saved:
+        inp = str(input("Do you want to save the project to a new file? y/n: "))
+        if inp == 'y':
+            filename = str(input("Please enter the filename to save to: "))
+            if not filename.isascii():
+                print("Filename contains non-ASCII characters.")
+                return False
+            project.save_project(filename)
+        else: 
+            project.save_project(project.filename)
+        project.saved = True
     return True
 
 # 
@@ -66,8 +77,6 @@ def change_mc_version(project) -> bool:
     
     return True
 
-
-
 # 
 # Misc options
 #
@@ -77,11 +86,8 @@ def get_config_menu() -> bool:
 
 def exit_program(project) -> bool:
     """Exits the program"""
-
     if not project.saved:
         inp = str(input("Do you want to save the project? y/n: "))
-        
         if inp == 'y':
             project.save_project(project.filename)
-            print("Project saved.")
     return True
