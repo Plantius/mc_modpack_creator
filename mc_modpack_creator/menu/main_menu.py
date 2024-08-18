@@ -33,13 +33,13 @@ class menu:
     def main_menu(self) -> None:
         main_options = self.get_options({"loaded": self.proj.loaded, "config": False})
         config_options = self.get_options({"loaded": self.proj.loaded, "config": True})
-
+        
         main_menu_config = self.create_config("Load and edit or create a new project.", 
                                               menu_options.get_options_name(main_options),
-                                              clear_screen=True)
+                                              clear_screen=False)
         sub_menu_config = {"config_menu": self.create_config("Edit the current project's settings.", 
                                                        menu_options.get_options_name(config_options),
-                                                       clear_screen=True),
+                                                       clear_screen=False),
                             "mod_menu": self.create_config("Select which mods to remove.",
                                                            self.proj.mp.get_mod_list_names(),
                                                            multi_select=True,
@@ -51,6 +51,9 @@ class menu:
         while True:
             main_index = main_menu.show() # Main menu
             if main_index is None:
+                func = getattr(menu_func, menu_options.OPT_MISC["exit"][0][0])
+                if func(self.proj):
+                        print(f"SUCCES exit_program")
                 break
 
             if main_menu_config["menu_entries"][main_index] in menu_options.get_options_name(main_options)[main_index]: 
@@ -91,17 +94,16 @@ class menu:
                             break
 
                         print(mod_index, mod_menu.chosen_menu_indices)
-                        # if sub_menu_config["config_menu"]["menu_entries"][config_index] in menu_options.get_options_name(config_options)[config_index]: 
-                        #     option = menu_options.get_options_id(config_options)[config_index]
-                        #     func = getattr(menu_func, menu_options.get_options_func(config_options)[config_index]) # Get function corresponding to option
-    
-                        #     if option is menu_options.Option.SETTINGS: # Settings
-                        #         if func(self.proj):
-                        #             print(f"SUCCES {sub_menu_config['config_menu']['menu_entries'][config_index]}")
-                        #     elif option is menu_options.Option.EXIT: # Exit
-                        #         if func(self.proj):
-                        #             print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
-                        #             break
+                        for i in sorted(mod_index, reverse=True):
+                            del self.proj.mp.mod_list[i]
+
+                        # Update entries
+                        self.proj.saved = False
+                        mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
+                                                           self.proj.mp.get_mod_list_names(),
+                                                           multi_select=True,
+                                                           clear_screen=False))
+
                     if func(self.proj):
                         print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
 
@@ -110,6 +112,9 @@ class menu:
                         print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
                         break
             else:
+                func = getattr(menu_func, menu_options.get_options_func(menu_options.OPT_MISC["exit"]))
+                if func(self.proj):
+                        print(f"SUCCES exit_program")
                 break
     
         
