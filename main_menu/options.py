@@ -41,9 +41,11 @@ def remove_mods(project) -> bool:
     
     return True
 
+    
 # 
 # Config options
 #
+
 def change_project_name(project) -> bool:
     """Change the name of the current project"""
     
@@ -69,6 +71,10 @@ def change_mc_version(project) -> bool:
 # 
 # Misc options
 #
+def get_config_menu() -> bool:
+    return True
+
+
 def exit_program(project) -> bool:
     """Exits the program"""
 

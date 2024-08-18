@@ -11,7 +11,7 @@ def get_options_func(opt: list) -> list:
 def get_options_name(opt: list) -> list:
     return [x[1] for x in opt]
 
-def get_options_args(opt: list) -> list:
+def get_options_id(opt: list) -> list:
     return [x[2] for x in opt]
 
 class Option(Enum):
@@ -30,7 +30,7 @@ class menu:
     OPT_MODPACK = [["add_mods", "Add mod(s)", Option.MODPACK], ["remove_mods", "Remove mod(s)", Option.MODPACK]]
     OPT_CONFIG = [["change_project_name", "Change project name", Option.SETTINGS], ["change_project_version", "Change project version", Option.SETTINGS], 
                 ["change_project_loader", "Change mod loader", Option.SETTINGS], ["change_mc_version", "Change Minecraft version", Option.SETTINGS]]
-    OPT_MISC = {"config": [[None, "Change project settings", Option.CONFIG]], "exit": [["exit_program", "Exit menu", Option.EXIT]]}
+    OPT_MISC = {"config": [["get_config_menu", "Change project settings", Option.CONFIG]], "exit": [["exit_program", "Exit menu", Option.EXIT]]}
 
     def __init__(self, project: Modrinth.project) -> None:
         self.project = project
@@ -56,10 +56,9 @@ class menu:
 
     # TODO Add generalization of common functions
     def main_menu(self) -> None:
-        main_flags = {"loaded": self.project.loaded, "config": False}
-        config_flags = {"loaded": self.project.loaded, "config": True}
-        main_options = self.get_options(main_flags)
-        config_options = self.get_options(config_flags)
+        main_options = self.get_options({"loaded": self.project.loaded, "config": False})
+        config_options = self.get_options({"loaded": self.project.loaded, "config": True})
+
         main_menu_config = self.create_config("Load and edit or create a new project.", 
                                               get_options_name(main_options),
                                               clear_screen=False)
@@ -69,45 +68,40 @@ class menu:
 
         main_menu = TerminalMenu(**main_menu_config)
         config_menu = TerminalMenu(**sub_menu_config["config_menu"])
-        print(std.get_functions(opt))
         while True:
-            main_index = main_menu.show()
+            main_index = main_menu.show() # Main menu
 
             if main_menu_config["menu_entries"][main_index] in get_options_name(main_options)[main_index]: 
-                print("INDEX:", main_index)
-                option = get_options_args(main_options)[main_index]
+                option = get_options_id(main_options)[main_index] # Get  corresponding to option
+                func = getattr(opt, get_options_func(main_options)[main_index]) # Get function corresponding to option
                 
-                if option is Option.CONFIG: # Config
+                if option is Option.CONFIG: # Config submenu
                     while True:
-                        config_index = config_menu.show()
-                        option = get_options_args(config_options)[config_index]
-                        print("SUB INDEX:", config_index)
+                        config_index = config_menu.show() # Config menu
 
                         if sub_menu_config["config_menu"]["menu_entries"][config_index] in get_options_name(config_options)[config_index]: 
+                            option = get_options_id(config_options)[config_index]
+                            func = getattr(opt, get_options_func(config_options)[config_index]) # Get function corresponding to option
+    
                             if option is Option.SETTINGS: # Settings
-                                func = getattr(opt, get_options_func(config_options)[config_index])
                                 if func(self.project):
                                     print(f"SUCCES {sub_menu_config['config_menu']['menu_entries'][config_index]}")
                             elif option is Option.EXIT: # Exit
-                                func = getattr(opt, get_options_func(config_options)[config_index])
                                 if func(self.project):
-                                    print("SUCCES EXIT")
+                                    print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
                                     break
 
                 elif option is Option.PROJECT: # Project
-                    func = getattr(opt, get_options_func(main_options)[main_index])
                     if func():
                         print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
 
                 elif option is Option.MODPACK: # Modpack options
-                    func = getattr(opt, get_options_func(main_options)[main_index])
                     if func(self.project):
                         print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
 
                 elif option is Option.EXIT: # Exit
-                    func = getattr(opt, get_options_func(main_options)[main_index])
                     if func(self.project):
-                        print("SUCCES EXIT")
+                        print(f"SUCCES {main_menu_config['menu_entries'][main_index]}")
                         break
             else:
                 break
