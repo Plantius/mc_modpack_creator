@@ -1,17 +1,18 @@
+import modpack.project as proj
 # 
 # Project options
 # 
-def load_project(project) -> bool:
+def load_project(project: proj.Project) -> bool:
     """Loads a project"""
     filename = str(input("Please enter a project filename: "))
-    if not filename.isascii():
-        print("Filename contains non-ASCII characters.")
+    if not filename.isascii() or len(filename) == 0:
+        print("Filename contains non-ASCII characters or is empty.")
         return False
     
     project.load_project(filename)
     return True
 
-def create_project(project) -> bool:
+def create_project(project: proj.Project) -> bool:
     """Creates a project"""
     name = str(input("Please enter a project name: "))
     description = str(input("Please enter a description: "))
@@ -24,7 +25,7 @@ def create_project(project) -> bool:
     project.create_project(name=name, description=description, mc_version=mc, mod_loader=modloader)
     return True
 
-def save_project(project) -> bool:
+def save_project(project: proj.Project) -> bool:
     """Saves a project"""
     if not project.saved:
         inp = str(input("Do you want to save the project to a new file? y/n: "))
@@ -42,14 +43,17 @@ def save_project(project) -> bool:
 # 
 # Modpack options
 # 
-def add_mods(project) -> bool:
+def add_mods(project: proj.Project) -> bool:
     """Adds some mod(s) to the current project"""
     
     return True
 
-def remove_mods(project) -> bool:
+def remove_mods(project: proj.Project, indices) -> bool:
     """Removes some mod(s) from the current project"""
-    
+    if indices is None:
+        return False
+    for i in sorted(indices, reverse=True):
+        del project.mp.mod_list[i]
     return True
 
     
@@ -57,9 +61,14 @@ def remove_mods(project) -> bool:
 # Config options
 #
 
-def change_project_name(project) -> bool:
+def change_project_name(project: proj.Project) -> bool:
     """Change the name of the current project"""
+    name = str(input("Please enter a new name: "))
+    if not name.isascii() or len(name) == 0:
+        print("Name contains non-ASCII characters or is empty.")
+        return False
     
+    project.mp.name = name
     return True
 
 def change_project_version(project) -> bool:
@@ -87,7 +96,5 @@ def get_config_menu() -> bool:
 def exit_program(project) -> bool:
     """Exits the program"""
     if not project.saved:
-        inp = str(input("Do you want to save the project? y/n: "))
-        if inp == 'y':
-            project.save_project(project.filename)
+        return save_project(project)
     return True

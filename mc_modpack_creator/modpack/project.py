@@ -1,7 +1,7 @@
 import requests, json
 import modpack.modpack as modpack
 from datetime import datetime
-from . import API_BASE, HEADERS
+from . import API_BASE, HEADERS, DEF_FILENAME
 
 
 
@@ -27,6 +27,7 @@ class Project:
         self.loaded = loaded
         self.saved = saved
         self.valid = self.mp.check_compatibility()
+        self.filename = None
         if self.valid is not True:
             print("Invalid project created.")
             exit(1)
@@ -44,7 +45,9 @@ class Project:
                 print("Invalid project loaded.")
                 exit(1)
 
-    def save_project(self, filename):
+    def save_project(self, filename):   
+        if filename is None:
+            filename = DEF_FILENAME
         with open(filename, 'w') as file:
             self.filename = filename
             flags = {"loaded": self.loaded, "saved": True, "valid": self.valid, "filename": filename}
