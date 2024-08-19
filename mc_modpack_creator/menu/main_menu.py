@@ -3,7 +3,7 @@ from modpack import project
 from simple_term_menu import TerminalMenu
 import standard as std
 
-# TODO Add functionalities, make use of functions and change option layout
+# TODO Add Mod Update, Mod down/upgrade, Mod Version down/upgrade
 class menu:
     proj: project.Project
     

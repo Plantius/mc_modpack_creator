@@ -53,7 +53,7 @@ def save_project(project: proj.Project) -> bool:
 # 
 def add_mods(project: proj.Project) -> bool:
     """Adds some mod(s) to the current project"""
-    
+    # TODO
     return True
 
 def remove_mods(project: proj.Project, indices) -> bool:
@@ -71,27 +71,45 @@ def remove_mods(project: proj.Project, indices) -> bool:
 
 def change_project_name(project: proj.Project) -> bool:
     """Change the name of the current project"""
-    name = str(input("Please enter a new name: "))
-    if not name.isascii() or len(name) == 0:
+    inp = str(input("Please enter a new name: "))
+    if not inp.isascii() or len(inp) == 0:
         std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
         return False
     
-    project.mp.name = name
+    project.mp.name = inp
     project.saved = False
     return True
 
-def change_project_version(project) -> bool:
+def change_project_version(project: proj.Project) -> bool:
     """Change the version of the current project"""
+    inp = str(input("Please enter a new version: "))
+    if not inp.isascii() or len(inp) == 0:
+        std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
+        return False
+    
+    project.mp.build_version = inp
     project.saved = False
     return True
 
-def change_project_loader(project) -> bool:
+def change_project_loader(project: proj.Project) -> bool:
     """Change the modloader of the current project"""
+    inp = str(input("Please enter a new modloader: "))
+    if not inp.isascii() or len(inp) == 0:
+        std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
+        return False
+    
+    project.mp.mod_loader = inp
     project.saved = False
     return True
 
-def change_mc_version(project) -> bool:
+def change_mc_version(project: proj.Project) -> bool:
     """Change the minecraft version of the current project"""
+    inp = str(input("Please enter a new minecraft version: "))
+    if not inp.isascii() or len(inp) == 0:
+        std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
+        return False
+    
+    project.mp.mc_version = inp
     project.saved = False
     return True
 
@@ -99,6 +117,7 @@ def change_mc_version(project) -> bool:
 # Misc options
 #
 def get_config_menu() -> bool:
+    """"Placeholder"""
     return True
 
 
