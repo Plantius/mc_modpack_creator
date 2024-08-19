@@ -9,8 +9,8 @@ class menu:
     def __init__(self, proj: project.Project) -> None:
         self.proj = proj
     
-    def create_config(self, title="A Menu", menu_entries=["Exit"], clear_screen=True, multi_select=False, show_multi_select_hint=False) -> dict:
-        return {"title": title, "menu_entries": menu_entries, "clear_screen": clear_screen, "multi_select": multi_select, "show_multi_select_hint": show_multi_select_hint}
+    def create_config(self, title="A Menu", menu_entries=["Exit"], cursor_index=0, clear_screen=True, multi_select=False, show_multi_select_hint=False) -> dict:
+        return {"title": title, "menu_entries": menu_entries, "cursor_index": cursor_index, "clear_screen": clear_screen, "multi_select": multi_select, "show_multi_select_hint": show_multi_select_hint}
 
 
     def get_options(self, flags: dict) -> list:
@@ -22,9 +22,10 @@ class menu:
             if flags["loaded"]:
                 options += menu_options.OPT_PROJECT
                 options += menu_options.OPT_MODPACK
+                options += menu_options.OPT_MISC["config"]
             else:
                 options += menu_options.OPT_PROJECT
-            options += menu_options.OPT_MISC["config"]
+            
 
         return options + menu_options.OPT_MISC["exit"]    
             
@@ -34,11 +35,15 @@ class menu:
 
     # TODO Add generalization of common functions
     def main_menu(self) -> None:
+        main_index = 0
+        config_index = 0
+        mod_index = 0
         while True:
             main_options = self.get_options({"loaded": self.proj.loaded, "config": False})
             config_options = self.get_options({"loaded": self.proj.loaded, "config": True})
             main_menu = TerminalMenu(**self.create_config("Load and edit or create a new project.", 
                                                      menu_options.get_options_name(main_options),
+                                                     cursor_index=main_index,
                                                      clear_screen=False))
             # Main menu
             main_index = main_menu.show() 
@@ -56,6 +61,7 @@ class menu:
                 while True:
                     config_menu = TerminalMenu(**self.create_config("Edit project settings.", 
                                                     menu_options.get_options_name(config_options),
+                                                    cursor_index=config_index,
                                                     clear_screen=False))
                     config_index = config_menu.show() # Config menu
                     if config_index is None:
@@ -68,8 +74,6 @@ class menu:
                         if not func(self.proj):
                             print(f"[ERROR] Could not execute {menu_options.get_options_func(config_options)[config_index]}")
                     elif option is menu_options.Option.EXIT: # Exit
-                        if not func(self.proj):
-                            print(f"[ERROR] Could not execute {menu_options.get_options_func(config_options)[config_index]}")
                         break
             # Project
             elif option is menu_options.Option.PROJECT: 
@@ -89,6 +93,7 @@ class menu:
                 while True:
                     mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
                                                 self.proj.mp.get_mod_list_names(),
+                                                cursor_index=mod_index,
                                                 multi_select=True,
                                                 clear_screen=False))
                     # Config menu
