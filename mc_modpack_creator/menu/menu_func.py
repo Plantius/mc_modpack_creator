@@ -34,16 +34,18 @@ def create_project(project: proj.Project) -> bool:
 def save_project(project: proj.Project) -> bool:
     """Saves a project"""
     if not project.saved:
-        inp = str(input("Do you want to save the project to a new file? y/n: "))
-        if inp == 'y':
-            filename = str(input("Please enter the filename to save to: "))
-            if not filename.isascii():
-                std.eprint("[ERROR] Filename contains non-ASCII characters.")
-                return False
-            project.save_project(filename)
-        else: 
-            project.save_project(project.filename)
-        project.saved = True
+        inp = str(input("Do you want to save the project? y/n: "))
+        if inp == 'y': 
+            inp = str(input("Do you want to save the project to a new file? y/n: "))
+            if inp == 'y':
+                filename = str(input("Please enter the filename to save to: "))
+                if not filename.isascii():
+                    std.eprint("[ERROR] Filename contains non-ASCII characters.")
+                    return False
+                project.save_project(filename)
+            else: 
+                project.save_project(project.filename)
+            project.saved = True
     return True
 
 # 
@@ -60,8 +62,8 @@ def remove_mods(project: proj.Project, indices) -> bool:
         return False
     for i in sorted(indices, reverse=True):
         del project.mp.mod_list[i]
+    project.saved = False
     return True
-
     
 # 
 # Config options
@@ -75,21 +77,22 @@ def change_project_name(project: proj.Project) -> bool:
         return False
     
     project.mp.name = name
+    project.saved = False
     return True
 
 def change_project_version(project) -> bool:
     """Change the version of the current project"""
-    
+    project.saved = False
     return True
 
 def change_project_loader(project) -> bool:
     """Change the modloader of the current project"""
-    
+    project.saved = False
     return True
 
 def change_mc_version(project) -> bool:
     """Change the minecraft version of the current project"""
-    
+    project.saved = False
     return True
 
 # 

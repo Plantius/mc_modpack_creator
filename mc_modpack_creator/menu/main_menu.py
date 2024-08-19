@@ -33,20 +33,66 @@ class menu:
             
 
         return options + menu_options.OPT_MISC["exit"]    
-            
+    
+    def get_project_info(self) -> str:
+        return f"{self.proj.mp.name}: {self.proj.mp.description} | Version {self.proj.mp.build_version} | {self.proj.mp.build_date}" 
+    
+    def get_modpack_info(self) -> str:
+        return f"{self.proj.mp.name}: {self.proj.mp.mc_version} | {self.proj.mp.mod_loader} | {len(self.proj.mp.mod_list)} mods" 
+
     def update_menu(self, config) -> TerminalMenu:
         return TerminalMenu(**config)
 
+    def config_menu(self, config_options) -> None:
+        config_index = 0
+        while True:
+            if self.proj.loaded:
+                status = self.get_project_info()
+            config_menu = TerminalMenu(**self.create_config("Edit project settings.", 
+                                            menu_options.get_options_name(config_options),
+                                            cursor_index=config_index,
+                                            status_bar=status,
+                                            clear_screen=False))
+            config_index = config_menu.show() # Config menu
+            if config_index is None:
+                break
+        
+            option = menu_options.get_options_id(config_options)[config_index]
+            func = getattr(menu_func, menu_options.get_options_func(config_options)[config_index]) # Get function corresponding to option
+
+            if option is menu_options.Option.SETTINGS: # Settings
+                if not func(self.proj):
+                    print(f"[ERROR] Could not execute {menu_options.get_options_func(config_options)[config_index]}")
+            
+            elif option is menu_options.Option.EXIT: # Exit
+                break
+    
+    def mod_menu(self, main_options, main_index, func) -> None:
+        """Creates a menu containing all mods currently included in the project"""
+        while True:
+            if self.proj.loaded:
+                status = self.get_modpack_info() 
+            mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
+                                        self.proj.mp.get_mod_list_names(),
+                                        multi_select=True,
+                                        status_bar=status,
+                                        clear_screen=False))
+            # Config menu
+            mod_index = mod_menu.show() 
+            if mod_index is None:
+                break
+
+            print(mod_index, mod_menu.chosen_menu_indices)
+            if not func(self.proj, mod_index):
+                print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
 
     # TODO Add generalization of common functions
     def main_menu(self) -> None:
         main_index = 0
-        config_index = 0
         status = "No project loaded"
         while True:
-            std.eprint("MAIN LOOP")
             if self.proj.loaded:
-               status = f"{self.proj.mp.name}: {self.proj.mp.description} | {self.proj.mp.build_version} | {self.proj.mp.build_date}" 
+                status = self.get_project_info()
             main_options = self.get_options({"loaded": self.proj.loaded, "config": False})
             config_options = self.get_options({"loaded": self.proj.loaded, "config": True})
             main_menu = TerminalMenu(**self.create_config("Load and edit or create a new project.", 
@@ -67,25 +113,7 @@ class menu:
             
             # Config submenu
             if option is menu_options.Option.CONFIG: 
-                while True:
-                    std.eprint("CONFIG LOOP")
-                    config_menu = TerminalMenu(**self.create_config("Edit project settings.", 
-                                                    menu_options.get_options_name(config_options),
-                                                    cursor_index=config_index,
-                                                    clear_screen=False))
-                    config_index = config_menu.show() # Config menu
-                    if config_index is None:
-                        break
-                
-                    option = menu_options.get_options_id(config_options)[config_index]
-                    func = getattr(menu_func, menu_options.get_options_func(config_options)[config_index]) # Get function corresponding to option
-
-                    if option is menu_options.Option.SETTINGS: # Settings
-                        if not func(self.proj):
-                            print(f"[ERROR] Could not execute {menu_options.get_options_func(config_options)[config_index]}")
-                        self.proj.saved = False
-                    elif option is menu_options.Option.EXIT: # Exit
-                        break
+                self.config_menu(config_options)
             # Project
             elif option is menu_options.Option.PROJECT: 
                 if not func(self.proj):
@@ -101,21 +129,7 @@ class menu:
 
             # Remove mods
             elif option is menu_options.Option.RM_MODS: 
-                while True:
-                    std.eprint("MOD LOOP")
-                    mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
-                                                self.proj.mp.get_mod_list_names(),
-                                                multi_select=True,
-                                                clear_screen=False))
-                    # Config menu
-                    mod_index = mod_menu.show() 
-                    if mod_index is None:
-                        break
-
-                    print(mod_index, mod_menu.chosen_menu_indices)
-                    if not func(self.proj, mod_index):
-                        print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
-                    self.proj.saved = False
+                self.mod_menu(main_options, main_index, func)
 
             # Exit
             elif option is menu_options.Option.EXIT: 
