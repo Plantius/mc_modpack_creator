@@ -1,20 +1,18 @@
 import requests, json
-import modpack_creator.Modpack as Modpack
+import modpack.modpack as modpack
 from datetime import datetime
 from . import API_BASE, HEADERS
 
-def par_url(dic) -> str:
-    """Parses a dictionary to a correct parameter string"""
-    return '&'.join([f'{x}={dic[x]}' for x in dic.keys()]).replace('\'', '\"')
 
-class project:
-    mp: Modpack.modpack
+
+class Project:
+    mp: modpack.Modpack
     loaded: bool
     saved: bool
     valid: bool
     filename: str
     
-    def __init__(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
+    def __init__(self, name="Modpack", description="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=True, valid=False, filename="project1.json") -> None:
         """Constructor of project class"""
         self.loaded = False
@@ -22,12 +20,12 @@ class project:
         self.valid = True
         self.filename = "project1.json"
     
-    def create_project(self, name="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=True, valid=False) -> None:
+    def create_project(self, name="Modpack", description="My modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=True, saved=False, valid=False) -> None:
         """Create a new project"""
-        self.mp = Modpack.modpack(name, build_date, build_version, mc_version, mod_loader, mod_list)
-        self.loaded = True
-        self.saved = True
+        self.mp = modpack.Modpack(name, description, build_date, build_version, mc_version, mod_loader, mod_list)
+        self.loaded = loaded
+        self.saved = saved
         self.valid = self.mp.check_compatibility()
         if self.valid is not True:
             print("Invalid project created.")
@@ -37,7 +35,7 @@ class project:
         """Loads the given project file """
         with open(filename, 'r') as file:
             file_json = json.loads(file.read())
-            self.mp =  Modpack.modpack(**file_json)
+            self.mp = modpack.Modpack(**file_json)
             self.loaded = file_json["loaded"]
             self.saved = file_json["saved"]
             self.valid = file_json["valid"]
@@ -49,9 +47,14 @@ class project:
     def save_project(self, filename):
         with open(filename, 'w') as file:
             self.filename = filename
-            flags = {"loaded": self.loaded, "saved": self.saved, "valid": self.valid, "filename": filename}
+            flags = {"loaded": self.loaded, "saved": True, "valid": self.valid, "filename": filename}
             out_json = {**self.mp.export_json(), **flags}
             file.write(json.dumps(out_json, indent=1))
+    
+    def parse_url(self, dic) -> str:
+        """Parses a dictionary to a correct parameter string"""
+        return '&'.join([f'{x}={dic[x]}' for x in dic.keys()]).replace('\'', '\"')
+
 
     def is_slug_valid(self, slug_or_id: str) -> json:
         """Checks if the given project name (slug) or ID exist on Modrinth"""
@@ -84,7 +87,7 @@ class project:
             if i[-1] != None:
                 params[i[0]] = i[-1]
         print(params)
-        req = requests.get(API_BASE + '/search', params=par_url(params), headers=HEADERS)
+        req = requests.get(API_BASE + '/search', params=self.parse_url(params), headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()
@@ -114,7 +117,7 @@ class project:
                 params[i[0]] = i[-1]
         # params = {'loaders': join_list(loaders), 'game_versions': join_list(game_versions), 'featured': featured}
 
-        req = requests.get(API_BASE + '/project/' + project_name + '/version', params=par_url(params), headers=HEADERS)
+        req = requests.get(API_BASE + '/project/' + project_name + '/version', params=self.parse_url(params), headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()
@@ -130,7 +133,7 @@ class project:
         """Returns the specified versions"""
         params = {'ids': ids}
 
-        req = requests.get(API_BASE + '/versions', params=par_url(params), headers=HEADERS)
+        req = requests.get(API_BASE + '/versions', params=self.parse_url(params), headers=HEADERS)
         if req.reason != 'OK':
             return
         return req.json()
