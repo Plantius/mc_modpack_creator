@@ -1,4 +1,5 @@
 import modpack.project as proj
+import standard as std
 # 
 # Project options
 # 
@@ -6,7 +7,7 @@ def load_project(project: proj.Project) -> bool:
     """Loads a project"""
     filename = str(input("Please enter a project filename: "))
     if not filename.isascii() or len(filename) == 0:
-        print("Filename contains non-ASCII characters or is empty.")
+        std.eprint("[ERROR] Filename contains non-ASCII characters or is empty.")
         return False
     
     project.load_project(filename)
@@ -14,13 +15,18 @@ def load_project(project: proj.Project) -> bool:
 
 def create_project(project: proj.Project) -> bool:
     """Creates a project"""
+    if project.loaded:
+        if not save_project(project):
+            std.eprint("[ERROR] Could not save current project.")
+            return False
+        
     name = str(input("Please enter a project name: "))
     description = str(input("Please enter a description: "))
     mc = str(input("Please enter the projects minecraft version: "))
     modloader = str(input("Please enter the projects modloader: "))
 
     if not (name.isascii() and description.isascii() and mc.isascii() and modloader.isascii()):
-        print("Input contains non-ASCII characters.")
+        std.eprint("[ERROR] Input contains non-ASCII characters.")
         return False
     project.create_project(name=name, description=description, mc_version=mc, mod_loader=modloader)
     return True
@@ -32,7 +38,7 @@ def save_project(project: proj.Project) -> bool:
         if inp == 'y':
             filename = str(input("Please enter the filename to save to: "))
             if not filename.isascii():
-                print("Filename contains non-ASCII characters.")
+                std.eprint("[ERROR] Filename contains non-ASCII characters.")
                 return False
             project.save_project(filename)
         else: 
@@ -65,7 +71,7 @@ def change_project_name(project: proj.Project) -> bool:
     """Change the name of the current project"""
     name = str(input("Please enter a new name: "))
     if not name.isascii() or len(name) == 0:
-        print("Name contains non-ASCII characters or is empty.")
+        std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
         return False
     
     project.mp.name = name
