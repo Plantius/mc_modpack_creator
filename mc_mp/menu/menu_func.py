@@ -54,11 +54,11 @@ def save_project(project: proj.Project) -> bool:
 # 
 def search_mods(project: proj.Project) -> bool:
     """Search for a (list of) mod(s) to add"""
-    names = str(input("Please enter a mod name or id: [name/id or [name1, name2, ...]] "))
+    names = str(input("Please enter a mod name or id: [name/id or name1 name2 ...] "))
     if not names.isascii() or len(names) == 0:
         std.eprint("[ERROR] Filename contains non-ASCII characters or is empty.")
         return False
-    names = ast.literal_eval(names)
+    names = names.split()
     print(names)
     return True
 
