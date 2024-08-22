@@ -53,13 +53,15 @@ def save_project(project: proj.Project) -> bool:
 # Modpack options
 # 
 def search_mods(project: proj.Project) -> bool:
-    """Search for a (list of) mod(s) to add"""
-    names = str(input("Please enter a mod name or id: [name/id or name1 name2 ...] "))
+    """Enter a (list of) mod(s) to add"""
+    names = str(input("Please enter a mod slug or id: [name/id or name1 name2 ...] "))
     if not names.isascii() or len(names) == 0:
-        std.eprint("[ERROR] Filename contains non-ASCII characters or is empty.")
+        std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
         return False
     names = names.split()
-    print(names)
+    for name in names:
+        versions = project.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
+        print(versions)
     return True
 
 def add_mods(project: proj.Project) -> bool:
