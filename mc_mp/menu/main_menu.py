@@ -23,14 +23,15 @@ class menu:
 
         if flags["config"]:
             options += menu_options.OPT_CONFIG
-        else:
+        elif not flags["mod"]:
             if flags["loaded"]:
                 options += menu_options.OPT_PROJECT
                 options += menu_options.OPT_MODPACK
                 options += menu_options.OPT_MISC["config"]
             else:
                 options += menu_options.OPT_PROJECT
-            
+        else:
+            options += menu_options.OPT_ADD_MOD
 
         return options + menu_options.OPT_MISC["exit"]    
     
@@ -67,7 +68,7 @@ class menu:
             elif option is menu_options.Option.EXIT: # Exit
                 break
     
-    def mod_menu(self, main_options, main_index, func) -> None:
+    def rm_mod_menu(self, main_options, main_index, func) -> None:
         """Creates a menu containing all mods currently included in the project"""
         while True:
             if self.proj.loaded:
@@ -85,6 +86,30 @@ class menu:
             print(mod_index, mod_menu.chosen_menu_indices)
             if not func(self.proj, mod_index):
                 print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
+    
+    def add_mod_menu(self, mod_options) -> None:
+        """Creates a menu with options to add a mod by name/id, search for mods, or return to the previous menu"""
+        while True:
+            if self.proj.loaded:
+                status = self.get_modpack_info() 
+            mod_menu = TerminalMenu(**self.create_config("Search for new mods to add to the project.",
+                                        menu_options.get_options_name(mod_options),
+                                        status_bar=status,
+                                        clear_screen=False))
+            # Config menu
+            mod_index = mod_menu.show() 
+            if mod_index is None:
+                break
+
+            option = menu_options.get_options_id(mod_options)[mod_index]
+            func = getattr(menu_func, menu_options.get_options_func(mod_options)[mod_index]) # Get function corresponding to option
+            if option is menu_options.Option.ADD_MODS: # Settings
+                if not func(self.proj):
+                    print(f"[ERROR] Could not execute {menu_options.get_options_func(mod_options)[mod_index]}")
+            
+            elif option is menu_options.Option.EXIT: # Exit
+                break
+
 
     # TODO Add generalization of common functions
     def main_menu(self) -> None:
@@ -93,8 +118,10 @@ class menu:
         while True:
             if self.proj.loaded:
                 status = self.get_project_info()
-            main_options = self.get_options({"loaded": self.proj.loaded, "config": False})
-            config_options = self.get_options({"loaded": self.proj.loaded, "config": True})
+            main_options = self.get_options({"loaded": self.proj.loaded, "config": False, "mod": False})
+            config_options = self.get_options({"loaded": self.proj.loaded, "config": True, "mod": False})
+            mod_options = self.get_options({"loaded": self.proj.loaded, "config": False, "mod": True})
+
             main_menu = TerminalMenu(**self.create_config("Load and edit or create a new project.", 
                                                      menu_options.get_options_name(main_options),
                                                      cursor_index=main_index,
@@ -124,12 +151,11 @@ class menu:
 
             # Add mods
             elif option is menu_options.Option.ADD_MODS: 
-                if not func(self.proj):
-                    print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
+                self.add_mod_menu(mod_options)
 
             # Remove mods
             elif option is menu_options.Option.RM_MODS: 
-                self.mod_menu(main_options, main_index, func)
+                self.rm_mod_menu(main_options, main_index, func)
 
             # Exit
             elif option is menu_options.Option.EXIT: 
@@ -137,4 +163,3 @@ class menu:
                     print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
                 break
     
-        

@@ -1,5 +1,6 @@
 import modpack.project as proj
 import standard as std
+import ast
 # 
 # Project options
 # 
@@ -51,7 +52,22 @@ def save_project(project: proj.Project) -> bool:
 # 
 # Modpack options
 # 
+def search_mods(project: proj.Project) -> bool:
+    """Search for a (list of) mod(s) to add"""
+    names = str(input("Please enter a mod name or id: [name/id or [name1, name2, ...]] "))
+    if not names.isascii() or len(names) == 0:
+        std.eprint("[ERROR] Filename contains non-ASCII characters or is empty.")
+        return False
+    names = ast.literal_eval(names)
+    print(names)
+    return True
+
 def add_mods(project: proj.Project) -> bool:
+    """Adds some mod(s) to the current project"""
+    # TODO
+    return True
+
+def add_mods_from_file(project: proj.Project) -> bool:
     """Adds some mod(s) to the current project"""
     # TODO
     return True

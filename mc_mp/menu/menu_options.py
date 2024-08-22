@@ -17,6 +17,9 @@ OPT_PROJECT = [["load_project", "Load project", Option.PROJECT],
 OPT_MODPACK = [["add_mods", "Add mod(s)", Option.ADD_MODS], 
                ["remove_mods", "Remove mod(s)", Option.RM_MODS]]
 
+OPT_ADD_MOD = [["search_mods", "Search mod(s)", Option.ADD_MODS],
+               ["add_mods_from_file", "Add mod(s) from file", Option.ADD_MODS]]
+
 OPT_CONFIG = [["change_project_name", "Change project name", Option.SETTINGS], 
               ["change_project_version", "Change project version", Option.SETTINGS], 
               ["change_project_loader", "Change mod loader", Option.SETTINGS], 

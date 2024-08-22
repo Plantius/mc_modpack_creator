@@ -20,6 +20,8 @@ def main():
 
     # Project object
     p = project.Project()
+    if arguments.open_project is not None:
+        p.load_project(arguments.open_project)
     # mod_list = []
     # for i in range(25):
     #     mod_list.append(mod.Mod(f"{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}{chr(random.randint(65, 121))}",
