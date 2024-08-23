@@ -1,6 +1,7 @@
 import modpack.project as p
+import modpack.mod as mod
 import standard as std
-
+from simple_term_menu import TerminalMenu
 # 
 # Project options
 # 
@@ -61,7 +62,7 @@ def search_mods(project: p.Project) -> bool:
         return False
     
     f = str(input("Do you want to enter additional filters? y/n "))
-    if f == 'y':
+    if f.isascii() and f == 'y':
         facets = str(input("Enter the facets you want to search with: (modloader, minecraft version, client side, server side) "))
         print(facets)
     
@@ -80,9 +81,17 @@ def add_mods(project: p.Project) -> bool:
         versions = project.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
         if versions is None:
             std.eprint(f"[ERROR] No mod called {name} found.")
+        version_list = TerminalMenu([f'{version["name"]}: minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions], 
+                                    clear_screen=False)
+        mod_index = version_list.show()
+        if mod_index is None:
+            return False
         
+        print(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}')
+        # inp = str(input("Do you want to add this mod to the current project? y/n "))
+        # if inp.isascii() and inp == 'y':
+        #     project.mp.mod_list.append(mod.Mod(mod_name=))
 
-        print(versions)
     return True
 
 def add_mods_from_file(project: p.Project) -> bool:
