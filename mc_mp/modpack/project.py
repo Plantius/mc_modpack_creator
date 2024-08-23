@@ -1,13 +1,15 @@
 import requests, json
 import modpack.modpack as modpack
 from datetime import datetime
+import standard as std
+from base64 import urlsafe_b64encode
 from . import API_BASE, HEADERS, DEF_FILENAME
 
 
 # TODO Restructure json loading
 class Project:
     mp: modpack.Modpack
-    metadata: json = {"loaded":False, "saved":True, "filename": "project1.json"}
+    metadata: json = {"loaded":False, "saved":True, "filename": "project1.json", "project_id": None}
     
     def __init__(self, name="Modpack", description="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
                  mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
@@ -18,8 +20,8 @@ class Project:
                  mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
         """Create a new project"""
         self.mp = modpack.Modpack(name, description, build_date, build_version, mc_version, mod_loader, mod_list)
-        self.metadata["loaded"] = True 
-        self.metadata["saved"] = False 
+        self.metadata["loaded"] = True; self.metadata["saved"] = False 
+        self.metadata["project_id"] = std.generate_id()
         if self.mp.check_compatibility() is not True:
             print("Invalid project created.")
             exit(1)
@@ -28,6 +30,10 @@ class Project:
         """Loads the given project file """
         with open(filename, 'r') as file:
             file_json = json.loads(file.read())
+            if not std.check_id(file_json["metadata"]["project_id"]):
+                print("[ERROR] Invalid project file.")
+                print(file_json["metadata"]["project_id"])
+                exit(1)
             self.metadata = file_json["metadata"]; del file_json["metadata"]
             self.mp = modpack.Modpack(**file_json)
             
@@ -40,7 +46,7 @@ class Project:
             filename = DEF_FILENAME
         with open(filename, 'w') as file:
             self.filename = filename
-            flags = {"loaded": self.metadata["loaded"], "saved": True, "filename": filename}
+            flags = self.metadata; flags["saved"] = True
             out_json = self.mp.export_json(); out_json["metadata"] = flags
             file.write(json.dumps(out_json, indent=1))
     
