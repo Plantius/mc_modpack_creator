@@ -16,7 +16,7 @@ def load_project(project: proj.Project) -> bool:
 
 def create_project(project: proj.Project) -> bool:
     """Creates a project"""
-    if project.loaded:
+    if project.metadata["loaded"]:
         if not save_project(project):
             std.eprint("[ERROR] Could not save current project.")
             return False
@@ -34,7 +34,7 @@ def create_project(project: proj.Project) -> bool:
 
 def save_project(project: proj.Project) -> bool:
     """Saves a project"""
-    if not project.saved:
+    if not project.metadata["saved"]:
         inp = str(input("Do you want to save the project? y/n: "))
         if inp == 'y': 
             inp = str(input("Do you want to save the project to a new file? y/n: "))
@@ -45,8 +45,8 @@ def save_project(project: proj.Project) -> bool:
                     return False
                 project.save_project(filename)
             else: 
-                project.save_project(project.filename)
-            project.saved = True
+                project.save_project(project.metadata["filename"])
+            project.metadata["saved"] = True
     return True
 
 # 
@@ -80,7 +80,7 @@ def remove_mods(project: proj.Project, indices) -> bool:
         return False
     for i in sorted(indices, reverse=True):
         del project.mp.mod_list[i]
-    project.saved = False
+    project.metadata["saved"] = False
     return True
     
 # 
@@ -95,7 +95,7 @@ def change_project_name(project: proj.Project) -> bool:
         return False
     
     project.mp.name = inp
-    project.saved = False
+    project.metadata["saved"] = False
     return True
 
 def change_project_version(project: proj.Project) -> bool:
@@ -106,7 +106,7 @@ def change_project_version(project: proj.Project) -> bool:
         return False
     
     project.mp.build_version = inp
-    project.saved = False
+    project.metadata["saved"] = False
     return True
 
 def change_project_loader(project: proj.Project) -> bool:
@@ -117,7 +117,7 @@ def change_project_loader(project: proj.Project) -> bool:
         return False
     
     project.mp.mod_loader = inp
-    project.saved = False
+    project.metadata["saved"] = False
     return True
 
 def change_mc_version(project: proj.Project) -> bool:
@@ -128,7 +128,7 @@ def change_mc_version(project: proj.Project) -> bool:
         return False
     
     project.mp.mc_version = inp
-    project.saved = False
+    project.metadata["saved"] = False
     return True
 
 # 
@@ -141,6 +141,6 @@ def get_config_menu() -> bool:
 
 def exit_program(project) -> bool:
     """Exits the program"""
-    if not project.saved:
+    if not project.metadata["saved"]:
         return save_project(project)
     return True

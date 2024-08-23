@@ -1,5 +1,6 @@
 import json
 
+# TODO Restructure to accept json data better
 class Mod:
     mod_name: str
     description: str

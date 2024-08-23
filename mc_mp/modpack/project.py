@@ -4,31 +4,23 @@ from datetime import datetime
 from . import API_BASE, HEADERS, DEF_FILENAME
 
 
-
+# TODO Restructure json loading
 class Project:
     mp: modpack.Modpack
-    loaded: bool
-    saved: bool
-    valid: bool
-    filename: str
+    metadata = {"loaded":False, "saved":False, "valid":True, "filename": "project1.json"}
     
     def __init__(self, name="Modpack", description="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=True, valid=False, filename="project1.json") -> None:
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[], metadata={"loaded":False, "saved":True, "valid":True, "filename": "project1.json"}) -> None:
         """Constructor of project class"""
-        self.loaded = False
-        self.saved = True
-        self.valid = True
-        self.filename = "project1.json"
+        self.metadata = metadata
     
     def create_project(self, name="Modpack", description="My modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=True, saved=False, valid=False) -> None:
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[], metadata={"loaded":True, "saved":False, "valid":True, "filename": "project1.json"}) -> None:
         """Create a new project"""
         self.mp = modpack.Modpack(name, description, build_date, build_version, mc_version, mod_loader, mod_list)
-        self.loaded = loaded
-        self.saved = saved
-        self.valid = self.mp.check_compatibility()
-        self.filename = None
-        if self.valid is not True:
+        self.metadata = metadata; self.metadata["valid"] = self.mp.check_compatibility()
+        print(self.metadata)
+        if self.metadata["valid"] is not True:
             print("Invalid project created.")
             exit(1)
 
@@ -36,12 +28,11 @@ class Project:
         """Loads the given project file """
         with open(filename, 'r') as file:
             file_json = json.loads(file.read())
+            print(file_json["metadata"])
+            self.metadata = file_json["metadata"]; del file_json["metadata"]
             self.mp = modpack.Modpack(**file_json)
-            self.loaded = file_json["loaded"]
-            self.saved = file_json["saved"]
-            self.valid = file_json["valid"]
-            self.filename = filename
-            if self.valid is not True:
+            
+            if self.metadata["valid"] is not True:
                 print("Invalid project loaded.")
                 exit(1)
 
@@ -50,8 +41,8 @@ class Project:
             filename = DEF_FILENAME
         with open(filename, 'w') as file:
             self.filename = filename
-            flags = {"loaded": self.loaded, "saved": True, "valid": self.valid, "filename": filename}
-            out_json = {**self.mp.export_json(), **flags}
+            flags = {"loaded": self.metadata["loaded"], "saved": True, "valid": self.metadata["saved"], "filename": filename}
+            out_json = self.mp.export_json(); out_json["metadata"] = flags
             file.write(json.dumps(out_json, indent=1))
     
     def parse_url(self, dic) -> str:

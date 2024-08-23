@@ -2,22 +2,18 @@ import modpack.mod as mod
 from datetime import datetime
 import json
 
-
+# TODO Restructure json loading
 class Modpack:
     name: str
     description: str
-    build_date: datetime
+    build_date: datetime = datetime.today().strftime('%Y-%m-%d')
     build_version: str
     mc_version: str
     mod_loader: str
-    mod_list: list
-    loaded: bool
-    saved: bool
-    valid: bool
-    filename: str
+    mod_list: list[mod.Mod]
     
     def __init__(self, name="Modpack", description="My modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[], loaded=False, saved=False, valid=False, filename="project1.json") -> None:
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
         """Constructor of modpack class"""
         self.name = name
         self.description = description

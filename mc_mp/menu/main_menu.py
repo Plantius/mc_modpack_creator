@@ -5,10 +5,10 @@ import standard as std
 
 # TODO Add Mod Update, Mod down/upgrade, Mod Version down/upgrade
 class menu:
-    proj: project.Project
+    p: project.Project
     
-    def __init__(self, proj: project.Project) -> None:
-        self.proj = proj
+    def __init__(self, p: project.Project) -> None:
+        self.p = p
     
     def create_config(self, title="A Menu", menu_entries=["Exit"], cursor_index=0, 
                       clear_screen=True, multi_select=False, show_multi_select_hint=False,
@@ -36,10 +36,10 @@ class menu:
         return options + menu_options.OPT_MISC["exit"]    
     
     def get_project_info(self) -> str:
-        return f"{self.proj.mp.name}: {self.proj.mp.description} | Version {self.proj.mp.build_version} | {self.proj.mp.build_date}" 
+        return f"{self.p.mp.name}: {self.p.mp.description} | Version {self.p.mp.build_version} | {self.p.mp.build_date}" 
     
     def get_modpack_info(self) -> str:
-        return f"{self.proj.mp.name}: {self.proj.mp.mc_version} | {self.proj.mp.mod_loader} | {len(self.proj.mp.mod_list)} mods" 
+        return f"{self.p.mp.name}: {self.p.mp.mc_version} | {self.p.mp.mod_loader} | {len(self.p.mp.mod_list)} mods" 
 
     def update_menu(self, config) -> TerminalMenu:
         return TerminalMenu(**config)
@@ -47,7 +47,7 @@ class menu:
     def config_menu(self, config_options) -> None:
         config_index = 0
         while True:
-            if self.proj.loaded:
+            if self.p.metadata["loaded"]:
                 status = self.get_project_info()
             config_menu = TerminalMenu(**self.create_config("Edit project settings.", 
                                             menu_options.get_options_name(config_options),
@@ -62,7 +62,7 @@ class menu:
             func = getattr(menu_func, menu_options.get_options_func(config_options)[config_index]) # Get function corresponding to option
 
             if option is menu_options.Option.SETTINGS: # Settings
-                if not func(self.proj):
+                if not func(self.p):
                     print(f"[ERROR] Could not execute {menu_options.get_options_func(config_options)[config_index]}")
             
             elif option is menu_options.Option.EXIT: # Exit
@@ -71,10 +71,10 @@ class menu:
     def rm_mod_menu(self, main_options, main_index, func) -> None:
         """Creates a menu containing all mods currently included in the project"""
         while True:
-            if self.proj.loaded:
+            if self.p.metadata["loaded"]:
                 status = self.get_modpack_info() 
             mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
-                                        self.proj.mp.get_mod_list_names(),
+                                        self.p.mp.get_mod_list_names(),
                                         multi_select=True,
                                         status_bar=status,
                                         clear_screen=False))
@@ -84,13 +84,13 @@ class menu:
                 break
 
             print(mod_index, mod_menu.chosen_menu_indices)
-            if not func(self.proj, mod_index):
+            if not func(self.p, mod_index):
                 print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
     
     def add_mod_menu(self, mod_options) -> None:
         """Creates a menu with options to add a mod by name/id, search for mods, or return to the previous menu"""
         while True:
-            if self.proj.loaded:
+            if self.p.metadata["loaded"]:
                 status = self.get_modpack_info() 
             mod_menu = TerminalMenu(**self.create_config("Search for new mods to add to the project.",
                                         menu_options.get_options_name(mod_options),
@@ -104,7 +104,7 @@ class menu:
             option = menu_options.get_options_id(mod_options)[mod_index]
             func = getattr(menu_func, menu_options.get_options_func(mod_options)[mod_index]) # Get function corresponding to option
             if option is menu_options.Option.ADD_MODS: # Settings
-                if not func(self.proj):
+                if not func(self.p):
                     print(f"[ERROR] Could not execute {menu_options.get_options_func(mod_options)[mod_index]}")
             
             elif option is menu_options.Option.EXIT: # Exit
@@ -116,11 +116,11 @@ class menu:
         main_index = 0
         status = "No project loaded"
         while True:
-            if self.proj.loaded:
+            if self.p.metadata["loaded"]:
                 status = self.get_project_info()
-            main_options = self.get_options({"loaded": self.proj.loaded, "config": False, "mod": False})
-            config_options = self.get_options({"loaded": self.proj.loaded, "config": True, "mod": False})
-            mod_options = self.get_options({"loaded": self.proj.loaded, "config": False, "mod": True})
+            main_options = self.get_options({"loaded": self.p.metadata["loaded"], "config": False, "mod": False})
+            config_options = self.get_options({"loaded": self.p.metadata["loaded"], "config": True, "mod": False})
+            mod_options = self.get_options({"loaded": self.p.metadata["loaded"], "config": False, "mod": True})
 
             main_menu = TerminalMenu(**self.create_config("Load and edit or create a new project.", 
                                                      menu_options.get_options_name(main_options),
@@ -131,7 +131,7 @@ class menu:
             main_index = main_menu.show() 
             if main_index is None:
                 func = getattr(menu_func, menu_options.OPT_MISC["exit"][0][0])
-                if not func(self.proj):
+                if not func(self.p):
                     print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
                 break
 
@@ -141,9 +141,10 @@ class menu:
             # Config submenu
             if option is menu_options.Option.CONFIG: 
                 self.config_menu(config_options)
+
             # Project
             elif option is menu_options.Option.PROJECT: 
-                if not func(self.proj):
+                if not func(self.p):
                     print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
 
             # TODO Add sub menu to select mods currently in the modpack if delete, or 
@@ -159,7 +160,7 @@ class menu:
 
             # Exit
             elif option is menu_options.Option.EXIT: 
-                if not func(self.proj):
+                if not func(self.p):
                     print(f"[ERROR] Could not execute {menu_options.get_options_func(main_options)[main_index]}")
                 break
     
