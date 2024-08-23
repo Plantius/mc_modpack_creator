@@ -36,11 +36,8 @@ class menu:
         return options + menu_options.OPT_MISC["exit"]    
     
     def get_project_info(self) -> str:
-        return f"{self.p.mp.name}: {self.p.mp.description} | Version {self.p.mp.build_version} | {self.p.mp.build_date}" 
+        return f"{self.p.mp.name}: {self.p.mp.description} | Version {self.p.mp.build_version} | {self.p.mp.build_date} | {self.p.mp.mc_version} | {self.p.mp.mod_loader} | {len(self.p.mp.mod_list)} mods" 
     
-    def get_modpack_info(self) -> str:
-        return f"{self.p.mp.name}: {self.p.mp.mc_version} | {self.p.mp.mod_loader} | {len(self.p.mp.mod_list)} mods" 
-
     def update_menu(self, config) -> TerminalMenu:
         return TerminalMenu(**config)
 
@@ -72,7 +69,7 @@ class menu:
         """Creates a menu containing all mods currently included in the project"""
         while True:
             if self.p.metadata["loaded"]:
-                status = self.get_modpack_info() 
+                status = self.get_project_info() 
             mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
                                         self.p.mp.get_mod_list_names(),
                                         multi_select=True,
@@ -91,7 +88,7 @@ class menu:
         """Creates a menu with options to add a mod by name/id, search for mods, or return to the previous menu"""
         while True:
             if self.p.metadata["loaded"]:
-                status = self.get_modpack_info() 
+                status = self.get_project_info() 
             mod_menu = TerminalMenu(**self.create_config("Search for new mods to add to the project.",
                                         menu_options.get_options_name(mod_options),
                                         status_bar=status,

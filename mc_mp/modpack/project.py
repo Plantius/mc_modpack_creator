@@ -7,20 +7,19 @@ from . import API_BASE, HEADERS, DEF_FILENAME
 # TODO Restructure json loading
 class Project:
     mp: modpack.Modpack
-    metadata = {"loaded":False, "saved":False, "valid":True, "filename": "project1.json"}
+    metadata: json = {"loaded":False, "saved":True, "filename": "project1.json"}
     
     def __init__(self, name="Modpack", description="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[], metadata={"loaded":False, "saved":True, "valid":True, "filename": "project1.json"}) -> None:
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
         """Constructor of project class"""
-        self.metadata = metadata
-    
+        pass
+
     def create_project(self, name="Modpack", description="My modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[], metadata={"loaded":True, "saved":False, "valid":True, "filename": "project1.json"}) -> None:
+                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
         """Create a new project"""
         self.mp = modpack.Modpack(name, description, build_date, build_version, mc_version, mod_loader, mod_list)
-        self.metadata = metadata; self.metadata["valid"] = self.mp.check_compatibility()
-        print(self.metadata)
-        if self.metadata["valid"] is not True:
+        self.metadata["loaded"] = True 
+        if self.mp.check_compatibility() is not True:
             print("Invalid project created.")
             exit(1)
 
@@ -28,11 +27,10 @@ class Project:
         """Loads the given project file """
         with open(filename, 'r') as file:
             file_json = json.loads(file.read())
-            print(file_json["metadata"])
             self.metadata = file_json["metadata"]; del file_json["metadata"]
             self.mp = modpack.Modpack(**file_json)
             
-            if self.metadata["valid"] is not True:
+            if self.mp.check_compatibility() is not True:
                 print("Invalid project loaded.")
                 exit(1)
 
@@ -41,7 +39,7 @@ class Project:
             filename = DEF_FILENAME
         with open(filename, 'w') as file:
             self.filename = filename
-            flags = {"loaded": self.metadata["loaded"], "saved": True, "valid": self.metadata["saved"], "filename": filename}
+            flags = {"loaded": self.metadata["loaded"], "saved": True, "filename": filename}
             out_json = self.mp.export_json(); out_json["metadata"] = flags
             file.write(json.dumps(out_json, indent=1))
     
@@ -72,7 +70,27 @@ class Project:
         \nArguments are:\n
             query: The query to search for
             facets: Used to filter out results
-            index: The sorting method used for sorting search results ("relevance" "downloads" "follows" "newest" "updated")
+                project_type
+                categories (loaders are lumped in with categories in search)
+                versions
+                client_side
+                server_side
+                open_source
+                title
+                author
+                follows
+                project_id
+                license
+                downloads
+                color
+                created_timestamp
+                modified_timestamp
+            index: The sorting method used for sorting search results 
+                "relevance"
+                "downloads"
+                "follows" 
+                "newest" 
+                "updated"
             offset: The offset into the search. Skips this number of results
             limit: The number of results returned by the search
         """

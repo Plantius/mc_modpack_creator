@@ -1,10 +1,10 @@
-import modpack.project as proj
+import modpack.project as p
 import standard as std
 import ast
 # 
 # Project options
 # 
-def load_project(project: proj.Project) -> bool:
+def load_project(project: p.Project) -> bool:
     """Loads a project"""
     filename = str(input("Please enter a project filename: "))
     if not filename.isascii() or len(filename) == 0:
@@ -14,7 +14,7 @@ def load_project(project: proj.Project) -> bool:
     project.load_project(filename)
     return True
 
-def create_project(project: proj.Project) -> bool:
+def create_project(project: p.Project) -> bool:
     """Creates a project"""
     if project.metadata["loaded"]:
         if not save_project(project):
@@ -32,7 +32,7 @@ def create_project(project: proj.Project) -> bool:
     project.create_project(name=name, description=description, mc_version=mc, mod_loader=modloader)
     return True
 
-def save_project(project: proj.Project) -> bool:
+def save_project(project: p.Project) -> bool:
     """Saves a project"""
     if not project.metadata["saved"]:
         inp = str(input("Do you want to save the project? y/n: "))
@@ -52,29 +52,42 @@ def save_project(project: proj.Project) -> bool:
 # 
 # Modpack options
 # 
-def search_mods(project: proj.Project) -> bool:
+def search_mods(project: p.Project) -> bool:
     """Enter a (list of) mod(s) to add"""
+    query = str(input("Please enter a term to search for: "))
+    if not query.isascii() or len(query) == 0:
+        std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
+        return False
+    
+    f = str(input("Do you want to enter additional filters? y/n "))
+    if f == 'y':
+        print("Enter the facets you want to search with: (categories:forge, versions:1.20, etc) ")
+        facets = str(input("Multiple facets: f1 f2 f3 etc. "))
+        print(facets)
+    
+    results = project.search_project(query=query, facets=[[f"categories:{project.mp.mod_loader}"], [f"versions:{project.mp.mc_version}"], ["project_type:mod"], ])
+    print(results)
+    return True
+
+def add_mods(project: p.Project) -> bool:
+    """Adds some mod(s) to the current project"""
     names = str(input("Please enter a mod slug or id: [name/id or name1 name2 ...] "))
     if not names.isascii() or len(names) == 0:
         std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
         return False
     names = names.split()
     for name in names:
+        print(project.mp.mod_loader, project.mp.mc_version)
         versions = project.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
         print(versions)
     return True
 
-def add_mods(project: proj.Project) -> bool:
+def add_mods_from_file(project: p.Project) -> bool:
     """Adds some mod(s) to the current project"""
     # TODO
     return True
 
-def add_mods_from_file(project: proj.Project) -> bool:
-    """Adds some mod(s) to the current project"""
-    # TODO
-    return True
-
-def remove_mods(project: proj.Project, indices) -> bool:
+def remove_mods(project: p.Project, indices) -> bool:
     """Removes some mod(s) from the current project"""
     if indices is None:
         return False
@@ -87,7 +100,7 @@ def remove_mods(project: proj.Project, indices) -> bool:
 # Config options
 #
 
-def change_project_name(project: proj.Project) -> bool:
+def change_project_name(project: p.Project) -> bool:
     """Change the name of the current project"""
     inp = str(input("Please enter a new name: "))
     if not inp.isascii() or len(inp) == 0:
@@ -98,7 +111,7 @@ def change_project_name(project: proj.Project) -> bool:
     project.metadata["saved"] = False
     return True
 
-def change_project_version(project: proj.Project) -> bool:
+def change_project_version(project: p.Project) -> bool:
     """Change the version of the current project"""
     inp = str(input("Please enter a new version: "))
     if not inp.isascii() or len(inp) == 0:
@@ -109,7 +122,7 @@ def change_project_version(project: proj.Project) -> bool:
     project.metadata["saved"] = False
     return True
 
-def change_project_loader(project: proj.Project) -> bool:
+def change_project_loader(project: p.Project) -> bool:
     """Change the modloader of the current project"""
     inp = str(input("Please enter a new modloader: "))
     if not inp.isascii() or len(inp) == 0:
@@ -120,7 +133,7 @@ def change_project_loader(project: proj.Project) -> bool:
     project.metadata["saved"] = False
     return True
 
-def change_mc_version(project: proj.Project) -> bool:
+def change_mc_version(project: p.Project) -> bool:
     """Change the minecraft version of the current project"""
     inp = str(input("Please enter a new minecraft version: "))
     if not inp.isascii() or len(inp) == 0:
@@ -134,13 +147,13 @@ def change_mc_version(project: proj.Project) -> bool:
 # 
 # Misc options
 #
-def get_config_menu() -> bool:
-    """"Placeholder"""
-    return True
-
 
 def exit_program(project) -> bool:
     """Exits the program"""
     if not project.metadata["saved"]:
         return save_project(project)
+    return True
+
+def placeholder() -> bool:
+    """"Placeholder"""
     return True
