@@ -19,6 +19,7 @@ class Project:
         """Create a new project"""
         self.mp = modpack.Modpack(name, description, build_date, build_version, mc_version, mod_loader, mod_list)
         self.metadata["loaded"] = True 
+        self.metadata["saved"] = False 
         if self.mp.check_compatibility() is not True:
             print("Invalid project created.")
             exit(1)
