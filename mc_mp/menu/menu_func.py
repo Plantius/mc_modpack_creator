@@ -22,16 +22,16 @@ def create_project(project: p.Project) -> bool:
             std.eprint("[ERROR] Could not save current project.")
             return False
         
-    name = str(input("Please enter a project name: "))
+    title = str(input("Please enter a project name: "))
     description = str(input("Please enter a description: "))
     mc = str(input("Please enter the projects minecraft version: "))
     modloader = str(input("Please enter the projects modloader: "))
     allow_alpha_beta = str(input("Allow alpha/beta mods? y/n "))
 
-    if not (name.isascii() and description.isascii() and mc.isascii() and modloader.isascii() and allow_alpha_beta.isascii()):
+    if not (title.isascii() and description.isascii() and mc.isascii() and modloader.isascii() and allow_alpha_beta.isascii()):
         std.eprint("[ERROR] Input contains non-ASCII characters.")
         return False
-    project.create_project(name=name, description=description, mc_version=mc, mod_loader=modloader, flags={"allow_alpha_beta": allow_alpha_beta == 'y'})
+    project.create_project(title=title, description=description, mc_version=mc, mod_loader=modloader, flags={"allow_alpha_beta": allow_alpha_beta == 'y'})
     return True
 
 def save_project(project: p.Project) -> bool:
@@ -88,9 +88,13 @@ def add_mods(project: p.Project) -> bool:
             return False
         
         print(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}')
-        # inp = str(input("Do you want to add this mod to the current project? y/n "))
-        # if inp.isascii() and inp == 'y':
-        #     project.mp.mod_list.append(mod.Mod(mod_name=))
+        inp = str(input("Do you want to add this mod to the current project? y/n "))
+        if inp.isascii() and inp == 'y':
+            project_info = project.get_project(name)
+            project.mp.mod_list.append(mod.Mod(mod_name=project_info["title"], description=project_info["description"],
+                                               mod_version=project.mp.mc_version, client_side=project_info["client_side"],
+                                               server_side=project_info["server_side"], mod_loader=project.mp.mod_loader, id=project_info["id"],
+                                               version=versions[mod_index]["version_number"], files=versions[mod_index]["files"]))
 
     return True
 

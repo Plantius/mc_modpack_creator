@@ -6,15 +6,16 @@ class Mod:
     description: str
     mod_version: str
     mc_version: str
-    client_side: bool
-    server_side: bool
+    client_side: str
+    server_side: str
     mod_loader: str
     id: str
     version: str
+    files: list
 
     def __init__(self, mod_name="A Mod", description="Mod description", mod_version="1.0",
                  mc_version="1.21", client_side=True, server_side=True, 
-                 mod_loader="Fabric", id="", version="") -> None:
+                 mod_loader="Fabric", id="", version="", files=[]) -> None:
         """Constructor of mod class"""
         self.mod_name = mod_name
         self.description = description
@@ -25,13 +26,14 @@ class Mod:
         self.mod_loader = mod_loader
         self.id = id
         self.version = version
+        self.files = files
 
 
     def export_json(self):
         """Exports all variables in the current modpack object as a JSON object"""
         out_json = {"mod_name": self.mod_name, "description": self.description, "mod_version": self.mod_version, "mc_version": self.mc_version,
                "client_side": self.client_side, "server_side": self.server_side, "mod_loader": self.mod_loader, 
-               "id": self.id, "version": self.version}
+               "id": self.id, "version": self.version, "files": self.files}
         return json.loads(json.dumps(out_json))
     
     def load_json(self, in_json):
@@ -45,4 +47,5 @@ class Mod:
         self.mod_loader = in_json["mod_loader"]
         self.id = in_json["id"]
         self.version = in_json["version"]
+        self.files = in_json["files"]
  
