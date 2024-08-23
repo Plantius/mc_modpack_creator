@@ -24,7 +24,8 @@ OPT_ADD_MOD = [["add_mods", "Add mod(s)", Option.ADD_MODS],
 OPT_CONFIG = [["change_project_name", "Change project name", Option.SETTINGS], 
               ["change_project_version", "Change project version", Option.SETTINGS], 
               ["change_project_loader", "Change mod loader", Option.SETTINGS], 
-              ["change_mc_version", "Change Minecraft version", Option.SETTINGS]]
+              ["change_mc_version", "Change Minecraft version", Option.SETTINGS],
+              ["allow_alpha_beta", "Allow alpha or beta mods", Option.SETTINGS]]
 
 OPT_MISC = {"config": [["placeholder", "Change project settings", Option.CONFIG]], 
             "exit": [["exit_program", "Exit menu", Option.EXIT]]}

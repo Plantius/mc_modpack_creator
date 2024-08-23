@@ -36,7 +36,7 @@ class menu:
         return options + menu_options.OPT_MISC["exit"]    
     
     def get_project_info(self) -> str:
-        return f"{self.p.mp.name}: {self.p.mp.description} | Version {self.p.mp.build_version} | {self.p.mp.build_date} | {self.p.mp.mc_version} | {self.p.mp.mod_loader} | {len(self.p.mp.mod_list)} mods" 
+        return f"{self.p.mp.title}: {self.p.mp.description} | Version {self.p.mp.build_version} | {self.p.mp.build_date} | {self.p.mp.mc_version} | {self.p.mp.mod_loader} | {len(self.p.mp.mod_list)} mods" 
     
     def update_menu(self, config) -> TerminalMenu:
         return TerminalMenu(**config)

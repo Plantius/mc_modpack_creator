@@ -16,10 +16,9 @@ class Project:
         """Constructor of project class"""
         pass
 
-    def create_project(self, name="Modpack", description="My modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+    def create_project(self, **kwargs) -> None:
         """Create a new project"""
-        self.mp = modpack.Modpack(name, description, build_date, build_version, mc_version, mod_loader, mod_list)
+        self.mp = modpack.Modpack(**kwargs)
         self.metadata["loaded"] = True; self.metadata["saved"] = False 
         self.metadata["project_id"] = std.generate_id()
         if self.mp.check_compatibility() is not True:
@@ -31,9 +30,9 @@ class Project:
         with open(filename, 'r') as file:
             file_json = json.loads(file.read())
             if not std.check_id(file_json["metadata"]["project_id"]):
-                print("[ERROR] Invalid project file.")
-                print(file_json["metadata"]["project_id"])
+                std.eprint("[ERROR] Invalid project file.")
                 exit(1)
+
             self.metadata = file_json["metadata"]; del file_json["metadata"]
             self.mp = modpack.Modpack(**file_json)
             

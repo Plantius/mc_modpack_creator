@@ -1,6 +1,6 @@
 import modpack.project as p
 import standard as std
-import ast
+
 # 
 # Project options
 # 
@@ -25,11 +25,12 @@ def create_project(project: p.Project) -> bool:
     description = str(input("Please enter a description: "))
     mc = str(input("Please enter the projects minecraft version: "))
     modloader = str(input("Please enter the projects modloader: "))
+    allow_alpha_beta = str(input("Allow alpha/beta mods? y/n "))
 
-    if not (name.isascii() and description.isascii() and mc.isascii() and modloader.isascii()):
+    if not (name.isascii() and description.isascii() and mc.isascii() and modloader.isascii() and allow_alpha_beta.isascii()):
         std.eprint("[ERROR] Input contains non-ASCII characters.")
         return False
-    project.create_project(name=name, description=description, mc_version=mc, mod_loader=modloader)
+    project.create_project(name=name, description=description, mc_version=mc, mod_loader=modloader, flags={"allow_alpha_beta": allow_alpha_beta == 'y'})
     return True
 
 def save_project(project: p.Project) -> bool:
@@ -61,8 +62,7 @@ def search_mods(project: p.Project) -> bool:
     
     f = str(input("Do you want to enter additional filters? y/n "))
     if f == 'y':
-        print("Enter the facets you want to search with: (categories:forge, versions:1.20, etc) ")
-        facets = str(input("Multiple facets: f1 f2 f3 etc. "))
+        facets = str(input("Enter the facets you want to search with: (modloader, minecraft version, client side, server side) "))
         print(facets)
     
     results = project.search_project(query=query, facets=[[f"categories:{project.mp.mod_loader}"], [f"versions:{project.mp.mc_version}"], ["project_type:mod"], ])
@@ -77,8 +77,11 @@ def add_mods(project: p.Project) -> bool:
         return False
     names = names.split()
     for name in names:
-        print(project.mp.mod_loader, project.mp.mc_version)
         versions = project.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
+        if versions is None:
+            std.eprint(f"[ERROR] No mod called {name} found.")
+        
+
         print(versions)
     return True
 
@@ -141,6 +144,17 @@ def change_mc_version(project: p.Project) -> bool:
         return False
     
     project.mp.mc_version = inp
+    project.metadata["saved"] = False
+    return True
+
+def allow_alpha_beta(project: p.Project) -> bool:
+    """Change if mods in alpha or beta are allowd"""
+    inp = str(input("Allow alpha/beta mods? y/n "))
+    if not inp.isascii() or len(inp) == 0:
+        std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
+        return False
+    
+    project.mp.flags["allow_alpha_beta"] = inp == 'y'
     project.metadata["saved"] = False
     return True
 
