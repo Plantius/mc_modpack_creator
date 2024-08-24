@@ -22,9 +22,9 @@ class Mod:
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
 
-    def export_json(self):
+    def export_json(self) -> json:
         """Exports all variables in the current modpack object as a JSON object"""
-        return json.loads(json.dumps(std.get_variables(self), cls=std.ProjectEncoder))
+        return std.get_variables(self)
     
     def load_json(self, in_json):
         """Loads the given json into the class' variables"""

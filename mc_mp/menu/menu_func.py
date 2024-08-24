@@ -106,7 +106,9 @@ def add_mods(project: p.Project) -> bool:
         print(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}')
         inp = std.get_input("Do you want to add this mod to the current project? y/n ")
         if inp == ACCEPT:
-            return project.add_mod(name, versions, mod_index)
+            if not project.add_mod(name, versions, mod_index):
+                std.eprint(f"[ERROR] Could not find {name}.")
+                continue
     return True
 
 
