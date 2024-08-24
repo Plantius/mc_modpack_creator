@@ -29,8 +29,5 @@ class Modpack:
 
     def get_mod_list_names(self) -> list:
         """Returns a list of all mod names"""
-        return [x.mod_name for x in self.mod_list]
-
-    def add_mod(self, new_mod: mod.Mod):
-        if new_mod.mc_version is not self.mc_version:
-            print("Error: this mod does not match the current minecraft version.")
+        return [mod["mod_name"] for mod in self.mod_list]
+    

@@ -2,6 +2,7 @@ from menu import menu_func, menu_options
 from modpack import project
 from simple_term_menu import TerminalMenu
 import standard as std
+import textwrap as tw
 
 # TODO Add Mod Update, Mod down/upgrade, Mod Version down/upgrade
 class menu:
@@ -65,6 +66,10 @@ class menu:
             elif option is menu_options.Option.EXIT: # Exit
                 break
     
+    def get_mod_status(self, entry) -> str:
+        index = self.p.mp.get_mod_list_names().index(entry)
+        return f'{entry} - {self.p.mp.mod_list[index]["mod_version"]}: ' + tw.fill(self.p.mp.mod_list[index]["description"], width=100, fix_sentence_endings=True)
+
     def rm_mod_menu(self, main_options, main_index, func) -> None:
         """Creates a menu containing all mods currently included in the project"""
         while True:
@@ -73,7 +78,7 @@ class menu:
             mod_menu = TerminalMenu(**self.create_config("Select which mods to remove.",
                                         self.p.mp.get_mod_list_names(),
                                         multi_select=True,
-                                        status_bar=status,
+                                        status_bar=self.get_mod_status,
                                         clear_screen=False))
             # Config menu
             mod_index = mod_menu.show() 

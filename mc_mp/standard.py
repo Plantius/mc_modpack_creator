@@ -28,6 +28,14 @@ def check_id(id: str) -> bool:
     f = Fernet(SECRET_KEY)
     return f.decrypt(bytes(id, "utf-8")) == MAGIC
 
+def get_input(msg: str) -> str:
+    inp = str(input(msg))
+    if not inp.isascii() or len(inp) == 0:
+        eprint("[ERROR] Input contains non ASCII characters.")
+        return None
+    return inp
+
+
 def eprint(*args, **kwargs):
     """Print to stderr"""
     print(*args, file=sys.stderr, **kwargs)
