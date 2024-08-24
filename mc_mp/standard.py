@@ -4,9 +4,9 @@ from cryptography.fernet import Fernet
 SECRET_KEY: bytes = "_Wentk-C_UTgkPQlUKoXQy_QGncHXgm8RoC4-ddWBG8="
 MAGIC: bytes = b"MODPACK_PROJECT_CREATOR"
 
-def get_variables(obj) -> list:
+def get_variables(obj) -> dict:
     """Returns all variables in an object"""
-    return [i for i in dir(obj) if not callable(getattr(obj, i)) and not i.startswith("__")]
+    return {key:value for key, value in obj.__dict__.items() if not key.startswith('__') and not callable(key)}
 
 def get_functions(obj) -> list:
     """"Returns all functions in an object"""
