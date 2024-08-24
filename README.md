@@ -7,29 +7,21 @@ A python program to help with the creation of modpacks. Uses the Modrinth API to
 ## Features
 
 - Automatic mod updates
-- Project saving
+- Searching for new mods
+- Downloading the project as a complete modpack
 
 
 ## Usage/Examples
 
 ```python
-python3 main.py [] []
+python3 mc_mp/main.py [-h help] [-o project_to_load]
 ```
 
 ## TODO
-- Restructure menu to make use of functions etc.
 - Add more menu options
 - Write tests
-- Add proper credit
-- Restructure Modpack and Mod classes, determine which data fields are necessary
-- Create modular menu structure for easy expansions
-- Check if project file is valid
 - Add arguments for CLI interface
-- Fix API calls and add error handling
 - Add error handling for all functions which require input
-- Add CLI GUI for creating, editing and removing projects
-- Add command line arguments for all major project functions
-- Add support for JSON loading and Mod object loading
 
 ## Acknowledgements
 
