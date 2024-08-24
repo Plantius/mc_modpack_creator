@@ -82,26 +82,16 @@ class Menu:
 
         return options + [None] + m.OPT_MISC["exit"]
 
-    def get_status(self, entry: str, option_list: list, misc: bool = False) -> str:
-        """
-        Retrieves the status of an entry based on the provided option list.
-        """
-        index = std.get_index(m.get_options_name(option_list), entry)
-        if index is not None:
-            return m.get_options_help(option_list)[index]
+    def get_project_status(self, entry) -> str:
+        for lst in [m.OPT_PROJECT, m.OPT_MODPACK, m.OPT_ADD_MOD, m.OPT_CONFIG]:
+            i = std.get_index(m.get_options_name(lst), entry)
+            if i is not None:
+                return m.get_options_help(lst)[i]
 
-        if misc:
-            for option in m.OPT_MISC.values():
-                index = std.get_index(m.get_options_name(option), entry)
-                if index is not None:
-                    return m.get_options_help(option)[index]
-        return entry
-
-    def get_project_status(self, entry: str) -> str:
-        """
-        Retrieves the status of a project option based on the provided entry.
-        """
-        return self.get_status(entry, [m.OPT_PROJECT, m.OPT_MODPACK, m.OPT_ADD_MOD, m.OPT_CONFIG], misc=True)
+        for option in m.OPT_MISC.keys():
+            i = std.get_index(m.get_options_name(m.OPT_MISC[option]), entry)
+            if i is not None:
+                return m.get_options_help(m.OPT_MISC[option])[i]
 
     def get_mod_status(self, entry: str) -> str:
         """
@@ -219,8 +209,9 @@ class Menu:
         Generates a title string for the main menu based on the project's current status.
         """
         if self.p.metadata["loaded"]:
-            return (f"{self.p.mp.title}: {self.p.mp.description} | "
-                    f"Version {self.p.mp.build_version} | {self.p.mp.build_date} | "
+            title = (f"{self.p.mp.title}: {self.p.mp.description} | "
                     f"{self.p.mp.mc_version} | {self.p.mp.mod_loader} | "
-                    f"{len(self.p.mp.mod_list)} mods")
+                    f"{len(self.p.mp.mod_list)} mods | "
+                    f"Version {self.p.mp.build_version} | {self.p.mp.build_date}")
+            return title + '\n' + len(title)*'-'
         return "No project loaded"

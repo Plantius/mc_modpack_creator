@@ -18,7 +18,7 @@ API_BASE = 'https://api.modrinth.com/v2'
 
 # Default request headers
 HEADERS = {
-    'User-Agent': 'Plantius/mc_modpack_creator/1.57.0'
+    'User-Agent': 'Plantius/mc_modpack_creator'
 }
 
 # Default project filename

@@ -131,10 +131,6 @@ class Project:
         self.metadata["saved"] = False
         return True
 
-    def rm_mod(self):
-        """Placeholder for removing a mod from the project."""
-        pass
-
     def parse_url(self, params: Dict[str, Any]) -> str:
         """Converts a dictionary to a URL query string."""
         return '&'.join(f'{key}={value}' for key, value in params.items()).replace('\'', '\"')

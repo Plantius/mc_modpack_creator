@@ -33,8 +33,7 @@ OPT_CONFIG = [
     ["change_project_description", "Change project description", Option.SETTINGS, "Change the current modpack description"],
     ["change_project_version", "Change project version", Option.SETTINGS, "Change the current modpack build version"],
     ["change_project_loader", "Change mod loader", Option.SETTINGS, "Change the current mod loader"],
-    ["change_mc_version", "Change Minecraft version", Option.SETTINGS, "Change the current Minecraft version"],
-    ["allow_alpha_beta", "Allow alpha or beta mods?", Option.SETTINGS, "Allow mods with version alpha or beta?"]
+    ["change_mc_version", "Change Minecraft version", Option.SETTINGS, "Change the current Minecraft version"]
 ]
 
 OPT_MISC = {
@@ -42,22 +41,22 @@ OPT_MISC = {
     "exit": [["exit_program", "Exit menu", Option.EXIT, "Exit the current menu"]]
 }
 
-def extract_option_details(options: List[List[Union[str, Option]]], index: int) -> List[Union[str, Option]]:
+def extract_option_details(options: list, index: int) -> list:
     """Extracts a specific detail from a list of options."""
     return [option[index] for option in options if option is not None]
 
-def get_options_func(options: List[List[Union[str, Option]]]) -> List[str]:
+def get_options_func(options: list) -> List[str]:
     """Extracts function names from a list of options."""
     return extract_option_details(options, 0)
 
-def get_options_name(options: List[List[Union[str, Option]]]) -> List[str]:
+def get_options_name(options: list) -> List[str]:
     """Extracts descriptive names from a list of options."""
     return extract_option_details(options, 1)
 
-def get_options_id(options: List[List[Union[str, Option]]]) -> List[Option]:
+def get_options_id(options: list) -> List[Option]:
     """Extracts option IDs from a list of options."""
     return extract_option_details(options, 2)
 
-def get_options_help(options: List[List[Union[str, Option]]]) -> List[str]:
+def get_options_help(options: list) -> List[str]:
     """Extracts help descriptions from a list of options."""
     return extract_option_details(options, 3)

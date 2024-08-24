@@ -25,8 +25,7 @@ class Modpack:
         The mod loader used by the modpack (e.g., "fabric"). Defaults to "fabric".
     mod_list : List[mod.Mod]
         A list of `mod.Mod` objects included in the modpack. Defaults to an empty list.
-    flags : Dict[str, bool]
-        A dictionary of configuration flags for the modpack. Defaults to `{"allow_alpha_beta": True}`.
+
 
     Methods
     -------
@@ -50,7 +49,6 @@ class Modpack:
     mc_version: str = "1.19"
     mod_loader: str = "fabric"
     mod_list: List[mod.Mod] = []
-    flags: Dict[str, bool] = {"allow_alpha_beta": True}
 
     def __init__(self, **kwargs: Any) -> None:
         """

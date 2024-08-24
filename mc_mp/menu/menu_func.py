@@ -27,9 +27,8 @@ def create_project(project: p.Project) -> bool:
     description = std.get_input("Please enter a description: ")
     mc_version = std.get_input("Please enter the project's Minecraft version: ")
     mod_loader = std.get_input("Please enter the project's modloader: ")
-    allow_alpha_beta = std.get_input("Allow alpha/beta mods? y/n: ")
 
-    if any(value is None for value in [title, description, mc_version, mod_loader, allow_alpha_beta]):
+    if any(value is None for value in [title, description, mc_version, mod_loader]):
         return False
 
     project.create_project(
@@ -37,7 +36,6 @@ def create_project(project: p.Project) -> bool:
         description=description,
         mc_version=mc_version,
         mod_loader=mod_loader,
-        flags={"allow_alpha_beta": allow_alpha_beta == ACCEPT}
     )
     return True
 
@@ -104,6 +102,16 @@ Do you want to add this mod to the current project? y/n ''') != ACCEPT:
             res = add_mods(project, results["hits"][i]["slug"])
         return res
 
+
+def add_mods_input(project: p.Project) -> bool:
+    """Add multiple mods to the current project based on user input."""
+    names = std.get_input("Please enter mod slugs or IDs (e.g., name1 name2 ...): ")
+    if not names:
+        return False
+    
+    return all(add_mods(project, name) for name in names.split())
+
+
 # TODO: Ask for user confirmation when selecting mod to add 
 def add_mods(project: p.Project, name: str) -> bool:
     """Add a mod to the current project by its name."""
@@ -128,13 +136,6 @@ def add_mods(project: p.Project, name: str) -> bool:
         if input(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}\nDo you want to add this mod to the current project? y/n ') is ACCEPT:
             return project.add_mod(name, versions, mod_index)
 
-def add_mods_input(project: p.Project) -> bool:
-    """Add multiple mods to the current project based on user input."""
-    names = std.get_input("Please enter mod slugs or IDs (e.g., name1 name2 ...): ")
-    if not names:
-        return False
-
-    return all(add_mods(project, name) for name in names.split())
 
 def remove_mods(project: p.Project, indices) -> bool:
     """Remove mods from the current project based on their indices."""
@@ -176,16 +177,6 @@ def change_project_loader(project: p.Project) -> bool:
 def change_mc_version(project: p.Project) -> bool:
     """Change the Minecraft version of the current project."""
     return change_project_attribute(project, "mc_version", "Please enter a new Minecraft version: ")
-
-def allow_alpha_beta(project: p.Project) -> bool:
-    """Set whether alpha/beta mods are allowed in the project."""
-    allow = std.get_input("Allow alpha/beta mods? y/n: ")
-    if not allow:
-        return False
-
-    project.mp.flags["allow_alpha_beta"] = allow == ACCEPT
-    project.metadata["saved"] = False
-    return True
 
 def exit_program(project: p.Project) -> bool:
     """Exit the program, prompting to save the project if necessary."""
