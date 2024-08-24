@@ -1,34 +1,36 @@
-
 # Minecraft Modpack Creator
 
-A python program to help with the creation of modpacks. Uses the Modrinth API to automatically update the mods in your modpack.
-
+A Python tool for creating Minecraft modpacks. It integrates with the Modrinth API to automate mod updates and manage modpack creation.
 
 ## Features
 
-- Automatic mod updates
-- Searching for new mods
-- Downloading the project as a complete modpack
+- **Automatic Mod Updates**: Keep your mods up to date effortlessly.
+- **Mod Search**: Easily find new mods to include in your modpack.
+- **Complete Modpack Download**: Download your modpack as a single, ready-to-use file.
 
+## Usage
 
-## Usage/Examples
+Run the main script with optional arguments:
 
-```python
-python3 mc_mp/main.py [-h help] [-o project_to_load]
+```sh
+python3 mc_mp/main.py [-h] [-o project_to_load]
 ```
 
+- `-h, --help`: Display help information.
+- `-o project_to_load`: Specify the project file to load.
+
 ## TODO
-- Check if input is valid 
-- Add more menu options
-- Write tests
-- Add arguments for CLI interface
-- Add error handling for all functions which require input
+
+- Validate user input
+- Expand menu options
+- Develop tests
+- Add CLI argument support
+- Implement comprehensive error handling
 
 ## Acknowledgements
 
- - [Simple Terminal Menu](https://pypi.org/project/simple-term-menu/)
+- [Simple Terminal Menu](https://pypi.org/project/simple-term-menu/) for terminal menu functionality.
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
-
+This project is licensed under the [MIT License](https://choosealicense.com/licenses/mit/).
