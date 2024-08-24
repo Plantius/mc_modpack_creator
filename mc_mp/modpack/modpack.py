@@ -17,7 +17,10 @@ class Modpack:
     def __init__(self, **kwargs) -> None:
         """Constructor of modpack class"""
         for key in kwargs.keys():
-            setattr(self, key, kwargs[key])
+            if key == 'mod_list':
+                setattr(self, key, [mod.Mod(**item) for item in kwargs[key]])
+            else:
+                setattr(self, key, kwargs[key])
     
     def export_json(self) -> json:
         """Exports all variables in the current modpack object as a JSON object"""
@@ -29,5 +32,5 @@ class Modpack:
 
     def get_mod_list_names(self) -> list:
         """Returns a list of all mod names"""
-        return [mod["mod_name"] for mod in self.mod_list]
+        return [f"{item.mod_name} - {item.mod_version}" for item in self.mod_list]
     

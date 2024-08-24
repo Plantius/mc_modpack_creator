@@ -5,6 +5,9 @@ import modpack.mod as mod
 SECRET_KEY: bytes = "_Wentk-C_UTgkPQlUKoXQy_QGncHXgm8RoC4-ddWBG8="
 MAGIC: bytes = b"MODPACK_PROJECT_CREATOR"
 
+ALLOWED_CATEGORIES = ["forge", "fabric", "neoforge", "quilt", "liteloader"]
+
+
 class ProjectEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, mod.Mod):

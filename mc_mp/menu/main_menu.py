@@ -48,11 +48,13 @@ class menu:
                 return m.get_options_help(m.OPT_MISC[option])[i]
         return entry
          
-    
+    # TODO Fix selecting correct option
     def get_mod_status(self, entry) -> str:
-        index = self.p.mp.get_mod_list_names().index(entry)
-        return f'{entry} - {self.p.mp.mod_list[index]["mod_version"]}: ' + tw.fill(self.p.mp.mod_list[index]["description"], width=100, fix_sentence_endings=True)
-    
+        index = std.get_index(self.p.mp.get_mod_list_names(), entry)
+        if index is not None:
+            return f'{entry}: ' + tw.fill(self.p.mp.mod_list[index].description, width=100, fix_sentence_endings=True)
+        return entry
+
     def config_menu(self, config_options) -> None:
         config_index = 0
         while True:
@@ -89,7 +91,6 @@ class menu:
             if mod_index is None:
                 break
 
-            print(mod_index, mod_menu.chosen_menu_indices)
             if not func(self.p, mod_index):
                 print(f"[ERROR] Could not execute {m.get_options_func(main_options)[main_index]}")
     

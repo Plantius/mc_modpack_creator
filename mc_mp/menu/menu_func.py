@@ -2,7 +2,7 @@ import modpack.project as p
 import modpack.mod as mod
 import standard as std
 from simple_term_menu import TerminalMenu
-from menu import ACCEPT, REJECT
+from menu import ACCEPT
 # 
 # Project options
 # 
@@ -58,24 +58,35 @@ def save_project(project: p.Project) -> bool:
 # Modpack options
 # 
 def search_mods(project: p.Project) -> bool:
-    """Enter a (list of) mod(s) to add"""
+    """Search for new mods"""
     query = std.get_input("Please enter a term to search for: ")
     if query is None or len(query) == 0:
         return False
     
-    f = std.get_input("Do you want to enter additional filters? y/n ")
+    f = std.get_input("Do you want to enter additional facets? y/n ")
     if f == ACCEPT:
-        facets = std.get_input("Enter the facets you want to search with: (modloader, minecraft version, client side, server side) ")
+        facets = std.get_input("Enter the facets you want to search with: [modloader(s) ..., minecraft version(s) ...: ")
         if facets is None:
+            std.eprint("[ERROR] No facets given.")
             return False
-    
-    results = project.search_project(query=query, facets=[[f"categories:{project.mp.mod_loader}"], [f"versions:{project.mp.mc_version}"], ["project_type:mod"], ])
+        temp = [[f"{key}:{item}" for item in value.split()] for key, value in zip(["categories", "versions"], facets.split(','))]
+        facets = [[item] for facet in temp for item in facet]; facets.append(["project_type:mod"])
+        print(facets)
+        # , client side (required/optional/unsupported), server side (required/optional/unsupported)]
+        results = project.search_project(query=query, facets=facets)
+        result_list = TerminalMenu([f'{mod["name"]}: ' for mod in results], 
+                                    clear_screen=False)
+        mod_index = result_list.show()
+        if mod_index is None:
+            return False
+        return True
+    results = project.search_project(query=query)
     print(results)
     return True
 
 def add_mods(project: p.Project) -> bool:
-    """Adds some mod(s) to the current project"""
-    names = std.get_input("Please enter a mod slug or id: [name1 name2 ...] ")
+    """Add some mod(s) to the current project"""
+    names = std.get_input("Please enter a mod slug or id: [name1 name2 ...]: ")
     if names is None or len(names) == 0:
         return False
     names = names.split()
@@ -95,20 +106,7 @@ def add_mods(project: p.Project) -> bool:
         print(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}')
         inp = std.get_input("Do you want to add this mod to the current project? y/n ")
         if inp == ACCEPT:
-            project_info = project.get_project(name)
-            project.mp.mod_list.append(mod.Mod(mod_name=project_info["title"], 
-                                               description=project_info["description"],
-                                               mod_version=versions[mod_index]["version_number"],
-                                               dependencies=versions[mod_index]["dependencies"],
-                                               mc_versions=versions[mod_index]["game_versions"],
-                                               client_side=project_info["client_side"],
-                                               server_side=project_info["server_side"], 
-                                               mod_loaders=versions[mod_index]["loaders"], 
-                                               mod_id=versions[mod_index]["id"],
-                                               project_id=versions[mod_index]["project_id"],
-                                               date_published=versions[mod_index]["date_published"], 
-                                               files=versions[mod_index]["files"]))
-            project.metadata["saved"] = False
+            return project.add_mod(name, versions, mod_index)
     return True
 
 

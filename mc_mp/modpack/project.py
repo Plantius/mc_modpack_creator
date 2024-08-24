@@ -1,5 +1,6 @@
 import requests, json
 import modpack.modpack as modpack
+import modpack.mod as mod
 from datetime import datetime
 import standard as std
 from base64 import urlsafe_b64encode
@@ -40,8 +41,9 @@ class Project:
                     print("Invalid project loaded.")
                     exit(1)
         except:
-            std.eprint("[ERROR] File does not exist.")
-            return
+            
+            std.eprint("[ERROR] Error processing file. Does it exist?")
+            exit(1)
 
     def save_project(self, filename):   
         if filename is None:
@@ -52,6 +54,31 @@ class Project:
             out_json = self.mp.export_json(); out_json["metadata"] = flags
             file.write(json.dumps(out_json, indent=1))
     
+    def add_mod(self, name: str, versions: json, mod_index: int) -> bool:
+        project_info = self.get_project(name)
+        if project_info is None:
+            std.eprint("[ERROR] Could not find mod with name: " + name)
+            return False
+        print(versions[mod_index]["version_number"])
+        self.mp.mod_list.append(mod.Mod(mod_name=project_info["title"], 
+                                description=project_info["description"],
+                                mod_version=versions[mod_index]["version_number"],
+                                dependencies=versions[mod_index]["dependencies"],
+                                mc_versions=versions[mod_index]["game_versions"],
+                                client_side=project_info["client_side"],
+                                server_side=project_info["server_side"], 
+                                mod_loaders=versions[mod_index]["loaders"], 
+                                mod_id=versions[mod_index]["id"],
+                                project_id=versions[mod_index]["project_id"],
+                                date_published=versions[mod_index]["date_published"], 
+                                files=versions[mod_index]["files"]))
+        self.metadata["saved"] = False
+        return True
+    
+    def rm_mod(self):
+        pass
+
+
     def parse_url(self, dic) -> str:
         """Parses a dictionary to a correct parameter string"""
         return '&'.join([f'{x}={dic[x]}' for x in dic.keys()]).replace('\'', '\"')
