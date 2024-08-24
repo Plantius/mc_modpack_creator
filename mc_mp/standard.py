@@ -35,6 +35,10 @@ def get_input(msg: str) -> str:
         return None
     return inp
 
+def get_index(lst: list, item) -> int:
+    if item in lst:
+        return lst.index(item)
+    return None
 
 def eprint(*args, **kwargs):
     """Print to stderr"""

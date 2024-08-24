@@ -7,6 +7,10 @@ from simple_term_menu import TerminalMenu
 # 
 def load_project(project: p.Project) -> bool:
     """Loads a project"""
+    if project.metadata["loaded"]:
+        if not save_project(project):
+            std.eprint("[ERROR] Could not save current project.")
+            return False
     filename = std.get_input("Please enter a project file: ")
     if filename is None:
         return False
@@ -106,10 +110,6 @@ def add_mods(project: p.Project) -> bool:
             project.metadata["saved"] = False
     return True
 
-def add_mods_from_file(project: p.Project) -> bool:
-    """Adds some mod(s) to the current project"""
-    # TODO
-    return True
 
 def remove_mods(project: p.Project, indices) -> bool:
     """Removes some mod(s) from the current project"""

@@ -18,6 +18,7 @@ python3 mc_mp/main.py [-h help] [-o project_to_load]
 ```
 
 ## TODO
+- Check if input is valid 
 - Add more menu options
 - Write tests
 - Add arguments for CLI interface

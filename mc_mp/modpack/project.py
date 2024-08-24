@@ -26,18 +26,22 @@ class Project:
 
     def load_project(self, filename: str) -> None:
         """Loads the given project file """
-        with open(filename, 'r') as file:
-            file_json = json.loads(file.read())
-            if not std.check_id(file_json["metadata"]["project_id"]):
-                std.eprint("[ERROR] Invalid project file.")
-                exit(1)
+        try:
+            with open(filename, 'r') as file:
+                file_json = json.loads(file.read())
+                if not std.check_id(file_json["metadata"]["project_id"]):
+                    std.eprint("[ERROR] Invalid project file.")
+                    exit(1)
 
-            self.metadata = file_json["metadata"]; del file_json["metadata"]
-            self.mp = modpack.Modpack(**file_json)
-            
-            if self.mp.check_compatibility() is not True:
-                print("Invalid project loaded.")
-                exit(1)
+                self.metadata = file_json["metadata"]; del file_json["metadata"]
+                self.mp = modpack.Modpack(**file_json)
+                
+                if self.mp.check_compatibility() is not True:
+                    print("Invalid project loaded.")
+                    exit(1)
+        except:
+            std.eprint("[ERROR] File does not exist.")
+            return
 
     def save_project(self, filename):   
         if filename is None:
