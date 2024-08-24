@@ -17,7 +17,7 @@ OPT_PROJECT = [["load_project", "Load project", Option.PROJECT, "Load a project 
 OPT_MODPACK = [["placeholder", "Add mod(s)", Option.ADD_MODS, "Add new mods to the current project"], 
                ["remove_mods", "Remove mod(s)", Option.RM_MODS, "Remove mods from the current project"]]
 
-OPT_ADD_MOD = [["add_mods", "Add mod(s)", Option.ADD_MODS, "Add mods using their slug or id"],
+OPT_ADD_MOD = [["add_mods_input", "Add mod(s)", Option.ADD_MODS, "Add mods using their slug or id"],
                ["search_mods", "Search mod(s)", Option.ADD_MODS, "Search for new mods"]]
 
 OPT_CONFIG = [["change_project_name", "Change project name", Option.SETTINGS, "Change the current modpack title"], 
@@ -31,13 +31,13 @@ OPT_MISC = {"config": [["placeholder", "Change project settings", Option.CONFIG,
 
 
 def get_options_func(opt: list) -> list:
-    return [x[0] for x in opt]
+    return [x[0] if x is not None else None for x in opt]
 
 def get_options_name(opt: list) -> list:
-    return [x[1] for x in opt]
+    return [x[1] if x is not None else None for x in opt]
 
 def get_options_id(opt: list) -> list:
-    return [x[2] for x in opt]
+    return [x[2] if x is not None else None for x in opt]
 
 def get_options_help(opt: list) -> list:
-    return [x[3] for x in opt]
+    return [x[3] if x is not None else None for x in opt]

@@ -34,7 +34,7 @@ class menu:
         else:
             options += m.OPT_ADD_MOD
 
-        return options + m.OPT_MISC["exit"]    
+        return options + [None] + m.OPT_MISC["exit"]    
     
     def get_project_status(self, entry) -> str:
         for lst in [m.OPT_PROJECT, m.OPT_MODPACK, m.OPT_ADD_MOD, m.OPT_CONFIG]:
@@ -47,8 +47,7 @@ class menu:
             if i is not None:
                 return m.get_options_help(m.OPT_MISC[option])[i]
         return entry
-         
-    # TODO Fix selecting correct option
+    
     def get_mod_status(self, entry) -> str:
         index = std.get_index(self.p.mp.get_mod_list_names(), entry)
         if index is not None:

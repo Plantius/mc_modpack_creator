@@ -52,14 +52,14 @@ class Project:
             self.metadata["filename"] = filename
             flags = self.metadata; flags["saved"] = True
             out_json = self.mp.export_json(); out_json["metadata"] = flags
-            file.write(json.dumps(out_json, indent=1))
+            file.write(json.dumps(out_json))
     
     def add_mod(self, name: str, versions: json, mod_index: int) -> bool:
         project_info = self.get_project(name)
         if project_info is None:
             std.eprint("[ERROR] Could not find mod with name: " + name)
             return False
-        print(versions[mod_index]["version_number"])
+        
         self.mp.mod_list.append(mod.Mod(mod_name=project_info["title"], 
                                 description=project_info["description"],
                                 mod_version=versions[mod_index]["version_number"],

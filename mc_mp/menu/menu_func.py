@@ -62,7 +62,7 @@ def search_mods(project: p.Project) -> bool:
     query = std.get_input("Please enter a term to search for: ")
     if query is None or len(query) == 0:
         return False
-    
+    kwargs = {"query": query, "facets": [[f"categories:{project.mp.mod_loader}"], [f"versions:{project.mp.mc_version}"]],"limit": 25}
     f = std.get_input("Do you want to enter additional facets? y/n ")
     if f == ACCEPT:
         facets = std.get_input("Enter the facets you want to search with: [modloader(s) ..., minecraft version(s) ...: ")
@@ -71,45 +71,62 @@ def search_mods(project: p.Project) -> bool:
             return False
         temp = [[f"{key}:{item}" for item in value.split()] for key, value in zip(["categories", "versions"], facets.split(','))]
         facets = [[item] for facet in temp for item in facet]; facets.append(["project_type:mod"])
-        print(facets)
         # , client side (required/optional/unsupported), server side (required/optional/unsupported)]
-        results = project.search_project(query=query, facets=facets)
-        result_list = TerminalMenu([f'{mod["name"]}: ' for mod in results], 
-                                    clear_screen=False)
-        mod_index = result_list.show()
-        if mod_index is None:
+        kwargs["facets"] = facets
+    
+    results = project.search_project(**kwargs)
+    # Display found mods
+    while True:
+        result_list = TerminalMenu(title="Which entries do you want to add? Select one option to see its details.",
+                                   menu_entries=[f'{mod["title"]}: ' for mod in results["hits"]],
+                                   multi_select=True, 
+                                   clear_screen=False)
+        mod_indices = result_list.show()
+        if mod_indices is None:
             return False
-        return True
-    results = project.search_project(query=query)
-    print(results)
+        if len(mod_indices) == 1:
+            if input(f'''{results["hits"][mod_indices[0]]["title"]}\nClient side: {results["hits"][mod_indices[0]]["client_side"]}\n
+                     Server side: {results["hits"][mod_indices[0]]["server_side"]}\n\n{results["hits"][mod_indices[0]]["description"]}''') is not None:
+                continue
+        
+        for i in mod_indices: 
+            res = add_mods(project, results["hits"][i]["slug"])
+        return res
+
+# Helper function
+def add_mods(project: p.Project, name: str) -> bool:
+    if not project.is_slug_valid(name):
+        std.eprint("[ERROR] Invalid project name/id.")
+        return False
+    versions = project.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
+    if versions is None:
+        std.eprint(f"[ERROR] No mod called {name} found.")
+    
+    version_list = TerminalMenu(title="Which version do you want to add?", 
+                                menu_entries=[f'{version["name"]}: minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions], 
+                                clear_screen=False)
+    mod_index = version_list.show()
+    if mod_index is None:
+        return False
+    
+    print(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}')
+    # inp = std.get_input(f"Do you want to add {name} to the current project? y/n ")
+    # if inp == ACCEPT:
+    if not project.add_mod(name, versions, mod_index):
+        std.eprint(f"[ERROR] Could not find {name}.")
+        return False
     return True
 
-def add_mods(project: p.Project) -> bool:
+def add_mods_input(project: p.Project) -> bool:
     """Add some mod(s) to the current project"""
     names = std.get_input("Please enter a mod slug or id: [name1 name2 ...]: ")
     if names is None or len(names) == 0:
         return False
     names = names.split()
     for name in names:
-        if not project.is_slug_valid(name):
-            std.eprint("[ERROR] Invalid project name/id.")
-            continue
-        versions = project.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
-        if versions is None:
-            std.eprint(f"[ERROR] No mod called {name} found.")
-        version_list = TerminalMenu([f'{version["name"]}: minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions], 
-                                    clear_screen=False)
-        mod_index = version_list.show()
-        if mod_index is None:
-            return False
-        
-        print(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}')
-        inp = std.get_input("Do you want to add this mod to the current project? y/n ")
-        if inp == ACCEPT:
-            if not project.add_mod(name, versions, mod_index):
-                std.eprint(f"[ERROR] Could not find {name}.")
-                continue
-    return True
+        res = add_mods(project, name)
+    return res        
+    
 
 
 def remove_mods(project: p.Project, indices) -> bool:
