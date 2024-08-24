@@ -1,7 +1,17 @@
-import argparse
+from argparse import ArgumentParser, Namespace
 
-def parse_arguments() -> argparse.Namespace:
-    """Parses CLI arguments"""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--open_project", required=False, type=str, help="enter name of project file to load")
+def create_parser() -> ArgumentParser:
+    """Creates and configures the ArgumentParser for command-line arguments."""
+    parser = ArgumentParser(description="Command-line interface for managing project files.")
+    parser.add_argument(
+        "-o", "--open_project",
+        type=str,
+        required=False,
+        help="Specify the project file to load"
+    )
+    return parser
+
+def parse_arguments() -> Namespace:
+    """Parses command-line arguments and returns the result."""
+    parser = create_parser()
     return parser.parse_args()
