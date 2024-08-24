@@ -1,35 +1,27 @@
 import modpack.mod as mod
 from datetime import datetime
 import json
+import standard as std
 
 # TODO Restructure json loading
 class Modpack:
-    title: str
-    description: str
-    build_date: datetime = datetime.today().strftime('%Y-%m-%d')
-    build_version: str
-    mc_version: str
-    mod_loader: str
-    mod_list: list[mod.Mod]
-    flags: json
+    title: str = "Modpack"
+    description: str = "A modpack"
+    build_date: str = datetime.today().strftime('%Y-%m-%d')
+    build_version: str = "0.1"
+    mc_version: str = "1.19"
+    mod_loader: str = "fabric"
+    mod_list: list[mod.Mod] = []
+    flags: json = {"allow_alpha_beta": True}
     
-    def __init__(self, title="Modpack", description="My modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[], flags={"allow_alpha_beta": True}) -> None:
+    def __init__(self, **kwargs) -> None:
         """Constructor of modpack class"""
-        self.title = title
-        self.description = description
-        self.build_date = build_date
-        self.build_version = build_version
-        self.mc_version = mc_version
-        self.mod_loader = mod_loader
-        self.mod_list = [mod.Mod(**x) if type(x) is not mod.Mod else x for x in mod_list]
-        self.flags = flags
+        for key in kwargs.keys():
+            setattr(self, key, kwargs[key])
     
     def export_json(self) -> json:
         """Exports all variables in the current modpack object as a JSON object"""
-        out_json = {"title": self.title, "description": self.description, "build_date": self.build_date, "build_version": self.build_version,
-               "mc_version": self.mc_version, "mod_loader": self.mod_loader, "mod_list": [mod.export_json() for mod in self.mod_list], "flags": self.flags}
-        return json.loads(json.dumps(out_json))
+        return json.loads(json.dumps(std.get_variables(self), cls=std.ProjectEncoder))
 
     def check_compatibility(self) -> bool:
         """Checks if the current mods are compatibel"""

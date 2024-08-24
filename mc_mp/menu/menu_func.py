@@ -78,6 +78,9 @@ def add_mods(project: p.Project) -> bool:
         return False
     names = names.split()
     for name in names:
+        if not project.is_slug_valid(name):
+            std.eprint("[ERROR] Invalid project name/id")
+            continue
         versions = project.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
         if versions is None:
             std.eprint(f"[ERROR] No mod called {name} found.")
@@ -91,8 +94,8 @@ def add_mods(project: p.Project) -> bool:
         inp = str(input("Do you want to add this mod to the current project? y/n "))
         if inp.isascii() and inp == 'y':
             project_info = project.get_project(name)
-            print(project_info)
-            print(versions[mod_index])
+            # print(project_info)
+            # print(versions[mod_index])
             project.mp.mod_list.append(mod.Mod(mod_name=project_info["title"], 
                                                description=project_info["description"],
                                                mod_version=versions[mod_index]["version_number"],

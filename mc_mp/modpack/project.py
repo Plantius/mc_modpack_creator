@@ -11,8 +11,7 @@ class Project:
     mp: modpack.Modpack
     metadata: json = {"loaded":False, "saved":True, "filename": "project1.json", "project_id": None}
     
-    def __init__(self, name="Modpack", description="My Modpack", build_date=datetime.today().strftime('%Y-%m-%d'), build_version="1.0",
-                 mc_version="1.21", mod_loader="Fabric", mod_list=[]) -> None:
+    def __init__(self, **kwargs) -> None:
         """Constructor of project class"""
         pass
 
@@ -68,7 +67,7 @@ class Project:
         
         req = requests.get(API_BASE + '/project/' + project_name + '/dependencies', headers=HEADERS)
         if req.reason != 'OK':
-            return
+            return None
         return req.json()
 
     def search_project(self, **kwargs) -> json:
@@ -133,7 +132,6 @@ class Project:
         for i in kwargs.items():
             if i[-1] != None:
                 params[i[0]] = i[-1]
-        # params = {'loaders': join_list(loaders), 'game_versions': join_list(game_versions), 'featured': featured}
 
         req = requests.get(API_BASE + '/project/' + project_name + '/version', params=self.parse_url(params), headers=HEADERS)
         if req.reason != 'OK':
