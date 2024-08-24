@@ -72,7 +72,7 @@ def search_mods(project: p.Project) -> bool:
 
 def add_mods(project: p.Project) -> bool:
     """Adds some mod(s) to the current project"""
-    names = str(input("Please enter a mod slug or id: [name/id or name1 name2 ...] "))
+    names = str(input("Please enter a mod slug or id: [name1 name2 ...] "))
     if not names.isascii() or len(names) == 0:
         std.eprint("[ERROR] Name contains non-ASCII characters or is empty.")
         return False
@@ -91,11 +91,21 @@ def add_mods(project: p.Project) -> bool:
         inp = str(input("Do you want to add this mod to the current project? y/n "))
         if inp.isascii() and inp == 'y':
             project_info = project.get_project(name)
-            project.mp.mod_list.append(mod.Mod(mod_name=project_info["title"], description=project_info["description"],
-                                               mod_version=project.mp.mc_version, client_side=project_info["client_side"],
-                                               server_side=project_info["server_side"], mod_loader=project.mp.mod_loader, id=project_info["id"],
-                                               version=versions[mod_index]["version_number"], files=versions[mod_index]["files"]))
-
+            print(project_info)
+            print(versions[mod_index])
+            project.mp.mod_list.append(mod.Mod(mod_name=project_info["title"], 
+                                               description=project_info["description"],
+                                               mod_version=versions[mod_index]["version_number"],
+                                               dependencies=versions[mod_index]["dependencies"],
+                                               mc_versions=versions[mod_index]["game_versions"],
+                                               client_side=project_info["client_side"],
+                                               server_side=project_info["server_side"], 
+                                               mod_loaders=versions[mod_index]["loaders"], 
+                                               mod_id=versions[mod_index]["id"],
+                                               project_id=versions[mod_index]["project_id"],
+                                               date_published=versions[mod_index]["date_published"], 
+                                               files=versions[mod_index]["files"]))
+            project.metadata["saved"] = False
     return True
 
 def add_mods_from_file(project: p.Project) -> bool:
