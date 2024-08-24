@@ -44,7 +44,7 @@ class Project:
         if filename is None:
             filename = DEF_FILENAME
         with open(filename, 'w') as file:
-            self.filename = filename
+            self.metadata["filename"] = filename
             flags = self.metadata; flags["saved"] = True
             out_json = self.mp.export_json(); out_json["metadata"] = flags
             file.write(json.dumps(out_json, indent=1))
