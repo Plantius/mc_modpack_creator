@@ -94,13 +94,15 @@ def search_mods(project: p.Project) -> bool:
         if len(mod_indices) == 1:
             selected_mod = results["hits"][mod_indices[0]]
             if input(f'''{selected_mod["title"]}
-                         Client side: {selected_mod["client_side"]}
-                         Server side: {selected_mod["server_side"]}
+Client side: {selected_mod["client_side"]}
+Server side: {selected_mod["server_side"]}
 
-                        {selected_mod["description"]}''') is not None:
+{selected_mod["description"]}
+Do you want to add this mod to the current project? y/n ''') != ACCEPT:
                 continue
-
-        return all(add_mods(project, results["hits"][i]["slug"]) for i in mod_indices)
+        for i in mod_indices:
+            res = add_mods(project, results["hits"][i]["slug"])
+        return res
 
 # TODO: Ask for user confirmation when selecting mod to add 
 def add_mods(project: p.Project, name: str) -> bool:
@@ -113,18 +115,18 @@ def add_mods(project: p.Project, name: str) -> bool:
     if versions is None:
         std.eprint(f"[ERROR] No mod called {name} found.")
         return False
+    while True:
+        version_list = TerminalMenu(
+            title=f"Which version of {name} do you want to add?",
+            menu_entries=[f'{version["name"]}: minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
+            clear_screen=True
+        )
+        mod_index = version_list.show()
+        if mod_index is None:
+            return False
 
-    version_list = TerminalMenu(
-        title="Which version do you want to add?",
-        menu_entries=[f'{version["name"]}: minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
-        clear_screen=True
-    )
-    mod_index = version_list.show()
-    if mod_index is None:
-        return False
-
-    if input(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}') is not None:
-        return project.add_mod(name, versions, mod_index)
+        if input(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}\nDo you want to add this mod to the current project? y/n ') is ACCEPT:
+            return project.add_mod(name, versions, mod_index)
 
 def add_mods_input(project: p.Project) -> bool:
     """Add multiple mods to the current project based on user input."""
