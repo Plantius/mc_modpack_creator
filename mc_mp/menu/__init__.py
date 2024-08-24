@@ -1,0 +1,2 @@
+ACCEPT = 'y'
+REJECT = 'n'

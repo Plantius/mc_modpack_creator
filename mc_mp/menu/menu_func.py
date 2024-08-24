@@ -2,6 +2,7 @@ import modpack.project as p
 import modpack.mod as mod
 import standard as std
 from simple_term_menu import TerminalMenu
+from menu import ACCEPT, REJECT
 # 
 # Project options
 # 
@@ -34,16 +35,16 @@ def create_project(project: p.Project) -> bool:
     if title is None or description is None or mc is None or modloader is None or allow_alpha_beta is None:
         return False
     
-    project.create_project(title=title, description=description, mc_version=mc, mod_loader=modloader, flags={"allow_alpha_beta": allow_alpha_beta == 'y'})
+    project.create_project(title=title, description=description, mc_version=mc, mod_loader=modloader, flags={"allow_alpha_beta": allow_alpha_beta == ACCEPT})
     return True
 
 def save_project(project: p.Project) -> bool:
     """Saves a project"""
     if not project.metadata["saved"]:
         inp = std.get_input("Do you want to save the project? y/n: ")
-        if inp == 'y': 
+        if inp == ACCEPT: 
             inp = std.get_input("Do you want to save the project to a new file? y/n: ")
-            if inp == 'y':
+            if inp == ACCEPT:
                 filename = std.get_input("Please enter the filename to save to: ")
                 if filename is None:
                     return False
@@ -63,7 +64,7 @@ def search_mods(project: p.Project) -> bool:
         return False
     
     f = std.get_input("Do you want to enter additional filters? y/n ")
-    if f == 'y':
+    if f == ACCEPT:
         facets = std.get_input("Enter the facets you want to search with: (modloader, minecraft version, client side, server side) ")
         if facets is None:
             return False
@@ -93,7 +94,7 @@ def add_mods(project: p.Project) -> bool:
         
         print(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}')
         inp = std.get_input("Do you want to add this mod to the current project? y/n ")
-        if inp == 'y':
+        if inp == ACCEPT:
             project_info = project.get_project(name)
             project.mp.mod_list.append(mod.Mod(mod_name=project_info["title"], 
                                                description=project_info["description"],
@@ -170,7 +171,7 @@ def allow_alpha_beta(project: p.Project) -> bool:
     if inp is None or len(inp) == 0:
         return False
     
-    project.mp.flags["allow_alpha_beta"] = inp == 'y'
+    project.mp.flags["allow_alpha_beta"] = inp == ACCEPT
     project.metadata["saved"] = False
     return True
 
