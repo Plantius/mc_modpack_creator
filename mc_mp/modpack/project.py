@@ -2,6 +2,7 @@ from .modpack import Modpack
 from .mod import Mod
 import standard as std
 import json
+import textwrap as tw
 from typing import Optional, Dict, Any
 from . import DEF_FILENAME
 from .project_api import ProjectAPI  # Import the new ProjectAPI class
@@ -129,6 +130,11 @@ class Project:
             except Exception as e:
                 continue
         return valid_projects
+    
+    def list_mods(self) -> list[str]:
+        if self.metadata["loaded"]:
+            return [f'{m}:\n\t{d}' for m,d in zip(self.mp.get_mod_list_names(), self.mp.get_mod_list_descriptions())]
+        return None
 
     def add_mod(self, name: str, versions: Dict[str, Any], mod_index: int) -> bool:
         """Adds a mod to the project's modpack."""

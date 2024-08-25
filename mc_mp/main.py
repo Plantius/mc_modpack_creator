@@ -17,10 +17,10 @@ def main():
         print(*p.list_projects(), sep='\n')
     if arguments.delete_project:
         p.delete_project(arguments.delete_project)
-    if arguments.list_mods:
-        print(p.list_mods())
     if arguments.open_project:
         p.load_project(arguments.open_project)
+    if arguments.list_mods:
+        print(*p.list_mods(), sep='\n')
 
     # Initialize and display main menu
     if arguments.menu:

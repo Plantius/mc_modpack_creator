@@ -69,3 +69,7 @@ class Modpack:
     def get_mod_list_names(self) -> List[str]:
         """Returns a list of all mod names and their versions."""
         return [f"{item.mod_name} - {item.mod_version}" for item in self.mod_list]
+
+    def get_mod_list_descriptions(self) -> List[str]:
+        """Returns a list of all mod descriptions."""
+        return [item.description for item in self.mod_list]
