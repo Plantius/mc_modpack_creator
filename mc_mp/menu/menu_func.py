@@ -125,7 +125,7 @@ class MenuFunctions():
                 multi_select=True
             )
             if selected_indices is None:
-                return False
+                return True
             
             if len(selected_indices) == 1:
                 selected_mod = results["hits"][selected_indices[0]]
@@ -168,7 +168,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 menu_entries=[f'{version["name"]}: minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
             )
             if selected_index is None:
-                return False
+                return True
 
             if input(f'{versions[selected_index]["name"]}:\n{versions[selected_index]["changelog"]}\nDo you want to add this mod to the current project? y/n ') is ACCEPT:
                 return project.add_mod(name, versions, selected_index)
