@@ -5,7 +5,7 @@ import json
 import textwrap as tw
 from typing import Optional, Dict, Any
 from . import DEF_FILENAME
-from .project_api import ProjectAPI  # Import the new ProjectAPI class
+from .project_api import ProjectAPI  # Import the new ProjectAPI 
 
 class Project:
     """
@@ -82,7 +82,7 @@ class Project:
         self.metadata.update({
             "loaded": True,
             "saved": False,
-            "project_id": std.generate_id()
+            "project_id": std.generate_project_id()
         })
         if not self.mp.check_compatibility():
             print("Invalid project created.")
@@ -93,7 +93,7 @@ class Project:
         try:
             with open(filename, 'r') as file:
                 data = json.load(file)
-                if not std.check_id(data["metadata"]["project_id"]):
+                if not std.is_valid_project_id(data["metadata"]["project_id"]):
                     std.eprint("[ERROR] Invalid project file.")
                     exit(1)
 

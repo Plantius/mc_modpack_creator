@@ -1,34 +1,25 @@
-import sys, inspect, json, glob
+import sys
+import inspect
+import json
+import glob
 from cryptography.fernet import Fernet
 import modpack.mod as mod
 
-SECRET_KEY: bytes = "_Wentk-C_UTgkPQlUKoXQy_QGncHXgm8RoC4-ddWBG8="
-MAGIC: bytes = b"MODPACK_PROJECT_CREATOR"
+SECRET_KEY = b'7rfdYCctHr9xCK2H4i92HLvxN4YzsTty4OrNaAC-bfc='
+UNIQUE_ID = "MC_MODPACK_CREATOR_ID"
+
+cipher = Fernet(SECRET_KEY)
 
 ALLOWED_CATEGORIES = ["forge", "fabric", "neoforge", "quilt", "liteloader"]
 
 class ProjectEncoder(json.JSONEncoder):
-    """
-    Custom JSON encoder for handling `mod.Mod` objects.
-
-    This encoder extends the `json.JSONEncoder` to provide custom serialization 
-    for `mod.Mod` objects. When an object of type `mod.Mod` is encountered, 
-    it uses the `export_json` method of the `mod.Mod` class to convert the 
-    object to a JSON-serializable format. For other types of objects, it uses 
-    the default serialization provided by `json.JSONEncoder`.
-
-    Methods
-    -------
-    default(obj: Any) -> Any
-        Override of the default method to handle custom JSON encoding for `mod.Mod` objects.
-    """
+    """Custom JSON encoder for handling `mod.Mod` objects."""
 
     def default(self, obj):
         """Encode `mod.Mod` objects to JSON; use default encoder otherwise."""
         if isinstance(obj, mod.Mod):
             return obj.export_json()
         return super().default(obj)
-
 
 def get_variables(obj) -> dict:
     """Get non-callable attributes of an object as a dictionary."""
@@ -40,23 +31,23 @@ def get_functions(obj) -> list:
     return [name for name in dir(obj) 
             if callable(getattr(obj, name)) and not name.startswith("__")]
 
-def generate_id() -> str:
-    """Generate and return a base64-encoded encrypted ID."""
-    f = Fernet(SECRET_KEY)
-    return f.encrypt(MAGIC).decode("utf-8")
+def generate_project_id() -> str:
+    """Generates and encrypts a new project ID."""
+    project_id = UNIQUE_ID
+    return cipher.encrypt(project_id.encode()).decode()
 
-def check_id(id: str) -> bool:
-    """Check if the provided ID matches the encrypted value."""
-    f = Fernet(SECRET_KEY)
+def is_valid_project_id(encrypted_id: str) -> bool:
+    """Checks if the provided encrypted project ID is valid."""
     try:
-        return f.decrypt(id.encode("utf-8")) == MAGIC
-    except (ValueError, TypeError):
+        decrypted_id = cipher.decrypt(encrypted_id.encode()).decode()
+        return decrypted_id == UNIQUE_ID
+    except:
         return False
 
 def get_input(msg: str) -> str:
     """Prompt for ASCII input and return it if valid."""
     inp = input(msg)
-    if not inp.isascii() or inp is None:
+    if not inp.isascii() or not inp:
         eprint("[ERROR] Input must be a non-empty ASCII string.")
         return None
     return inp
@@ -71,7 +62,6 @@ def get_index(lst: list, item) -> int:
 def get_project_files() -> list:
     """Returns a sorted list of JSON files in the current directory."""
     return sorted(glob.glob("./*.json"))
-
 
 def eprint(*args, **kwargs) -> None:
     """Print errors to standard error."""
