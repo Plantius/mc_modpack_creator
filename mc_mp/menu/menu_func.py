@@ -1,19 +1,33 @@
 import modpack.project as p
-import modpack.mod as mod
-import standard as std
+import standard as std, glob
 from simple_term_menu import TerminalMenu
 from menu import ACCEPT
+
+def get_project_files() -> list:
+    return glob.glob("./*.json")
 
 def load_project(project: p.Project) -> bool:
     """Load a project from a specified file, saving the current project if needed."""
     if project.metadata["loaded"] and not save_project(project):
         std.eprint("[ERROR] Could not save current project.")
         return False
-
-    filename = std.get_input("Please enter a project file: ")
-    if filename is None:
+    
+    entries = get_project_files() + [None, "Enter filename"]
+    project_list = TerminalMenu(
+        title=f"Which project do you want to load?",
+        menu_entries=entries,
+        clear_screen=True
+    )
+    p_index = project_list.show()
+    if p_index is None:
         return False
 
+    if entries[p_index] == "Enter filename":
+        filename = std.get_input("Please enter a project file: ")
+        if filename is None:
+            return False
+    else:
+        filename = entries[p_index]
     project.load_project(filename)
     return True
 
@@ -53,6 +67,7 @@ def save_project(project: p.Project) -> bool:
             project.metadata["saved"] = True
     return True
 
+# TODO Add more info when multiple mods are selected
 def search_mods(project: p.Project) -> bool:
     """Search for mods based on user input and add selected mods to the project."""
     query = std.get_input("Please enter a term to search for: ")
