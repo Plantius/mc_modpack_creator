@@ -184,14 +184,21 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         
         project.metadata["saved"] = False
         return res
-    def update_mods(self, project: p.Project, indices) -> bool:
+    def update_mods(self, project: p.Project) -> bool:
         """Update all mods in the current project."""
-        if indices is None or len(project.mp.mod_list) == 0:
-            return False
+        while True:
+            selected_indices = self.display_menu(
+                title="Update mods in the current project.",
+                menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
+                multi_select=True,
+                status_func=self.get_mod_status
+            )
+            if selected_indices is None or len(project.mp.mod_list) == 0:
+                break
 
-        res = project.update_mod(indices)
-        project.metadata["saved"] = False
-        return res
+            res = project.update_mod(selected_indices)
+            project.metadata["saved"] = False
+            return res
 
     def change_project_attribute(self, project: p.Project, attribute: str, prompt: str) -> bool:
         """Change a project attribute based on user input."""
