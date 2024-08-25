@@ -1,10 +1,9 @@
 import modpack.project as p
-import standard as std, glob
+import standard as std
 from simple_term_menu import TerminalMenu
 from menu import ACCEPT
 
-def get_project_files() -> list:
-    return glob.glob("./*.json")
+
 
 def load_project(project: p.Project) -> bool:
     """Load a project from a specified file, saving the current project if needed."""
@@ -12,7 +11,7 @@ def load_project(project: p.Project) -> bool:
         std.eprint("[ERROR] Could not save current project.")
         return False
     
-    entries = get_project_files() + [None, "Enter filename"]
+    entries = std.get_project_files() + [None, "Enter filename"]
     project_list = TerminalMenu(
         title=f"Which project do you want to load?",
         menu_entries=entries,

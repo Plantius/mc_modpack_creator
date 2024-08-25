@@ -43,31 +43,12 @@ class Menu:
     """
 
     def __init__(self, p: project.Project) -> None:
-        """
-        Initializes the `Menu` instance with a project.
-        """
+        """Initializes the `Menu` instance with a project."""
         self.p = p
 
-    def create_config(self, title="A Menu", menu_entries=["Exit"], cursor_index=0, 
-                      clear_screen=True, multi_select=False, show_multi_select_hint=False,
-                      status_bar="No project loaded") -> dict:
-        """
-        Creates a configuration dictionary for a menu.
-        """
-        return {
-            "title": title,
-            "menu_entries": menu_entries,
-            "cursor_index": cursor_index,
-            "clear_screen": clear_screen,
-            "multi_select": multi_select,
-            "show_multi_select_hint": show_multi_select_hint,
-            "status_bar": status_bar
-        }
 
     def get_options(self, flags: dict) -> list:
-        """
-        Returns a list of options based on the provided flags.
-        """
+        """Returns a list of options based on the provided flags."""
         options = []
 
         if flags["config"]:
@@ -83,6 +64,7 @@ class Menu:
         return options + [None] + m.OPT_MISC["exit"]
 
     def get_project_status(self, entry) -> str:
+        """Retrieves the status description for a given project menu entry."""
         for lst in [m.OPT_PROJECT, m.OPT_MODPACK, m.OPT_ADD_MOD, m.OPT_CONFIG]:
             i = std.get_index(m.get_options_name(lst), entry)
             if i is not None:
@@ -93,80 +75,92 @@ class Menu:
             if i is not None:
                 return m.get_options_help(m.OPT_MISC[option])[i]
 
+
     def get_mod_status(self, entry: str) -> str:
-        """
-        Retrieves the status of a mod based on the provided entry.
-        """
+        """Retrieves the status of a mod based on the provided entry."""
         index = std.get_index(self.p.mp.get_mod_list_names(), entry)
         if index is not None:
             return f'{entry}: ' + tw.fill(self.p.mp.mod_list[index].description, width=100, fix_sentence_endings=True)
         return entry
 
+    def create_config(self, title="A Menu", menu_entries=["Exit"], cursor_index=0, 
+                      clear_screen=True, multi_select=False, show_multi_select_hint=False,
+                      status_bar="No project loaded") -> dict:
+        """Creates a configuration dictionary for a menu."""
+        return {
+            "title": title,
+            "menu_entries": menu_entries,
+            "cursor_index": cursor_index,
+            "clear_screen": clear_screen,
+            "multi_select": multi_select,
+            "show_multi_select_hint": show_multi_select_hint,
+            "status_bar": status_bar
+        }
+
+    def display_menu(self, title: str, options: dict, multi_select=False, status_func=None) -> int:
+        """Displays a menu based on provided options and returns the selected index."""
+        menu_config = self.create_config(
+            title=title,
+            menu_entries=options,
+            multi_select=multi_select,
+            status_bar=status_func
+        )
+        menu = TerminalMenu(**menu_config)
+        return menu.show()
+
     def config_menu(self, config_options: dict) -> None:
-        """
-        Displays a menu for editing project settings.
-        """
+        """Displays a menu for editing project settings."""
         while True:
-            config_menu = TerminalMenu(**self.create_config(
+            selected_index = self.display_menu(
                 title="Edit project settings.",
-                menu_entries=m.get_options_name(config_options),
-                status_bar=self.get_project_status
-            ))
-            config_index = config_menu.show() 
-            if config_index is None:
+                options=m.get_options_name(config_options),
+                status_func=self.get_project_status
+            )
+            if selected_index is None:
                 break
 
-            option = m.get_options_id(config_options)[config_index]
-            func = getattr(menu_func, m.get_options_func(config_options)[config_index])
-
+            option = m.get_options_id(config_options)[selected_index]
+            func = getattr(menu_func, m.get_options_func(config_options)[selected_index])
             if option is m.Option.SETTINGS and not func(self.p):
-                print(f"[ERROR] Could not execute {m.get_options_func(config_options)[config_index]}")
+                print(f"[ERROR] Could not execute {m.get_options_func(config_options)[selected_index]}")
             elif option is m.Option.EXIT:
                 break
 
     def rm_mod_menu(self, main_options: dict, main_index: int, func: callable) -> None:
-        """
-        Displays a menu for removing mods from the project.
-        """
+        """Displays a menu for removing mods from the project."""
         while True:
-            mod_menu = TerminalMenu(**self.create_config(
+            selected_index = self.display_menu(
                 title="Select which mods to remove.",
-                menu_entries=self.p.mp.get_mod_list_names(),
+                options=self.p.mp.get_mod_list_names(),
                 multi_select=True,
-                status_bar=self.get_mod_status
-            ))
-            mod_index = mod_menu.show() 
-            if mod_index is None:
+                status_func=self.get_mod_status
+            )
+            if selected_index is None:
                 break
 
-            if not func(self.p, mod_index):
+            if not func(self.p, selected_index):
                 print(f"[ERROR] Could not execute {m.get_options_func(main_options)[main_index]}")
 
     def add_mod_menu(self, mod_options: dict) -> None:
-        """
-        Displays a menu for adding new mods to the project.
-        """
+        """Displays a menu for adding new mods to the project."""
         while True:
-            mod_menu = TerminalMenu(**self.create_config(
+            selected_index = self.display_menu(
                 title="Search for new mods to add to the project.",
-                menu_entries=m.get_options_name(mod_options),
-                status_bar=self.get_project_status
-            ))
-            mod_index = mod_menu.show() 
-            if mod_index is None:
+                options=m.get_options_name(mod_options),
+                status_func=self.get_project_status
+            )
+            if selected_index is None:
                 break
 
-            option = m.get_options_id(mod_options)[mod_index]
-            func = getattr(menu_func, m.get_options_func(mod_options)[mod_index])
+            option = m.get_options_id(mod_options)[selected_index]
+            func = getattr(menu_func, m.get_options_func(mod_options)[selected_index])
             if option is m.Option.ADD_MODS and not func(self.p):
-                print(f"[ERROR] Could not execute {m.get_options_func(mod_options)[mod_index]}")
+                print(f"[ERROR] Could not execute {m.get_options_func(mod_options)[selected_index]}")
             elif option is m.Option.EXIT:
                 break
 
     def main_menu(self) -> None:
-        """
-        Displays the main menu and handles user interactions with different options.
-        """
+        """Displays the main menu and handles user interactions with different options."""
         cursor_index: int = 0
         while True:
             title = self.get_project_title()
@@ -182,10 +176,11 @@ class Menu:
             ))
             main_index = main_menu.show()
             if main_index is None:
-                func = getattr(menu_func, m.OPT_MISC["exit"][0][0])
+                func = getattr(menu_func, m.get_options_func(m.OPT_MISC["exit"])[0])
                 if not func(self.p):
                     print(f"[ERROR] Could not execute exit function")
                 break
+
             cursor_index = main_index
             option = m.get_options_id(main_options)[main_index]
             func = getattr(menu_func, m.get_options_func(main_options)[main_index])
@@ -205,9 +200,7 @@ class Menu:
                 break
 
     def get_project_title(self) -> str:
-        """
-        Generates a title string for the main menu based on the project's current status.
-        """
+        """Generates a title string for the main menu based on the project's current status."""
         if self.p.metadata["loaded"]:
             title = (f"{self.p.mp.title}: {self.p.mp.description} | "
                     f"{self.p.mp.mc_version} | {self.p.mp.mod_loader} | "
