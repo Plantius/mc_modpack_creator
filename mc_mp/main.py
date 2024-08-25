@@ -26,8 +26,6 @@ def main():
         p.build_project()
     if arguments.export_config:
         p.export_config(arguments.export_config)
-    if arguments.import_config:
-        p.import_config(arguments.import_config)
     if arguments.list_mods:
         print(p.list_mods())
     if arguments.open_project:

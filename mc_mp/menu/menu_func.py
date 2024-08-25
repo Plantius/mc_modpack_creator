@@ -3,8 +3,6 @@ import standard as std
 from simple_term_menu import TerminalMenu
 from menu import ACCEPT
 
-
-
 def load_project(project: p.Project) -> bool:
     """Load a project from a specified file, saving the current project if needed."""
     if project.metadata["loaded"] and not save_project(project):

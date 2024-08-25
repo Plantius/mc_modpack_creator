@@ -66,14 +66,6 @@ def create_parser() -> ArgumentParser:
         help="Export the project configuration to the specified path"
     )
 
-    # Import a project configuration
-    parser.add_argument(
-        "-i", "--import_config",
-        type=str,
-        required=False,
-        help="Import a project configuration from the specified path"
-    )
-
     # List all mods in the current project
     parser.add_argument(
         "-m", "--list_mods",
@@ -81,7 +73,7 @@ def create_parser() -> ArgumentParser:
         help="List all mods in the current project"
     )
     
-    # Open the project menu directly
+    # Launch the project menu directly
     parser.add_argument(
         "--menu",
         action="store_true",

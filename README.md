@@ -30,9 +30,8 @@ To run the Minecraft Modpack Creator, execute the following command:
 - `-r, --remove_mod <mod_name>`: Remove a mod from the current project.
 - `-b, --build`: Build the current project.
 - `-e, --export_config <path>`: Export the project configuration to the specified path.
-- `-i, --import_config <path>`: Import a project configuration from the specified path.
 - `-m, --list_mods`: List all mods in the current project.
-- `--menu`: Open the project menu directly.
+- `--menu`: Launch the project menu directly.
 
 ### Examples
 
@@ -74,11 +73,6 @@ To run the Minecraft Modpack Creator, execute the following command:
 - To export the project configuration:
     ```
     python3 mc_mp/main.py -e /path/to/export/config.json
-    ```
-
-- To import a project configuration:
-    ```
-    python3 mc_mp/main.py -i /path/to/import/config.json
     ```
 
 - To list all mods in the current project:
