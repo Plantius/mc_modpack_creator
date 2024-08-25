@@ -27,7 +27,7 @@ To run the Minecraft Modpack Creator, execute the following command:
 - `-l, --list_projects`: List all available projects.
 - `-d, --delete_project <filename>`: Delete the specified project file.
 - `-m, --list_mods`: List all mods in the current project.
-- `--menu`: Launch the project menu directly.
+- `--menu`: Don't launch the project menu.
 
 ### Examples
 
@@ -56,10 +56,6 @@ To run the Minecraft Modpack Creator, execute the following command:
     python3 mc_mp/main.py -m
     ```
 
-- To open the project menu directly:
-    ```
-    python3 mc_mp/main.py --menu
-    ```
 
 ## Project Structure
 

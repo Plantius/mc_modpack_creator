@@ -42,11 +42,11 @@ def create_parser() -> ArgumentParser:
         help="List all mods in the current project"
     )
     
-    # Launch the project menu directly
+    # Dont launch the menu when set
     parser.add_argument(
         "--menu",
-        action="store_true",
-        help="Open the project menu directly"
+        action="store_false",
+        help="Don't Open the project menu"
     )
 
     return parser
