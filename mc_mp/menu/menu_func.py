@@ -6,6 +6,33 @@ from menu import ACCEPT, CLEAR_SCREEN
 class MenuFunctions():
     def __init__(self) -> None:
         pass
+    
+    def create_config(self, title="A Menu", menu_entries=["Exit"], cursor_index=0, 
+                      clear_screen=CLEAR_SCREEN, multi_select=False, show_multi_select_hint=False,
+                      status_bar="No project loaded") -> dict:
+        """Creates a configuration dictionary for a menu."""
+        return {
+            "title": title,
+            "menu_entries": menu_entries,
+            "cursor_index": cursor_index,
+            "clear_screen": clear_screen,
+            "multi_select": multi_select,
+            "show_multi_select_hint": show_multi_select_hint,
+            "status_bar": status_bar
+        }
+
+    def display_menu(self, title: str, menu_entries: dict, multi_select=False, status_func=None, clear_screen=CLEAR_SCREEN) -> int:
+        """Displays a menu based on provided options and returns the selected index."""
+        menu_config = self.create_config(
+            title=title,
+            menu_entries=menu_entries,
+            multi_select=multi_select,
+            status_bar=status_func,
+            clear_screen=clear_screen
+        )
+        menu = TerminalMenu(**menu_config)
+        return menu.show()
+    
 
     def load_project(self, project: p.Project) -> bool:
         """Load a project from a specified file, saving the current project if needed."""
@@ -13,22 +40,21 @@ class MenuFunctions():
             std.eprint("[ERROR] Could not save current project.")
             return False
         
-        entries = std.get_project_files() + [None, "Enter filename"]
-        project_list = TerminalMenu(
-            title=f"Which project do you want to load?",
-            menu_entries=entries,
-            clear_screen=CLEAR_SCREEN
+        # Display menu
+        menu_entries = std.get_project_files() + [None, "Enter filename"]
+        selected_index = self.display_menu(
+            title="Which project do you want to load?",
+            menu_entries=menu_entries
         )
-        p_index = project_list.show()
-        if p_index is None:
+        if selected_index is None:
             return True
 
-        if entries[p_index] == "Enter filename":
+        if menu_entries[selected_index] == "Enter filename":
             filename = std.get_input("Please enter a project file: ")
             if filename is None:
                 return False
         else:
-            filename = entries[p_index]
+            filename = menu_entries[selected_index]
         project.load_project(filename)
         return True
 
@@ -72,8 +98,6 @@ class MenuFunctions():
     def search_mods(self, project: p.Project) -> bool:
         """Search for mods based on user input and add selected mods to the project."""
         query = std.get_input("Please enter a term to search for: ")
-        if not query:
-            return False
 
         kwargs = {
             "query": query,
@@ -95,26 +119,25 @@ class MenuFunctions():
         results = project.search_project(**kwargs)
 
         while True:
-            result_list = TerminalMenu(
+            selected_indices = self.display_menu(
                 title="Which entries do you want to add? Select one option to see its details.",
                 menu_entries=[f'{mod["title"]}: ' for mod in results["hits"]],
-                multi_select=True,
-                clear_screen=CLEAR_SCREEN
+                multi_select=True
             )
-            mod_indices = result_list.show()
-            if mod_indices is None:
+            if selected_indices is None:
                 return False
             
-            if len(mod_indices) == 1:
-                selected_mod = results["hits"][mod_indices[0]]
+            if len(selected_indices) == 1:
+                selected_mod = results["hits"][selected_indices[0]]
                 if input(f'''{selected_mod["title"]}
     Client side: {selected_mod["client_side"]}
     Server side: {selected_mod["server_side"]}
 
-    {selected_mod["description"]}
+{selected_mod["description"]}
+Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     Do you want to add this mod to the current project? y/n ''') != ACCEPT:
                     continue
-            for i in mod_indices:
+            for i in selected_indices:
                 res = self.add_mods(project, results["hits"][i]["slug"])
             return res
 

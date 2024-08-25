@@ -89,34 +89,19 @@ class Menu:
                       clear_screen=CLEAR_SCREEN, multi_select=False, show_multi_select_hint=False,
                       status_bar="No project loaded") -> dict:
         """Creates a configuration dictionary for a menu."""
-        return {
-            "title": title,
-            "menu_entries": menu_entries,
-            "cursor_index": cursor_index,
-            "clear_screen": clear_screen,
-            "multi_select": multi_select,
-            "show_multi_select_hint": show_multi_select_hint,
-            "status_bar": status_bar
-        }
+        return self.mf.create_config(title, menu_entries, cursor_index, clear_screen, multi_select, show_multi_select_hint, status_bar)
 
-    def display_menu(self, title: str, options: dict, multi_select=False, status_func=None, clear_screen=CLEAR_SCREEN) -> int:
+    def display_menu(self, title: str, menu_entries: list, multi_select=False, status_func=None, clear_screen=CLEAR_SCREEN) -> int:
         """Displays a menu based on provided options and returns the selected index."""
-        menu_config = self.create_config(
-            title=title,
-            menu_entries=options,
-            multi_select=multi_select,
-            status_bar=status_func,
-            clear_screen=clear_screen
-        )
-        menu = TerminalMenu(**menu_config)
-        return menu.show()
+        return self.mf.display_menu(title, menu_entries, multi_select, status_func, clear_screen)
+
 
     def config_menu(self, config_options: dict) -> None:
         """Displays a menu for editing project settings."""
         while True:
             selected_index = self.display_menu(
                 title="Edit project settings.",
-                options=mo.get_options(config_options)["names"],
+                menu_entries=mo.get_options(config_options)["names"],
                 status_func=self.get_project_status
             )
             if selected_index is None:
@@ -134,7 +119,7 @@ class Menu:
         while True:
             selected_index = self.display_menu(
                 title="Select which mods to remove.",
-                options=self.p.mp.get_mod_list_names() or ["No mods in project"],
+                menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
                 multi_select=True,
                 status_func=self.get_mod_status
             )
@@ -149,7 +134,7 @@ class Menu:
         while True:
             selected_index = self.display_menu(
                 title="Search for new mods to add to the project.",
-                options=mo.get_options(mod_options)["names"],
+                menu_entries=mo.get_options(mod_options)["names"],
                 status_func=self.get_project_status
             )
             if selected_index is None:
@@ -167,7 +152,7 @@ class Menu:
         while True:
             selected_index = self.display_menu(
                 title="Update mods in the current project.",
-                options=self.p.mp.get_mod_list_names() or ["No mods in project"],
+                menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
                 multi_select=True,
                 status_func=self.get_mod_status
             )
