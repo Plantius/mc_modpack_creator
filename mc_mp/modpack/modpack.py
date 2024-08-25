@@ -51,9 +51,7 @@ class Modpack:
     mod_list: List[mod.Mod] = []
 
     def __init__(self, **kwargs: Any) -> None:
-        """
-        Initializes the Modpack with optional parameters.
-        """
+        """Initializes the Modpack with optional parameters."""
         for key, value in kwargs.items():
             if key == 'mod_list' and isinstance(value, list):
                 setattr(self, key, [mod.Mod(**item) for item in value])
@@ -61,19 +59,13 @@ class Modpack:
                 setattr(self, key, value)
 
     def export_json(self) -> Dict[str, Any]:
-        """
-        Exports the Modpack attributes as a JSON object.
-        """
+        """Exports the Modpack attributes as a JSON object."""
         return json.loads(json.dumps(std.get_variables(self), cls=std.ProjectEncoder))
 
     def check_compatibility(self) -> bool:
-        """
-        Checks if the current mods in the modpack are compatible (always returns `True`).
-        """
+        """Checks if the current mods in the modpack are compatible (always returns `True`)."""
         return True
 
     def get_mod_list_names(self) -> List[str]:
-        """
-        Returns a list of all mod names and their versions.
-        """
+        """Returns a list of all mod names and their versions."""
         return [f"{item.mod_name} - {item.mod_version}" for item in self.mod_list]

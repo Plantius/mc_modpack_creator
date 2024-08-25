@@ -1,11 +1,10 @@
-import requests
+from .modpack import Modpack
+from .mod import Mod
+import standard as std
 import json
 from typing import Optional, Dict, Any
-import modpack.modpack as modpack
-import modpack.mod as mod
-import standard as std
-from . import API_BASE, HEADERS, DEF_FILENAME
-
+from . import DEF_FILENAME
+from .project_api import ProjectAPI  # Import the new ProjectAPI class
 
 class Project:
     """
@@ -13,58 +12,72 @@ class Project:
 
     Attributes
     ----------
-    mp : modpack.Modpack
-        An instance of the `Modpack` class.
+    mp : Modpack
+        An instance of the Modpack class representing the modpack for the project.
     metadata : dict
-        Metadata about the project, including loading and saving status, filename, and project ID.
+        A dictionary containing project metadata with the following keys:
+        - 'loaded' (bool): Whether the project is loaded.
+        - 'saved' (bool): Whether the project is saved.
+        - 'filename' (str): The filename of the project file.
+        - 'project_id' (Optional[str]): The ID of the project.
 
     Methods
     -------
     __init__(**kwargs)
-        Initializes a new `Project` instance.
+        Initializes a Project instance and instantiates the ProjectAPI class.
+    
     create_project(**kwargs)
-        Creates a new project and updates metadata.
+        Creates a new project, updates metadata, and checks modpack compatibility.
+
     load_project(filename: str)
-        Loads project data from a file and initializes the modpack.
+        Loads project data from a file, initializes the modpack, and checks compatibility.
+
     save_project(filename: Optional[str] = None)
-        Saves the current project state to a file.
+        Saves the current project state to a file, using a default filename if none is provided.
+
     add_mod(name: str, versions: Dict[str, Any], mod_index: int) -> bool
-        Adds a mod to the project's modpack.
-    rm_mod()
-        Placeholder for removing a mod from the project.
+        Adds a mod to the project's modpack based on the provided name and version index.
+
     parse_url(params: Dict[str, Any]) -> str
-        Converts a dictionary to a URL query string.
+        Parses a URL using the ProjectAPI instance.
+
     is_slug_valid(slug_or_id: str) -> Optional[Dict[str, Any]]
-        Checks if the project name or ID exists on Modrinth.
+        Checks if a slug or ID is valid using the ProjectAPI instance.
+
     get_dependencies(project_name: str) -> Optional[Dict[str, Any]]
-        Retrieves all dependencies of a given project.
+        Retrieves dependencies for a project using the ProjectAPI instance.
+
     search_project(**kwargs) -> Optional[Dict[str, Any]]
-        Searches for projects using various filters and sorting options.
+        Searches for a project using the ProjectAPI instance.
+
     get_project(project_name: str) -> Optional[Dict[str, Any]]
-        Retrieves information about a specific project.
+        Retrieves project details using the ProjectAPI instance.
+
     list_versions(project_name: str, **kwargs) -> Optional[Dict[str, Any]]
-        Lists versions of a given project with optional filtering.
+        Lists versions of a project using the ProjectAPI instance.
+
     get_version(version_id: str) -> Optional[Dict[str, Any]]
-        Retrieves information about a specific version by ID.
+        Retrieves details of a specific version using the ProjectAPI instance.
+
     get_versions(ids: str) -> Optional[Dict[str, Any]]
-        Retrieves information about multiple versions by their IDs.
+        Retrieves details of multiple versions using the ProjectAPI instance.
     """
 
-    mp: modpack.Modpack
+    mp: Modpack
     metadata: Dict[str, Any] = {
         "loaded": False,
         "saved": True,
         "filename": "project1.json",
         "project_id": None
     }
-    
+
     def __init__(self, **kwargs) -> None:
         """Initializes a Project instance."""
-        pass
+        self.api = ProjectAPI()  # Instantiate the ProjectAPI class
 
     def create_project(self, **kwargs) -> None:
         """Creates a new project and updates metadata."""
-        self.mp = modpack.Modpack(**kwargs)
+        self.mp = Modpack(**kwargs)
         self.metadata.update({
             "loaded": True,
             "saved": False,
@@ -85,7 +98,7 @@ class Project:
 
                 self.metadata = data["metadata"]
                 del data["metadata"]
-                self.mp = modpack.Modpack(**data)
+                self.mp = Modpack(**data)
                 
                 if not self.mp.check_compatibility():
                     print("Invalid project loaded.")
@@ -107,13 +120,13 @@ class Project:
 
     def add_mod(self, name: str, versions: Dict[str, Any], mod_index: int) -> bool:
         """Adds a mod to the project's modpack."""
-        project_info = self.get_project(name)
+        project_info = self.api.get_project(name)
         if project_info is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
             return False
         
         mod_details = versions[mod_index]
-        new_mod = mod.Mod(
+        new_mod = Mod(
             mod_name=project_info["title"], 
             description=project_info["description"],
             mod_version=mod_details["version_number"],
@@ -131,67 +144,27 @@ class Project:
         self.metadata["saved"] = False
         return True
 
+    # The following methods are delegated to the ProjectAPI instance
     def parse_url(self, params: Dict[str, Any]) -> str:
-        """Converts a dictionary to a URL query string."""
-        return '&'.join(f'{key}={value}' for key, value in params.items()).replace('\'', '\"')
+        return self.api.parse_url(params)
 
     def is_slug_valid(self, slug_or_id: str) -> Optional[Dict[str, Any]]:
-        """Checks if the given project name or ID exists on Modrinth."""
-        response = requests.get(f"{API_BASE}/project/{slug_or_id}/check", headers=HEADERS)
-        if response.status_code == 200:
-            return response.json()
-        return None
+        return self.api.is_slug_valid(slug_or_id)
 
     def get_dependencies(self, project_name: str) -> Optional[Dict[str, Any]]:
-        """Retrieves all dependencies of a given project."""
-        if self.is_slug_valid(project_name) is None:
-            return None
-        
-        response = requests.get(f"{API_BASE}/project/{project_name}/dependencies", headers=HEADERS)
-        if response.status_code == 200:
-            return response.json()
-        return None
+        return self.api.get_dependencies(project_name)
 
     def search_project(self, **kwargs) -> Optional[Dict[str, Any]]:
-        """Searches for projects using various filters and sorting options."""
-        params = {k: v for k, v in kwargs.items() if v is not None}
-        response = requests.get(f"{API_BASE}/search", params=self.parse_url(params), headers=HEADERS)
-        if response.status_code == 200:
-            return response.json()
-        return None
+        return self.api.search_project(**kwargs)
 
     def get_project(self, project_name: str) -> Optional[Dict[str, Any]]:
-        """Retrieves information about a specific project."""
-        if self.is_slug_valid(project_name) is None:
-            return None
-
-        response = requests.get(f"{API_BASE}/project/{project_name}", headers=HEADERS)
-        if response.status_code == 200:
-            return response.json()
-        return None
+        return self.api.get_project(project_name)
     
     def list_versions(self, project_name: str, **kwargs) -> Optional[Dict[str, Any]]:
-        """Lists versions of a given project with optional filtering."""
-        params = {k: v for k, v in kwargs.items() if v is not None}
-        if self.is_slug_valid(project_name) is None:
-            return None
-
-        response = requests.get(f"{API_BASE}/project/{project_name}/version", params=self.parse_url(params), headers=HEADERS)
-        if response.status_code == 200:
-            return response.json()
-        return None
+        return self.api.list_versions(project_name, **kwargs)
     
     def get_version(self, version_id: str) -> Optional[Dict[str, Any]]:
-        """Retrieves information about a specific version by ID."""
-        response = requests.get(f"{API_BASE}/version/{version_id}", headers=HEADERS)
-        if response.status_code == 200:
-            return response.json()
-        return None
+        return self.api.get_version(version_id)
     
     def get_versions(self, ids: str) -> Optional[Dict[str, Any]]:
-        """Retrieves information about multiple versions by their IDs."""
-        params = {'ids': ids}
-        response = requests.get(f"{API_BASE}/versions", params=self.parse_url(params), headers=HEADERS)
-        if response.status_code == 200:
-            return response.json()
-        return None
+        return self.api.get_versions(ids)

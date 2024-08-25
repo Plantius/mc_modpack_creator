@@ -1,4 +1,4 @@
-import sys, inspect, json
+import sys, inspect, json, glob
 from cryptography.fernet import Fernet
 import modpack.mod as mod
 
@@ -67,6 +67,11 @@ def get_index(lst: list, item) -> int:
         return lst.index(item)
     except ValueError:
         return None
+
+def get_project_files() -> list:
+    """Returns a sorted list of JSON files in the current directory."""
+    return sorted([file.replace("./", "") for file in glob.glob("./*.json")])
+
 
 def eprint(*args, **kwargs) -> None:
     """Print errors to standard error."""
