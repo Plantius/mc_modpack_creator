@@ -163,17 +163,15 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
             std.eprint(f"[ERROR] No mod called {name} found.")
             return False
         while True:
-            version_list = TerminalMenu(
+            selected_index = self.display_menu(
                 title=f"Which version of {name} do you want to add?",
                 menu_entries=[f'{version["name"]}: minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
-                clear_screen=CLEAR_SCREEN
             )
-            mod_index = version_list.show()
-            if mod_index is None:
+            if selected_index is None:
                 return False
 
-            if input(f'{versions[mod_index]["name"]}:\n{versions[mod_index]["changelog"]}\nDo you want to add this mod to the current project? y/n ') is ACCEPT:
-                return project.add_mod(name, versions, mod_index)
+            if input(f'{versions[selected_index]["name"]}:\n{versions[selected_index]["changelog"]}\nDo you want to add this mod to the current project? y/n ') is ACCEPT:
+                return project.add_mod(name, versions, selected_index)
 
 
     def remove_mods(self, project: p.Project, indices) -> bool:
