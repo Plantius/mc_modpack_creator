@@ -23,7 +23,7 @@ def main():
         print(*p.list_mods(), sep='\n')
 
     # Initialize and display main menu
-    if arguments.menu:
+    if arguments.menu_disable:
         menu = main_menu.Menu(p)
         menu.main_menu()
 

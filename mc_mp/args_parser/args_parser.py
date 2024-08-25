@@ -44,9 +44,9 @@ def create_parser() -> ArgumentParser:
     
     # Dont launch the menu when set
     parser.add_argument(
-        "--menu",
+        "--menu_disable",
         action="store_false",
-        help="Don't Open the project menu"
+        help="Disable the project menu"
     )
 
     return parser

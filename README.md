@@ -27,7 +27,7 @@ To run the Minecraft Modpack Creator, execute the following command:
 - `-l, --list_projects`: List all available projects.
 - `-d, --delete_project <filename>`: Delete the specified project file.
 - `-m, --list_mods`: List all mods in the current project.
-- `--menu`: Don't launch the project menu.
+- `--menu_disable`: Disable the project menu.
 
 ### Examples
 
