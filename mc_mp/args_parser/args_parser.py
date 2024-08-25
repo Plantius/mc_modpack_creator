@@ -51,21 +51,6 @@ def create_parser() -> ArgumentParser:
         help="Specify the mod name to remove from the project"
     )
 
-    # Build the current project
-    parser.add_argument(
-        "-b", "--build",
-        action="store_true",
-        help="Build the current project"
-    )
-
-    # Export the project configuration
-    parser.add_argument(
-        "-e", "--export_config",
-        type=str,
-        required=False,
-        help="Export the project configuration to the specified path"
-    )
-
     # List all mods in the current project
     parser.add_argument(
         "-m", "--list_mods",

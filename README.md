@@ -28,8 +28,6 @@ To run the Minecraft Modpack Creator, execute the following command:
 - `-d, --delete_project <filename>`: Delete the specified project file.
 - `-a, --add_mod <mod_name>`: Add a mod to the current project.
 - `-r, --remove_mod <mod_name>`: Remove a mod from the current project.
-- `-b, --build`: Build the current project.
-- `-e, --export_config <path>`: Export the project configuration to the specified path.
 - `-m, --list_mods`: List all mods in the current project.
 - `--menu`: Launch the project menu directly.
 

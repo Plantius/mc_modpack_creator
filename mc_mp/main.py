@@ -22,10 +22,6 @@ def main():
         p.add_mod(arguments.add_mod)
     if arguments.remove_mod:
         p.remove_mod(arguments.remove_mod)
-    if arguments.build:
-        p.build_project()
-    if arguments.export_config:
-        p.export_config(arguments.export_config)
     if arguments.list_mods:
         print(p.list_mods())
     if arguments.open_project:
