@@ -169,7 +169,6 @@ class Project:
         except:
             return False
 
-
     def update_mod(self, indices) -> bool:
         for index in indices:
             new_versions = self.list_versions(self.mp.mod_list[index].project_id, loaders=[self.mp.mod_loader], game_versions=[self.mp.mc_version]) 
