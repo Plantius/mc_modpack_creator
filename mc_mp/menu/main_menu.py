@@ -91,9 +91,9 @@ class Menu:
         """Creates a configuration dictionary for a menu."""
         return self.mf.create_config(title, menu_entries, cursor_index, clear_screen, multi_select, show_multi_select_hint, status_bar)
 
-    def display_menu(self, title: str, menu_entries: list, multi_select=False, status_func=None, clear_screen=CLEAR_SCREEN) -> int:
+    def display_menu(self, title: str, menu_entries: list, multi_select=False, status_func=None, clear_screen=CLEAR_SCREEN, cursor_index=0) -> int:
         """Displays a menu based on provided options and returns the selected index."""
-        return self.mf.display_menu(title, menu_entries, multi_select, status_func, clear_screen)
+        return self.mf.display_menu(title, menu_entries, multi_select, status_func, clear_screen, cursor_index)
 
 
     def config_menu(self, config_options: dict) -> None:
@@ -147,6 +147,38 @@ class Menu:
             elif option is mo.Option.EXIT:
                 break
     
+    def update_mods_menu(self, main_options: dict, main_index: int, func: callable) -> None:
+        """Displays a menu for adding new mods to the project."""
+        while True:
+            selected_indices = self.display_menu(
+                title="Update mods in the current project.",
+                menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
+                multi_select=True,
+                status_func=self.get_mod_status
+            )
+            if selected_indices is None:
+                break
+
+            if not func(self.p, selected_indices):
+                print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
+
+    def list_mods_menu(self, main_options: dict, main_index: int, func: callable) -> None:
+        """Displays a menu for adding new mods to the project."""
+        cursor_index: int = 0
+        while True:
+            selected_index = self.display_menu(
+                title="Current mods in this project.",
+                menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
+                status_func=self.get_mod_status,
+                cursor_index=cursor_index
+            )
+            if selected_index is None:
+                break
+            cursor_index = selected_index
+
+            if not func(self.p, selected_index):
+                print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
+
     def main_menu(self) -> None:
         """Displays the main menu and handles user interactions with different options."""
         cursor_index: int = 0
@@ -156,13 +188,13 @@ class Menu:
             config_options = self.get_options({"loaded": self.p.metadata["loaded"], "config": True, "mod": False})
             mod_options = self.get_options({"loaded": self.p.metadata["loaded"], "config": False, "mod": True})
 
-            main_menu = TerminalMenu(**self.create_config(
+            main_index = self.display_menu(
                 title=title,
                 cursor_index=cursor_index,
                 menu_entries=mo.get_options(main_options)["names"],
-                status_bar=self.get_project_status
-            ))
-            main_index = main_menu.show()
+                status_func=self.get_project_status
+            )
+            
             if main_index is None:
                 func = getattr(self.mf, mo.get_options(mo.OPT_MISC["exit"])["functions"][0])
                 if not func(self.p):
@@ -175,15 +207,17 @@ class Menu:
 
             if option is mo.Option.CONFIG:
                 self.config_menu(config_options)
-            elif option is mo.Option.PROJECT or option is mo.Option.UPDATE_MODS:
+            elif option is mo.Option.PROJECT:
                 if not func(self.p):
                     print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
             elif option is mo.Option.ADD_MODS:
                 self.add_mod_menu(mod_options) # Contains sub menu
             elif option is mo.Option.RM_MODS:
                 self.rm_mod_menu(main_options, main_index, func) # Contains sub menu
+            elif option is mo.Option.UPDATE_MODS:
+                self.update_mods_menu(main_options, main_index, func) # Contains sub menu
             elif option is mo.Option.LIST_MODS:
-                self.update_mods_menu(main_options, main_index, func)
+                self.list_mods_menu(main_options, main_index, func)
             elif option is mo.Option.EXIT:
                 if not func(self.p):
                     print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")

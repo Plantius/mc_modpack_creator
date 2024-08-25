@@ -21,14 +21,15 @@ class MenuFunctions():
             "status_bar": status_bar
         }
 
-    def display_menu(self, title: str, menu_entries: dict, multi_select=False, status_func=None, clear_screen=CLEAR_SCREEN) -> int:
+    def display_menu(self, title: str, menu_entries: dict, multi_select=False, status_func=None, clear_screen=CLEAR_SCREEN, cursor_index=0) -> int:
         """Displays a menu based on provided options and returns the selected index."""
         menu_config = self.create_config(
             title=title,
             menu_entries=menu_entries,
             multi_select=multi_select,
             status_bar=status_func,
-            clear_screen=clear_screen
+            clear_screen=clear_screen,
+            cursor_index=cursor_index
         )
         menu = TerminalMenu(**menu_config)
         return menu.show()
@@ -184,21 +185,20 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         
         project.metadata["saved"] = False
         return res
-    def update_mods(self, project: p.Project) -> bool:
+    
+    def update_mods(self, project: p.Project, indices) -> bool:
         """Update all mods in the current project."""
-        while True:
-            selected_indices = self.display_menu(
-                title="Update mods in the current project.",
-                menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
-                multi_select=True,
-                status_func=self.get_mod_status
-            )
-            if selected_indices is None or len(project.mp.mod_list) == 0:
-                break
+        if indices is None or len(project.mp.mod_list) == 0:
+            return False
 
-            res = project.update_mod(selected_indices)
-            project.metadata["saved"] = False
-            return res
+        return project.update_mod(indices)
+    
+    def list_mods(self, project: p.Project, index) -> bool:
+        """View all mods in the current project."""
+        if index is None or len(project.mp.mod_list) == 0:
+            return False
+        return True
+
 
     def change_project_attribute(self, project: p.Project, attribute: str, prompt: str) -> bool:
         """Change a project attribute based on user input."""
