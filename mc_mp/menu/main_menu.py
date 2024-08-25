@@ -159,6 +159,21 @@ class Menu:
                 print(f"[ERROR] Could not execute {m.get_options(mod_options)['functions'][selected_index]}")
             elif option is m.Option.EXIT:
                 break
+    
+    def update_mods_menu(self, main_options: dict, main_index: int, func: callable) -> None:
+        """Displays a menu for adding new mods to the project."""
+        while True:
+            selected_index = self.display_menu(
+                title="Update mods in the current project.",
+                options=self.p.mp.get_mod_list_names()+[None, "Update all"],
+                multi_select=True,
+                status_func=self.get_mod_status
+            )
+            if selected_index is None:
+                break
+
+            if not func(self.p, selected_index):
+                print(f"[ERROR] Could not execute {m.get_options(main_options)['functions'][main_index]}")
 
     def main_menu(self) -> None:
         """Displays the main menu and handles user interactions with different options."""
@@ -195,6 +210,8 @@ class Menu:
                 self.add_mod_menu(mod_options)
             elif option is m.Option.RM_MODS:
                 self.rm_mod_menu(main_options, main_index, func)
+            elif option is m.Option.UPDATE_MODS:
+                self.update_mods_menu(main_options, main_index, func)
             elif option is m.Option.EXIT:
                 if not func(self.p):
                     print(f"[ERROR] Could not execute {m.get_options(main_options)['functions'][main_index]}")

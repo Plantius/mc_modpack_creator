@@ -149,7 +149,7 @@ def add_mods(project: p.Project, name: str) -> bool:
             return project.add_mod(name, versions, mod_index)
 
 
-def remove_mods(project: p.Project, indices) -> bool:
+def remove_mods(project: p.Project, indices: tuple) -> bool:
     """Remove mods from the current project based on their indices."""
     if indices is None:
         return False
@@ -158,6 +158,10 @@ def remove_mods(project: p.Project, indices) -> bool:
         del project.mp.mod_list[i]
 
     project.metadata["saved"] = False
+    return True
+
+def update_mods(project: p.Project, indices: tuple) -> bool:
+    """Update all mods in the current project."""
     return True
 
 def change_project_attribute(project: p.Project, attribute: str, prompt: str) -> bool:

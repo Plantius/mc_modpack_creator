@@ -6,6 +6,7 @@ class Option(Enum):
     PROJECT = auto()
     ADD_MODS = auto()
     RM_MODS = auto()
+    UPDATE_MODS = auto()
     CONFIG = auto()
     SETTINGS = auto()
     EXIT = auto()
@@ -19,7 +20,8 @@ OPT_PROJECT = [
 
 OPT_MODPACK = [
     ["placeholder", "Add mod(s)", Option.ADD_MODS, "Add new mods to the current project"],
-    ["remove_mods", "Remove mod(s)", Option.RM_MODS, "Remove mods from the current project"]
+    ["remove_mods", "Remove mod(s)", Option.RM_MODS, "Remove mods from the current project"],
+    ["update_mods", "Update mods", Option.UPDATE_MODS, "Update all mods in the current project"]
 ]
 
 OPT_ADD_MOD = [
