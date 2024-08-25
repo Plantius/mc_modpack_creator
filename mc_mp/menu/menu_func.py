@@ -64,13 +64,13 @@ class MenuFunctions():
         if project.metadata["loaded"] and not self.save_project(project):
             std.eprint("[ERROR] Could not save current project.")
             return False
+        print("Create a new project. Please enter the following details:")
+        title = std.get_input("1. Project Title: ")
+        description = std.get_input("2. Project Description: ")
+        mc_version = std.get_input("3. Minecraft Version (e.g., 1.16.5): ")
+        mod_loader = std.get_input("4. Mod Loader (e.g., forge, fabric): ")
 
-        title = std.get_input("Please enter a project name: ")
-        description = std.get_input("Please enter a description: ")
-        mc_version = std.get_input("Please enter the project's Minecraft version: ")
-        mod_loader = std.get_input("Please enter the project's modloader: ")
-
-        if any(value is None for value in [title, description, mc_version, mod_loader]):
+        if any(value == "" or None for value in [title, description, mc_version, mod_loader]):
             return False
 
         project.create_project(
@@ -171,7 +171,9 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
             if selected_index is None:
                 return True
 
-            if input(f'{versions[selected_index]["name"]}:\n{versions[selected_index]["changelog"]}\nDo you want to add this mod to the current project? y/n ') is ACCEPT:
+            if input(f'''{versions[selected_index]["name"]}:
+{versions[selected_index]["changelog"]}
+    Do you want to add {versions[selected_index]["name"]} to the current project? y/n ''') is ACCEPT:
                 return project.add_mod(name, versions, selected_index)
 
 

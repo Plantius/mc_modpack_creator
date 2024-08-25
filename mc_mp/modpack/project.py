@@ -176,7 +176,7 @@ class Project:
                 new_mod_date = parser.parse(new_versions[0]["date_published"])
                 current_mod_date = parser.parse(self.mp.mod_list[index].date_published)
                 if new_mod_date > current_mod_date:
-                    inp = std.get_input(f"There is a newer version available, do you want to upgrade? y/n {self.mp.mod_list[index].mod_version} -> {new_versions[0]['version_number']} ")
+                    inp = std.get_input(f"There is a newer version available for {self.mp.mod_list[index].mod_name}, do you want to upgrade? y/n {self.mp.mod_list[index].mod_version} -> {new_versions[0]['version_number']} ")
                     if inp == ACCEPT:
                         name = self.mp.mod_list[index].project_id
                         self.metadata["saved"] = False

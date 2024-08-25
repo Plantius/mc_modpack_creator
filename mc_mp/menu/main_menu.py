@@ -1,6 +1,5 @@
 from menu import menu_func as mf, menu_options as mo
 from modpack import project
-from simple_term_menu import TerminalMenu
 import standard as std
 import textwrap as tw
 from . import CLEAR_SCREEN
@@ -96,6 +95,10 @@ class Menu:
         return self.mf.display_menu(title, menu_entries, multi_select, status_func, clear_screen, cursor_index)
 
 
+    # Move to menu_func
+    # 
+    # 
+    # 
     def config_menu(self, config_options: dict) -> None:
         """Displays a menu for editing project settings."""
         while True:
@@ -144,6 +147,7 @@ class Menu:
             func = getattr(self.mf, mo.get_options(mod_options)["functions"][selected_index])
             if option is mo.Option.ADD_MODS and not func(self.p):
                 print(f"[ERROR] Could not execute {mo.get_options(mod_options)['functions'][selected_index]}")
+
             elif option is mo.Option.EXIT:
                 break
     
@@ -178,6 +182,10 @@ class Menu:
 
             if not func(self.p, selected_index):
                 print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
+    # 
+    # 
+    # 
+    # Move to menu_func
 
     def main_menu(self) -> None:
         """Displays the main menu and handles user interactions with different options."""
@@ -217,7 +225,7 @@ class Menu:
             elif option is mo.Option.UPDATE_MODS:
                 self.update_mods_menu(main_options, main_index, func) # Contains sub menu
             elif option is mo.Option.LIST_MODS:
-                self.list_mods_menu(main_options, main_index, func)
+                self.list_mods_menu(main_options, main_index, func) # Contains sub menu
             elif option is mo.Option.EXIT:
                 if not func(self.p):
                     print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
