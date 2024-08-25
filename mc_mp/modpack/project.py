@@ -125,9 +125,9 @@ class Project:
             try:
                 with open(filename, 'r') as file:
                     data = json.load(file)
-                    if std.check_id(data["metadata"]["project_id"]):
+                    if std.is_valid_project_id(data["metadata"]["project_id"]):
                         valid_projects.append(f'{filename}: {data["title"]}, {data["description"]}')
-            except Exception as e:
+            except:
                 continue
         return valid_projects
     
