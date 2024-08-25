@@ -7,7 +7,8 @@ A Python tool for creating and managing Minecraft modpacks. This program leverag
 - **Automatic Mod Updates:** Keep your modpack up-to-date with the latest versions of your favorite mods.
 - **Mod Search:** Search for new mods directly from the program.
 - **Modpack Download:** Export your project as a complete, ready-to-use modpack.
-- **Project Management:** Load, create, edit, and delete modpack projects easily.
+- **Project Management:** Load, create, edit, delete, and list modpack projects easily.
+- **Mod Management:** Add or remove mods from your project.
 - **Compatibility Check:** Ensure all mods within a modpack are compatible.
 
 ## Usage
@@ -16,22 +17,79 @@ A Python tool for creating and managing Minecraft modpacks. This program leverag
 
 To run the Minecraft Modpack Creator, execute the following command:
 
-```bash
-python3 mc_mp/main.py [-h help] [-o project_to_load]
-```
+    python3 mc_mp/main.py [options]
 
 ### Command-Line Options
 
 - `-h, --help`: Display the help message with available options.
 - `-o, --open_project <filename>`: Load an existing project by specifying the filename.
+- `-c, --create_project <name>`: Create a new project with the specified name.
+- `-l, --list_projects`: List all available projects.
+- `-d, --delete_project <filename>`: Delete the specified project file.
+- `-a, --add_mod <mod_name>`: Add a mod to the current project.
+- `-r, --remove_mod <mod_name>`: Remove a mod from the current project.
+- `-b, --build`: Build the current project.
+- `-e, --export_config <path>`: Export the project configuration to the specified path.
+- `-i, --import_config <path>`: Import a project configuration from the specified path.
+- `-m, --list_mods`: List all mods in the current project.
+- `--menu`: Open the project menu directly.
 
-### Example
+### Examples
 
-To load an existing project:
+- To load an existing project:
+    ```
+    python3 mc_mp/main.py -o my_modpack.json
+    ```
 
-```bash
-python3 mc_mp/main.py -o my_modpack.json
-```
+- To create a new project:
+    ```
+    python3 mc_mp/main.py -c my_new_modpack
+    ```
+
+- To list all available projects:
+    ```
+    python3 mc_mp/main.py -l
+    ```
+
+- To delete a project:
+    ```
+    python3 mc_mp/main.py -d my_modpack.json
+    ```
+
+- To add a mod to the current project:
+    ```
+    python3 mc_mp/main.py -a AwesomeMod
+    ```
+
+- To remove a mod from the current project:
+    ```
+    python3 mc_mp/main.py -r AwesomeMod
+    ```
+
+- To build the current project:
+    ```
+    python3 mc_mp/main.py -b
+    ```
+
+- To export the project configuration:
+    ```
+    python3 mc_mp/main.py -e /path/to/export/config.json
+    ```
+
+- To import a project configuration:
+    ```
+    python3 mc_mp/main.py -i /path/to/import/config.json
+    ```
+
+- To list all mods in the current project:
+    ```
+    python3 mc_mp/main.py -m
+    ```
+
+- To open the project menu directly:
+    ```
+    python3 mc_mp/main.py --menu
+    ```
 
 ## Project Structure
 
