@@ -57,6 +57,7 @@ class ProjectAPI:
         return ProjectAPI.request(f"/version/{version_id}")
 
     @staticmethod
-    def get_versions(ids: str) -> Optional[Dict[str, Any]]:
+    def get_versions(**kwargs) -> Optional[Dict[str, Any]]:
         """Retrieves information about multiple versions by their IDs."""
-        return ProjectAPI.request(f"/versions", params=ProjectAPI.parse_url(ids))
+        params = {k: v for k, v in kwargs.items() if v is not None}
+        return ProjectAPI.request(f"/versions", params=ProjectAPI.parse_url(params))

@@ -149,20 +149,24 @@ def add_mods(project: p.Project, name: str) -> bool:
             return project.add_mod(name, versions, mod_index)
 
 
-def remove_mods(project: p.Project, indices: tuple) -> bool:
+def remove_mods(project: p.Project, indices) -> bool:
     """Remove mods from the current project based on their indices."""
     if indices is None:
         return False
-
+    
     for i in sorted(indices, reverse=True):
-        del project.mp.mod_list[i]
-
+        res = project.rm_mod(i)
+    
     project.metadata["saved"] = False
-    return True
-
-def update_mods(project: p.Project, indices: tuple) -> bool:
+    return res
+def update_mods(project: p.Project, indices) -> bool:
     """Update all mods in the current project."""
-    return True
+    if indices is None:
+        return False
+
+    res = project.update_mod(indices)
+    project.metadata["saved"] = False
+    return res
 
 def change_project_attribute(project: p.Project, attribute: str, prompt: str) -> bool:
     """Change a project attribute based on user input."""

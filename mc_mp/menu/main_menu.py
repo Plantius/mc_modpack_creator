@@ -165,7 +165,7 @@ class Menu:
         while True:
             selected_index = self.display_menu(
                 title="Update mods in the current project.",
-                options=self.p.mp.get_mod_list_names()+[None, "Update all"],
+                options=self.p.mp.get_mod_list_names(),
                 multi_select=True,
                 status_func=self.get_mod_status
             )

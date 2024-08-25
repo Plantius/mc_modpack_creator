@@ -23,3 +23,6 @@ HEADERS = {
 
 # Default project filename
 DEF_FILENAME = "project_1.json"
+
+# Indicates acceptance of a prompt
+ACCEPT = 'y'

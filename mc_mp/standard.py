@@ -47,7 +47,7 @@ def is_valid_project_id(encrypted_id: str) -> bool:
 def get_input(msg: str) -> str:
     """Prompt for ASCII input and return it if valid."""
     inp = input(msg)
-    if not inp.isascii() or not inp:
+    if not inp.isascii() or inp is None:
         eprint("[ERROR] Input must be a non-empty ASCII string.")
         return None
     return inp

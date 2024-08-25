@@ -88,6 +88,8 @@ In the `menu` package, configuration constants for user input are defined:
 
 ## TODO
 
+- Correctly download dependencies for mods that have them
+- Check if a mod is already in the project
 - Add `View mods` menu
 - Validate user input more robustly.
 - Expand the menu with additional options.

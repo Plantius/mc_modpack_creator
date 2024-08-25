@@ -2,9 +2,9 @@ from .modpack import Modpack
 from .mod import Mod
 import standard as std
 import json
-import textwrap as tw
+from dateutil import parser
 from typing import Optional, Dict, Any
-from . import DEF_FILENAME
+from . import DEF_FILENAME, ACCEPT
 from .project_api import ProjectAPI  # Import the new ProjectAPI 
 
 class Project:
@@ -161,6 +161,30 @@ class Project:
         self.mp.mod_list.append(new_mod)
         self.metadata["saved"] = False
         return True
+    
+    def rm_mod(self, index) -> bool:
+        try:
+            del self.mp.mod_list[index]
+            return True
+        except:
+            return False
+
+
+    def update_mod(self, indices) -> bool:
+        for index in indices:
+            new_versions = self.list_versions(self.mp.mod_list[index].project_id, loaders=[self.mp.mod_loader], game_versions=[self.mp.mc_version]) 
+            if new_versions is not None:
+                new_mod_date = parser.parse(new_versions[0]["date_published"])
+                current_mod_date = parser.parse(self.mp.mod_list[index].date_published)
+                if new_mod_date > current_mod_date:
+                    inp = std.get_input(f"There is a newer version available, do you want to upgrade? y/n {self.mp.mod_list[index].mod_version} -> {new_versions[0]['version_number']} ")
+                    if inp == ACCEPT:
+                        name = self.mp.mod_list[index].project_id
+                        self.metadata["saved"] = False
+                        return any([self.rm_mod(index), self.add_mod(name, new_versions, 0)])
+                print(f"{self.mp.get_mod_list_names()[index]} is up to date")
+                
+        return True
 
     # The following methods are delegated to the ProjectAPI instance
     def parse_url(self, params: Dict[str, Any]) -> str:
@@ -184,5 +208,5 @@ class Project:
     def get_version(self, version_id: str) -> Optional[Dict[str, Any]]:
         return self.api.get_version(version_id)
     
-    def get_versions(self, ids: str) -> Optional[Dict[str, Any]]:
-        return self.api.get_versions(ids)
+    def get_versions(self, **kwargs) -> Optional[Dict[str, Any]]:
+        return self.api.get_versions(**kwargs)
