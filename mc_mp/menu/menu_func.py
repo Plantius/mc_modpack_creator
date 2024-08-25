@@ -1,7 +1,7 @@
 import modpack.project as p
 import standard as std
 from simple_term_menu import TerminalMenu
-from menu import ACCEPT
+from menu import ACCEPT, CLEAR_SCREEN
 
 def load_project(project: p.Project) -> bool:
     """Load a project from a specified file, saving the current project if needed."""
@@ -13,7 +13,7 @@ def load_project(project: p.Project) -> bool:
     project_list = TerminalMenu(
         title=f"Which project do you want to load?",
         menu_entries=entries,
-        clear_screen=True
+        clear_screen=CLEAR_SCREEN
     )
     p_index = project_list.show()
     if p_index is None:
@@ -95,7 +95,7 @@ def search_mods(project: p.Project) -> bool:
             title="Which entries do you want to add? Select one option to see its details.",
             menu_entries=[f'{mod["title"]}: ' for mod in results["hits"]],
             multi_select=True,
-            clear_screen=True
+            clear_screen=CLEAR_SCREEN
         )
         mod_indices = result_list.show()
         if mod_indices is None:
@@ -139,7 +139,7 @@ def add_mods(project: p.Project, name: str) -> bool:
         version_list = TerminalMenu(
             title=f"Which version of {name} do you want to add?",
             menu_entries=[f'{version["name"]}: minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
-            clear_screen=True
+            clear_screen=CLEAR_SCREEN
         )
         mod_index = version_list.show()
         if mod_index is None:

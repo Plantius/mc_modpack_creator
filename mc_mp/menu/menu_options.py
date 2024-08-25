@@ -11,7 +11,6 @@ class Option(Enum):
     EXIT = auto()
 
 # Option Definitions
-
 OPT_PROJECT = [
     ["load_project", "Load project", Option.PROJECT, "Load a project file"],
     ["create_project", "Create project", Option.PROJECT, "Create a new project"],
@@ -45,18 +44,11 @@ def extract_option_details(options: list, index: int) -> list:
     """Extracts a specific detail from a list of options."""
     return [option[index] for option in options if option is not None]
 
-def get_options_func(options: list) -> List[str]:
-    """Extracts function names from a list of options."""
-    return extract_option_details(options, 0)
-
-def get_options_name(options: list) -> List[str]:
-    """Extracts descriptive names from a list of options."""
-    return extract_option_details(options, 1)
-
-def get_options_id(options: list) -> List[Option]:
-    """Extracts option IDs from a list of options."""
-    return extract_option_details(options, 2)
-
-def get_options_help(options: list) -> List[str]:
-    """Extracts help descriptions from a list of options."""
-    return extract_option_details(options, 3)
+def get_options(options: list) -> Dict[str, List[Union[str, Option]]]:
+    """Extracts all relevant details from a list of options."""
+    return {
+        'functions': extract_option_details(options, 0),
+        'names': extract_option_details(options, 1),
+        'ids': extract_option_details(options, 2),
+        'help': extract_option_details(options, 3)
+    }
