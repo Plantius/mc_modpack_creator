@@ -70,7 +70,7 @@ def get_index(lst: list, item) -> int:
 
 def get_project_files() -> list:
     """Returns a sorted list of JSON files in the current directory."""
-    return sorted([file.replace("./", "") for file in glob.glob("./*.json")])
+    return sorted(glob.glob("./*.json"))
 
 
 def eprint(*args, **kwargs) -> None:

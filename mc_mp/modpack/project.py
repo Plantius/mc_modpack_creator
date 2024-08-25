@@ -118,6 +118,18 @@ class Project:
         with open(filename, 'w') as file:
             json.dump(project_data, file)
 
+    def list_projects(self) -> list[str]:
+        valid_projects: list[str] = []
+        for filename in std.get_project_files():
+            try:
+                with open(filename, 'r') as file:
+                    data = json.load(file)
+                    if std.check_id(data["metadata"]["project_id"]):
+                        valid_projects.append(f'{filename}: {data["title"]}, {data["description"]}')
+            except Exception as e:
+                continue
+        return valid_projects
+
     def add_mod(self, name: str, versions: Dict[str, Any], mod_index: int) -> bool:
         """Adds a mod to the project's modpack."""
         project_info = self.api.get_project(name)

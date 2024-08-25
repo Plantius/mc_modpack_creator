@@ -26,8 +26,6 @@ To run the Minecraft Modpack Creator, execute the following command:
 - `-c, --create_project <name>`: Create a new project with the specified name.
 - `-l, --list_projects`: List all available projects.
 - `-d, --delete_project <filename>`: Delete the specified project file.
-- `-a, --add_mod <mod_name>`: Add a mod to the current project.
-- `-r, --remove_mod <mod_name>`: Remove a mod from the current project.
 - `-m, --list_mods`: List all mods in the current project.
 - `--menu`: Launch the project menu directly.
 
@@ -51,26 +49,6 @@ To run the Minecraft Modpack Creator, execute the following command:
 - To delete a project:
     ```
     python3 mc_mp/main.py -d my_modpack.json
-    ```
-
-- To add a mod to the current project:
-    ```
-    python3 mc_mp/main.py -a AwesomeMod
-    ```
-
-- To remove a mod from the current project:
-    ```
-    python3 mc_mp/main.py -r AwesomeMod
-    ```
-
-- To build the current project:
-    ```
-    python3 mc_mp/main.py -b
-    ```
-
-- To export the project configuration:
-    ```
-    python3 mc_mp/main.py -e /path/to/export/config.json
     ```
 
 - To list all mods in the current project:

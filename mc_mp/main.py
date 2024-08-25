@@ -8,20 +8,15 @@ def main():
 
     # Parse command-line arguments
     arguments = args.parse_arguments()
-    print(arguments)
 
     # Handle CLI commands
     if arguments.create_project:
         p.create_project(arguments.create_project)
         p.save_project()
     if arguments.list_projects:
-        print(p.list_projects())
+        print(*p.list_projects(), sep='\n')
     if arguments.delete_project:
         p.delete_project(arguments.delete_project)
-    if arguments.add_mod:
-        p.add_mod(arguments.add_mod)
-    if arguments.remove_mod:
-        p.remove_mod(arguments.remove_mod)
     if arguments.list_mods:
         print(p.list_mods())
     if arguments.open_project:

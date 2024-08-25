@@ -35,22 +35,6 @@ def create_parser() -> ArgumentParser:
         help="Specify the project file to delete"
     )
 
-    # Add a mod to the current project
-    parser.add_argument(
-        "-a", "--add_mod",
-        type=str,
-        required=False,
-        help="Specify the mod name to add to the project"
-    )
-
-    # Remove a mod from the current project
-    parser.add_argument(
-        "-r", "--remove_mod",
-        type=str,
-        required=False,
-        help="Specify the mod name to remove from the project"
-    )
-
     # List all mods in the current project
     parser.add_argument(
         "-m", "--list_mods",
