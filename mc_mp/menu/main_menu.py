@@ -1,17 +1,15 @@
-from multiprocessing.pool import CLOSE
-from menu import menu_func as mf, menu_options as mo
 from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
-import textwrap as tw
-from . import CLEAR_SCREEN, ACCEPT, OPEN
+from . import CLEAR_SCREEN, ACCEPT, OPEN, CLOSE
 
 class Menu:
-    def __init__(self, title: str, menu_entries: list = None,
+    def __init__(self, project: p.Project, title: str=None, menu_entries: list = None,
                  multiselect: bool = False, clear_screen: bool = CLEAR_SCREEN,
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
                  parent_menu=None) -> None:
         """Initializes the `Menu` instance."""
+        self.project: p.Project = project
         self.title: str = title
         self.menu_entries: list = menu_entries or []
         self.multi_select: bool = multiselect
@@ -23,9 +21,31 @@ class Menu:
         self.parent_menu: Menu = parent_menu
         self.menu_active = True
 
+    def get_project_title(self) -> str:
+        """Generates a title string for the main menu based on the project's current status."""
+        if self.project.metadata["loaded"]:
+            title = (f"{self.project.modpack.title}: {self.project.modpack.description} | "
+                    f"{self.project.modpack.mc_version} | {self.project.modpack.mod_loader} | "
+                    f"{len(self.project.modpack.mod_data)} mods | "
+                    f"Version {self.project.modpack.build_version} | {self.project.modpack.build_date}")
+            return title + '\n' + len(title)*'-'
+        return "No project loaded"
+    
+    def add_entries(self):
+        self.menu_entries.clear()
+        self.actions.clear()
+        self.add_option("Load project", lambda: self.load_project_action())
+        self.add_option("Save project", lambda: self.save_project_action())
+        self.add_option("Create project", lambda: self.create_project_action())
+        if self.project.metadata["loaded"]:
+            self.add_option("Add mod(s)", lambda: self.add_mods_action("indium"))
+        self.add_option("Exit", self.go_back)
+    
     def display(self) -> None:
         """Display the menu and handle user input."""
+        
         while self.menu_active:
+            self.title = self.get_project_title()
             terminal_menu = TerminalMenu(
                 title=self.title,
                 menu_entries=self.menu_entries,
@@ -35,7 +55,6 @@ class Menu:
                 status_bar=self.status_bar
             )
             selected_index = terminal_menu.show()
-
             if selected_index is not None:
                 self.handle_selection(selected_index)
             else:
@@ -63,18 +82,23 @@ class Menu:
 
     def go_back(self) -> None:
         """Handle going back to the parent menu or exiting."""
+        if not self.project.metadata["saved"]:
+            self.save_project_action()
         self.menu_active = False
         if self.parent_menu:
             self.parent_menu.display()
     
-    def load_project_action(self, project: p.Project) -> bool:
-        if project.metadata["loaded"] and not self.save_project_action(project):
+    def load_project_action(self) -> bool:
+        if self.project.metadata["loaded"] and not self.save_project_action():
             std.eprint("[ERROR] Could not save current project.")
             return OPEN  # Keep menu open
 
-        submenu = Menu(title="Which project do you want to load?",
-                    menu_entries=std.get_project_files() + ["Enter filename"],
-                    parent_menu=self)
+        submenu = Menu(
+            project=self.project, 
+            title="Which project do you want to load?",
+            menu_entries=std.get_project_files() + ["Enter filename"],
+            parent_menu=self
+            )
         
         def handle_selection(selected_index):
             filename = None
@@ -83,19 +107,20 @@ class Menu:
             else:
                 filename = submenu.menu_entries[selected_index]
             if filename:
-                project.load_project(filename)
+                self.project.load_project(filename)
                 submenu.menu_active = False
                 return CLOSE  # Close sub menu
             
         submenu.handle_selection = handle_selection
         submenu.display()
+        self.add_entries()  # Update menu_entries
         return OPEN  # Keep main menu open
         
             
-    def create_project_action(self, project: p.Project) -> bool:
-        if not project.metadata["saved"] and not self.save_project_action(project):
+    def create_project_action(self) -> bool:
+        if not self.project.metadata["saved"] and not self.save_project_action():
             std.eprint("[ERROR] Could not save current project.")
-            return OPEN  # Keep sub menu open
+            return OPEN  # Keep main menu open
 
         print("To create a new project, please enter the following details:")
         title = std.get_input("1. Project Title: ")
@@ -104,64 +129,58 @@ class Menu:
         mod_loader = std.get_input("4. Mod Loader (e.g., forge, fabric): ")
 
         if any(not value for value in [title, description, mc_version, mod_loader]):
-            return OPEN  # Keep sub menu open if creation fails
+            return OPEN  # Keep main menu open if creation fails
 
-        project.create_project(
+        self.project.create_project(
             title=title,
             description=description,
             mc_version=mc_version,
             mod_loader=mod_loader,
         )
-        self.menu_active = False  # Close the current menu after project creation
-        return CLOSE  # Close sub menu
+        self.add_entries()  # Update menu_entries
+        return OPEN  # Keep main menu open
     
-    def save_project_action(self, project: p.Project) -> bool:
-        if not project.metadata["saved"]:
+    def save_project_action(self) -> bool:
+        if not self.project.metadata["saved"]:
             if std.get_input("Do you want to save the project? y/n: ") == ACCEPT:
                 filename = std.get_input("Please enter the filename to save to: ") \
                     if std.get_input("Do you want to save the project to a new file? y/n: ") == ACCEPT \
-                    else project.metadata["filename"]
-                if filename:
-                    project.save_project(filename)
+                    else self.project.metadata["filename"]
+                self.project.save_project(filename)
         return OPEN  # Keep Main menu open
     
-    def add_mods_action(self, project: p.Project, name: str) -> bool:
-        versions = project.api.list_versions(name, loaders=[project.modpack.mod_loader],
-                                            game_versions=[project.modpack.mc_version])
+    def add_mods_action(self, name: str) -> bool:
+        versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
+                                            game_versions=[self.project.modpack.mc_version])
         if not versions:
             std.eprint(f"[ERROR] No mod called {name} found.")
             return OPEN  # Keep main menu open
 
         submenu = Menu(
+            project=self.project, 
             title=f"Which version of {name} do you want to add?",
             menu_entries=[f'{version["name"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
             parent_menu=self
-        )
+            )
         
         def handle_selection(selected_index):
             version = versions[selected_index]
             if std.get_input(f'''{version["name"]}:
 {version["changelog"]}
 Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                project.add_mod(name, versions, selected_index)
+                self.project.add_mod(name, versions, selected_index)
                 submenu.menu_active = False
                 return CLOSE  # Return to the main menu
 
         submenu.handle_selection = handle_selection
         submenu.display()
+        self.add_entries()  # Update menu_entries
         return OPEN  # Keep main menu open
         
     
-    def search_mods_action(self, project: p.Project):
+    def search_mods_action(self):
         pass
     
-    def main_menu(self, project: p.Project) -> None:
-        self.add_option("Load project", lambda: self.load_project_action(project))
-        self.add_option("Save project", lambda: self.save_project_action(project))
-        self.add_option("Create project", lambda: self.create_project_action(project))
-        self.add_option("Add mod(s)", lambda: self.add_mods_action(project, "indium"))
-        self.add_option("Exit", self.go_back)
-        self.display()
     # def get_options(self, flags: dict) -> list:
     #     """Returns a list of options based on the provided flags."""
     #     options = []
@@ -193,9 +212,9 @@ Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
 
     # def get_mod_status(self, entry: str) -> str:
     #     """Retrieves the status of a mod based on the provided entry."""
-    #     index = std.get_index(self.p.mp.get_mod_list_names(), entry)
+    #     index = std.get_index(project.mp.get_mod_list_names(), entry)
     #     if index is not None:
-    #         return f'{entry}: ' + tw.fill(self.p.mp.mod_list[index].description, width=100, fix_sentence_endings=True)
+    #         return f'{entry}: ' + tw.fill(project.mp.mod_list[index].description, width=100, fix_sentence_endings=True)
     #     return entry
 
     # def create_config(self, title="A Menu", menu_entries=["Exit"], cursor_index=0, 
@@ -344,12 +363,4 @@ Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
         #             print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
         #         break
 
-    # def get_project_title(self) -> str:
-    #     """Generates a title string for the main menu based on the project's current status."""
-    #     if self.p.metadata["loaded"]:
-    #         title = (f"{self.p.mp.title}: {self.p.mp.description} | "
-    #                 f"{self.p.mp.mc_version} | {self.p.mp.mod_loader} | "
-    #                 f"{len(self.p.mp.mod_list)} mods | "
-    #                 f"Version {self.p.mp.build_version} | {self.p.mp.build_date}")
-    #         return title + '\n' + len(title)*'-'
-    #     return "No project loaded"
+    

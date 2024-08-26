@@ -24,8 +24,9 @@ def main():
 
     # Initialize and display main menu
     if arguments.menu_disable:
-        menu = main_menu.Menu(title="Main Menu")
-        menu.main_menu(p)
+        menu = main_menu.Menu(p)
+        menu.add_entries()
+        menu.display()
         
 
 if __name__ == "__main__":

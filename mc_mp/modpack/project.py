@@ -86,7 +86,6 @@ class Project:
             "saved": False,
             "project_id": std.generate_project_id()
         })
-        # TODO
         if not self.modpack.check_compatibility():
             std.eprint("[ERROR]: Invalid project created.")
             exit(1)
@@ -107,10 +106,12 @@ class Project:
                 if not self.modpack.check_compatibility():
                     print("Invalid project loaded.")
                     exit(1)
+            self.metadata["loaded"] = True
+            self.metadata["saved"] = True
             return True
         return False
 
-    def save_project(self, filename: Optional[str]=None) -> bool:
+    def save_project(self, filename: Optional[str]=DEF_FILENAME) -> bool:
         """Saves the current project state to a file."""
         if filename:
             self.metadata["filename"] = filename
