@@ -50,12 +50,13 @@ class Modpack:
     mod_loader: str = "fabric"
     client_side: str = "required"
     server_side: str = "optional"
-    mod_list: List[mod.Mod] = []
+    mod_metadata: list[dict] = []
+    mod_data: list[mod.Mod] = []
 
     def __init__(self, **kwargs: Any) -> None:
         """Initializes the Modpack with optional parameters."""
         for key, value in kwargs.items():
-            if key == 'mod_list' and isinstance(value, list):
+            if key == 'mod_data' and isinstance(value, list):
                 setattr(self, key, [mod.Mod(**item) for item in value])
             else:
                 setattr(self, key, value)
@@ -69,9 +70,9 @@ class Modpack:
         return True
 
     def get_mod_list_names(self) -> List[str]:
-        """Returns a list of all mod names and their versions."""
-        return [f"{item.mod_name} - {item.mod_version}" for item in self.mod_list]
+        """Returns a list of all mod names"""
+        return [item.name for item in self.mod_data]
 
     def get_mod_list_descriptions(self) -> List[str]:
         """Returns a list of all mod descriptions."""
-        return [item.description for item in self.mod_list]
+        return [item["description"] for item in self.mod_data]

@@ -65,7 +65,8 @@ class Project:
         Retrieves details of multiple versions using the ProjectAPI instance.
     """
 
-    mp: Modpack
+    modpack: Modpack
+    api: ProjectAPI
     metadata: Dict[str, Any] = {
         "loaded": False,
         "saved": True,
@@ -79,18 +80,19 @@ class Project:
 
     def create_project(self, **kwargs) -> None:
         """Creates a new project and updates metadata."""
-        self.mp = Modpack(**kwargs)
+        self.modpack = Modpack(**kwargs)
         self.metadata.update({
             "loaded": True,
             "saved": False,
             "project_id": std.generate_project_id()
         })
-        if not self.mp.check_compatibility():
-            print("Invalid project created.")
+        # TODO
+        if not self.modpack.check_compatibility():
+            std.eprint("[ERROR]: Invalid project created.")
             exit(1)
         
 
-    def load_project(self, filename: str) -> None:
+    def load_project(self, filename: str) -> bool:
         """Loads project data from a file and initializes the modpack."""
         if os.path.exists(filename):
             with open(filename, 'r') as file:
@@ -100,11 +102,13 @@ class Project:
                     exit(1)
 
                 self.metadata = data["metadata"]; del data["metadata"]
-                self.mp = Modpack(**data)
+                self.modpack = Modpack(**data)
                 
-                if not self.mp.check_compatibility():
+                if not self.modpack.check_compatibility():
                     print("Invalid project loaded.")
                     exit(1)
+            return True
+        return False
 
     def save_project(self, filename: Optional[str]=None) -> bool:
         """Saves the current project state to a file."""
@@ -113,7 +117,7 @@ class Project:
         if not self.metadata["filename"]:
             return False
 
-        project_data = self.mp.export_json(); project_data["metadata"] = self.metadata
+        project_data = self.modpack.export_json(); project_data["metadata"] = self.metadata
         with open(self.metadata["filename"], 'w') as file:
             json.dump(project_data, file, indent=4)
         self.metadata["saved"] = True
