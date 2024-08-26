@@ -12,6 +12,9 @@ REJECT : str
 """
 
 # Indicates acceptance of a prompt
+from multiprocessing.pool import CLOSE
+
+
 ACCEPT = 'y'
 
 # Indicates rejection of a prompt
@@ -19,3 +22,6 @@ REJECT = 'n'
 
 # Clear screen
 CLEAR_SCREEN = False
+
+OPEN = True
+CLOSE = False
