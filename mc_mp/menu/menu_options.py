@@ -14,21 +14,22 @@ class Option(Enum):
 
 # Option Definitions
 OPT_PROJECT = [
-    ["load_project", "Load project", Option.PROJECT, "Load a project file"],
-    ["create_project", "Create project", Option.PROJECT, "Create a new project"],
-    ["save_project", "Save project", Option.PROJECT, "Save the current project"]
+    ["load_project_menu", "Load project", Option.PROJECT, "Load a project file"],
+    ["create_project_menu", "Create project", Option.PROJECT, "Create a new project"],
+    ["save_project_menu", "Save project", Option.PROJECT, "Save the current project"]
 ]
 
 OPT_MODPACK = [
-    ["placeholder", "Add mod(s)", Option.ADD_MODS, "Add new mods to the current project"],
-    ["remove_mods", "Remove mod(s)", Option.RM_MODS, "Remove mods from the current project"],
-    ["list_mods", "List mod(s)", Option.LIST_MODS, "List all mods in the current project"],
-    ["update_mods", "Update mods", Option.UPDATE_MODS, "Update all mods in the current project"]
+    ["add_mods_menu", "Add mod(s)", Option.ADD_MODS, "Add new mods to the current project"],
+    ["rm_mods_menu", "Remove mod(s)", Option.RM_MODS, "Remove mods from the current project"],
+    ["list_mods_menu", "List mod(s)", Option.LIST_MODS, "List all mods in the current project"],
+    ["update_mods_menu", "Update mods", Option.UPDATE_MODS, "Update all mods in the current project"]
 ]
 
 OPT_ADD_MOD = [
-    ["add_mods_input", "Add mod(s)", Option.ADD_MODS, "Add mods using their slug or id"],
-    ["search_mods", "Search mod(s)", Option.ADD_MODS, "Search for new mods"]
+    ["add_mods_id_menu", "Add mod(s) by id", Option.ADD_MODS, "Add mods using their slug or id"],
+    ["add_mods_file_menu", "Add mod(s) by file", Option.ADD_MODS, "Add mods using file"],
+    ["search_mods_menu", "Search mod(s)", Option.ADD_MODS, "Search for new mods"]
 ]
 
 OPT_CONFIG = [

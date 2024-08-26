@@ -50,7 +50,6 @@ class Modpack:
     mod_loader: str = "fabric"
     client_side: str = "required"
     server_side: str = "optional"
-    mod_metadata: list[dict] = []
     mod_data: list[mod.Mod] = []
 
     def __init__(self, **kwargs: Any) -> None:
@@ -75,4 +74,4 @@ class Modpack:
 
     def get_mod_list_descriptions(self) -> List[str]:
         """Returns a list of all mod descriptions."""
-        return [item["description"] for item in self.mod_data]
+        return [item.description for item in self.mod_data]

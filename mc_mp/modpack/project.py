@@ -124,33 +124,35 @@ class Project:
         return True
 
 
-    def add_mod(self, name: str, versions: json, mod_index: int) -> bool:
+    def add_mod(self, name: str, versions: dict, mod_index: int) -> bool:
         """Adds a mod to the project's modpack."""
+        #TODO
+        mod_info = versions[mod_index]
         project_info = self.api.get_project(name)
-        if project_info is None:
+        if any([project_info, mod_info]) is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
             return False
         
-        mod_details = versions[mod_index]
-        new_mod = Mod(
-            mod_name=project_info["title"], 
+        self.modpack.mod_data.append(Mod(
+            title=project_info["title"],
             description=project_info["description"],
-            mod_version=mod_details["version_number"],
-            dependencies=mod_details["dependencies"],
-            mc_versions=mod_details["game_versions"],
-            mod_loaders=mod_details["loaders"], 
-            mod_id=mod_details["id"],
-            project_id=mod_details["project_id"],
-            date_published=mod_details["date_published"], 
-            files=mod_details["files"]
-        )
-        self.mp.mod_list.append(new_mod)
+            name=mod_info["name"], 
+            changelog=mod_info["changelog"], 
+            version_number=mod_info["version_number"],
+            dependencies=mod_info["dependencies"],
+            mc_versions=mod_info["game_versions"],
+            mod_loaders=mod_info["loaders"], 
+            id=mod_info["id"],
+            project_id=mod_info["project_id"],
+            date_published=mod_info["date_published"], 
+            files=mod_info["files"]
+        ))
         self.metadata["saved"] = False
         return True
     
     def rm_mod(self, index) -> bool:
         try:
-            del self.mp.mod_list[index]
+            del self.modpack.mod_data[index]
             self.metadata["saved"] = False
             return True
         except:
@@ -158,19 +160,18 @@ class Project:
 
     def update_mod(self, indices) -> bool:
         for index in indices:
-            new_versions = self.list_versions(self.mp.mod_list[index].project_id, loaders=[self.mp.mod_loader], game_versions=[self.mp.mc_version]) 
+            new_versions = self.api.list_versions(self.modpack.mod_data[index].project_id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]) 
             if new_versions is not None:
                 new_mod_date = parser.parse(new_versions[0]["date_published"])
-                current_mod_date = parser.parse(self.mp.mod_list[index].date_published)
+                current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)
                 if new_mod_date > current_mod_date:
-                    inp = std.get_input(f"There is a newer version available for {self.mp.mod_list[index].mod_name}, do you want to upgrade? y/n {self.mp.mod_list[index].mod_version} -> {new_versions[0]['version_number']} ")
+                    inp = std.get_input(f"There is a newer version available for {self.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.modpack.mod_data[index].version_number} -> {new_versions[0]['version_number']} ")
                     if inp == ACCEPT:
-                        name = self.mp.mod_list[index].project_id
+                        name = self.modpack.mod_data[index].project_id
                         self.metadata["saved"] = False
                         return any([self.rm_mod(index), self.add_mod(name, new_versions, 0)])
-                print(f"{self.mp.get_mod_list_names()[index]} is up to date")
-                
-        return True
+                print(f"{self.modpack.get_mod_list_names()[index]} is up to date")
+        return False
     
     def list_projects(self) -> list[str]:
         valid_projects: list[str] = []
@@ -186,5 +187,5 @@ class Project:
     
     def list_mods(self) -> list[str]:
         if self.metadata["loaded"]:
-            return [f'{m}:\n\t{d}' for m,d in zip(self.mp.get_mod_list_names(), self.mp.get_mod_list_descriptions())]
+            return [f'{m}:\n\t{d}' for m,d in zip(self.modpack.get_mod_list_names(), self.modpack.get_mod_list_descriptions())]
         return None

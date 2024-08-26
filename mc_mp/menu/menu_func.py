@@ -1,6 +1,5 @@
 import modpack.project as p
 import standard as std
-from simple_term_menu import TerminalMenu
 from menu import ACCEPT, CLEAR_SCREEN
 
 class MenuFunctions():

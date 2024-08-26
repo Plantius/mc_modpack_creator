@@ -42,7 +42,8 @@ class Mod:
     load_json(data: dict) -> None
         Loads the provided JSON data into the mod's attributes.
     """
-
+    title: str = "Mod"
+    description: str = "This is a mod"
     name: str = "Mod 1.0.0"
     changelog: str = "Changes"
     version_number: str = "1.0"

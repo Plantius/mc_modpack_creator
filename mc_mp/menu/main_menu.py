@@ -1,53 +1,26 @@
 from menu import menu_func as mf, menu_options as mo
-from modpack import project
+from simple_term_menu import TerminalMenu
+from modpack import project as p
 import standard as std
 import textwrap as tw
 from . import CLEAR_SCREEN
 
 class Menu:
-    """
-    A class to manage and interact with the menu system for a project.
-
-    Attributes
-    ----------
-    p : project.Project
-        An instance of the `Project` class that the menu operates on.
-
-    Methods
-    -------
-    create_config(title="A Menu", menu_entries=["Exit"], cursor_index=0, 
-                  clear_screen=True, multi_select=False, show_multi_select_hint=False,
-                  status_bar="No project loaded") -> dict
-        Creates a configuration dictionary for a menu.
-    
-    get_options(flags: dict) -> list
-        Returns a list of options based on the provided flags.
-    
-    get_project_status(entry: str) -> str
-        Retrieves the status of a project option based on the provided entry.
-    
-    get_mod_status(entry: str) -> str
-        Retrieves the status of a mod based on the provided entry.
-    
-    config_menu(config_options: dict) -> None
-        Displays a menu for editing project settings.
-    
-    rm_mod_menu(main_options: dict, main_index: int, func: callable) -> None
-        Displays a menu for removing mods from the project.
-    
-    add_mod_menu(mod_options: dict) -> None
-        Displays a menu for adding new mods to the project.
-    
-    main_menu() -> None
-        Displays the main menu and handles user interactions with different options.
-    """
-
-    def __init__(self, p: project.Project) -> None:
+    def __init__(self, project: p.Project, title: str, menu_entries: list, 
+                 multiselect=False, clear_screen=CLEAR_SCREEN, cursor_index=0, status: callable=None) -> None:
         """Initializes the `Menu` instance with a project."""
-        self.p = p
-        self.mf = mf.MenuFunctions()
+        self.project = project
+        self.title = title
+        self.menu_entries = menu_entries
+        self.multi_select = multiselect
+        self.clear_screen = clear_screen
+        self.cursor_index = cursor_index
+        self.status = status
 
 
+    def display(self):
+        termina
+    
     def get_options(self, flags: dict) -> list:
         """Returns a list of options based on the provided flags."""
         options = []
@@ -198,9 +171,9 @@ class Menu:
 
             main_index = self.display_menu(
                 title=title,
-                cursor_index=cursor_index,
                 menu_entries=mo.get_options(main_options)["names"],
-                status_func=self.get_project_status
+                status_func=self.get_project_status,
+                cursor_index=cursor_index
             )
             
             if main_index is None:
