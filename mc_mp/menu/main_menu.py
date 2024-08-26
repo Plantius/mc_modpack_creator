@@ -42,12 +42,16 @@ class Menu:
         self.add_option("Save project", lambda: self.save_project_action())
         self.add_option("Create project", lambda: self.create_project_action())
         if self.project.metadata["loaded"]:
-            self.add_option("Add mod(s)", lambda: self.add_mods_action("indium"))
+            self.add_option("Add mod(s)", lambda: self.add_mods_action())
         self.add_option("Exit", self.go_back)
+    
+    def add_option(self, option: str, action=None) -> None:
+        """Add a new option to the menu."""
+        self.menu_entries.append(option)
+        self.actions.append(action)
     
     def display(self) -> None:
         """Display the menu and handle user input."""
-        
         while self.menu_active:
             self.title = self.get_project_title()
             terminal_menu = TerminalMenu(
@@ -62,7 +66,7 @@ class Menu:
             if selected_index is not None:
                 self.handle_selection(selected_index)
             else:
-                self.go_back()
+                self.exit_submenu()
 
     def handle_selection(self, selected_index) -> None:
         """Handle the selected menu option."""
@@ -79,11 +83,15 @@ class Menu:
         else:
             std.eprint("[ERROR] Invalid menu selection.")
 
-    def add_option(self, option: str, action=None) -> None:
-        """Add a new option to the menu."""
-        self.menu_entries.append(option)
-        self.actions.append(action)
-
+    def exit_submenu(self) -> None:
+        """Handle exiting a submenu without triggering a full go_back."""
+        if self.parent_menu:
+            # Exiting a submenu
+            self.menu_active = False  # Close the current menu
+        else:
+            # No parent menu, treat as a normal go_back
+            self.go_back()
+    
     def go_back(self) -> None:
         """Handle going back to the parent menu or exiting."""
         if not self.project.metadata["saved"]:
@@ -153,32 +161,50 @@ class Menu:
                 self.project.save_project(filename)
         return OPEN  # Keep Main menu open
     
-    def add_mods_action(self, name: str) -> bool:
-        versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
-                                            game_versions=[self.project.modpack.mc_version])
-        if not versions:
-            std.eprint(f"[ERROR] No mod called {name} found.")
-            return OPEN  # Keep main menu open
-
+    def add_mods_action(self) -> bool:
         submenu = Menu(
             project=self.project, 
-            title=f"Which version of {name} do you want to add?",
-            menu_entries=[f'{version["name"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
+            title=f"Add mod options",
             parent_menu=self
             )
+        submenu.add_option("Add mod(s) by id/slug", lambda: self.add_mods_id_action())
+        submenu.display()
+        return OPEN  # Keep Main menu open
+    
+    def add_mods_id_action(self) -> bool:
+        names = std.get_input("Please enter mod slugs or IDs (e.g., name1 name2 ...): ")
+        if not names:
+            return OPEN
         
-        def handle_selection(selected_index):
-            version = versions[selected_index]
-            if std.get_input(f'''{version["name"]}:
+        for name in names.split():
+            versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
+                                                game_versions=[self.project.modpack.mc_version])
+            if not versions:
+                std.eprint(f"[ERROR] No mod called {name} found.")
+                continue
+                # return OPEN  # Keep main menu open
+
+            submenu = Menu(
+                project=self.project, 
+                title=f"Which version of {name} do you want to add?",
+                menu_entries=[f'{version["name"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
+                parent_menu=self
+                )
+            
+            def handle_selection(selected_index):
+                version = versions[selected_index]
+                if std.get_input(f'''{version["name"]}:
 {version["changelog"]}
 Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                self.project.add_mod(name, versions, selected_index)
-                submenu.menu_active = False
-                return CLOSE  # Return to the main menu
+                    self.project.add_mod(name, versions, selected_index)
+                    submenu.menu_active = False
+                    return CLOSE  # Close sub menu (version list)
 
-        submenu.handle_selection = handle_selection
-        submenu.display()
-        self.update_entries()  # Update menu_entries
+            submenu.handle_selection = handle_selection
+            submenu.display()
+            if not submenu.menu_active:
+                continue
+            
         return OPEN  # Keep main menu open
         
     
