@@ -67,8 +67,6 @@ class MenuFunctions():
     def create_project(self, project: p.Project) -> bool:
         """Create a new project with user-defined details and save it."""
         if not project.save_project():
-       
-        
             print("Create a new project. Please enter the following details:")
             title = std.get_input("1. Project Title: ")
             description = std.get_input("2. Project Description: ")
