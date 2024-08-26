@@ -238,7 +238,8 @@ class Menu:
             title="Add mod options",
             parent_menu=self
         )
-        submenu.add_option("Add mod(s) by id/slug", lambda: self.add_mods_id_action())
+        submenu.add_option("Add mods by id/slug", lambda: self.add_mods_id_action())
+        submenu.add_option("Search for mods", lambda: self.search_mods_action())
         submenu.display()
         return OPEN  # Keep main menu open
     
@@ -283,12 +284,58 @@ Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
                 continue
             
         return OPEN  # Keep main menu open
-        
+    # TODO Unify search mods and add mods
     def search_mods_action(self):
         """Placeholder for a future feature to search for mods."""
-        pass
+        query = std.get_input("Please enter a term to search for: ")
 
-    
+        kwargs = {
+            "query": query,
+            "facets": [
+                [f"categories:{self.project.modpack.mod_loader}"],
+                [f"versions:{self.project.modpack.mc_version}"]
+            ],
+            "limit": 200
+        }
+
+        if std.get_input("Do you want to enter additional facets? y/n: ") == ACCEPT:
+            facets = std.get_input("Enter the facets you want to search with (e.g., modloader(s), minecraft version(s)): ")
+            if facets is None:
+                std.eprint("[ERROR] No facets given.")
+                return False
+            temp = [[f"{key}:{item}" for item in value.split()] for key, value in zip(["categories", "versions"], facets.split(','))]
+            kwargs["facets"] = [item for facet in temp for item in facet] + ["project_type:mod"]
+
+        results = self.project.api.search_project(**kwargs)
+        if not results:
+            return OPEN
+        submenu = Menu(
+                project=self.project, 
+                title="Which entries do you want to add? Select one option to see its details.",
+                menu_entries=[f'{mod["title"]}: ' for mod in results["hits"]],
+                multi_select=True
+            )
+          
+        def handle_selection(selected_index):
+            if len(selected_index) == 1:
+                selected_mod = results["hits"][selected_index[0]]
+                if input(f'''{selected_mod["title"]}
+    Client side: {selected_mod["client_side"]}
+    Server side: {selected_mod["server_side"]}
+
+{selected_mod["description"]}
+Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
+    Do you want to add this mod to the current project? y/n ''') != ACCEPT:
+                    return OPEN
+            for i in selected_index:
+                self.add_mods_id_action()
+                self.project.add_mod(name, versions, selected_index)
+                res = self.add_mods(self.project, results["hits"][i]["slug"])
+
+        submenu.handle_selection = handle_selection
+        submenu.display()
+            
+                
     # def get_options(self, flags: dict) -> list:
     #     """Returns a list of options based on the provided flags."""
     #     options = []
