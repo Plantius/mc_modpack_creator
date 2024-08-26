@@ -25,7 +25,7 @@ def main():
     # Initialize and display main menu
     if arguments.menu_disable:
         menu = main_menu.Menu(p)
-        menu.add_entries()
+        menu.update_entries()
         menu.display()
         
 

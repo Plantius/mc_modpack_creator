@@ -4,6 +4,8 @@ import standard as std
 from . import CLEAR_SCREEN, ACCEPT, OPEN, CLOSE
 
 class Menu:
+    main_menu_instance = None
+    
     def __init__(self, project: p.Project, title: str=None, menu_entries: list = None,
                  multiselect: bool = False, clear_screen: bool = CLEAR_SCREEN,
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
@@ -20,6 +22,8 @@ class Menu:
         self.actions: list = actions or []
         self.parent_menu: Menu = parent_menu
         self.menu_active = True
+        if Menu.main_menu_instance is None:
+            Menu.main_menu_instance = self
 
     def get_project_title(self) -> str:
         """Generates a title string for the main menu based on the project's current status."""
@@ -31,7 +35,7 @@ class Menu:
             return title + '\n' + len(title)*'-'
         return "No project loaded"
     
-    def add_entries(self):
+    def update_entries(self):
         self.menu_entries.clear()
         self.actions.clear()
         self.add_option("Load project", lambda: self.load_project_action())
@@ -113,7 +117,7 @@ class Menu:
             
         submenu.handle_selection = handle_selection
         submenu.display()
-        self.add_entries()  # Update menu_entries
+        self.update_entries()  # Update menu_entries
         return OPEN  # Keep main menu open
         
             
@@ -137,11 +141,11 @@ class Menu:
             mc_version=mc_version,
             mod_loader=mod_loader,
         )
-        self.add_entries()  # Update menu_entries
+        self.update_entries()  # Update menu_entries
         return OPEN  # Keep main menu open
     
     def save_project_action(self) -> bool:
-        if not self.project.metadata["saved"]:
+        if self is Menu.main_menu_instance and not self.project.metadata["saved"]:
             if std.get_input("Do you want to save the project? y/n: ") == ACCEPT:
                 filename = std.get_input("Please enter the filename to save to: ") \
                     if std.get_input("Do you want to save the project to a new file? y/n: ") == ACCEPT \
@@ -174,7 +178,7 @@ Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
 
         submenu.handle_selection = handle_selection
         submenu.display()
-        self.add_entries()  # Update menu_entries
+        self.update_entries()  # Update menu_entries
         return OPEN  # Keep main menu open
         
     
