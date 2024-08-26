@@ -165,6 +165,7 @@ class Project:
     def rm_mod(self, index) -> bool:
         try:
             del self.mp.mod_list[index]
+            self.metadata["saved"] = False
             return True
         except:
             return False
@@ -184,28 +185,3 @@ class Project:
                 print(f"{self.mp.get_mod_list_names()[index]} is up to date")
                 
         return True
-
-    # The following methods are delegated to the ProjectAPI instance
-    def parse_url(self, params: Dict[str, Any]) -> str:
-        return self.api.parse_url(params)
-
-    def is_slug_valid(self, slug_or_id: str) -> Optional[Dict[str, Any]]:
-        return self.api.is_slug_valid(slug_or_id)
-
-    def get_dependencies(self, project_name: str) -> Optional[Dict[str, Any]]:
-        return self.api.get_dependencies(project_name)
-
-    def search_project(self, **kwargs) -> Optional[Dict[str, Any]]:
-        return self.api.search_project(**kwargs)
-
-    def get_project(self, project_name: str) -> Optional[Dict[str, Any]]:
-        return self.api.get_project(project_name)
-    
-    def list_versions(self, project_name: str, **kwargs) -> Optional[Dict[str, Any]]:
-        return self.api.list_versions(project_name, **kwargs)
-    
-    def get_version(self, version_id: str) -> Optional[Dict[str, Any]]:
-        return self.api.get_version(version_id)
-    
-    def get_versions(self, **kwargs) -> Optional[Dict[str, Any]]:
-        return self.api.get_versions(**kwargs)

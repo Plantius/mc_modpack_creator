@@ -34,7 +34,9 @@ class MenuFunctions():
         menu = TerminalMenu(**menu_config)
         return menu.show()
     
-
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     def load_project(self, project: p.Project) -> bool:
         """Load a project from a specified file, saving the current project if needed."""
         if project.metadata["loaded"] and not self.save_project(project):
@@ -59,6 +61,10 @@ class MenuFunctions():
         project.load_project(filename)
         return True
 
+
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     def create_project(self, project: p.Project) -> bool:
         """Create a new project with user-defined details and save it."""
         if project.metadata["loaded"] and not self.save_project(project):
@@ -81,6 +87,9 @@ class MenuFunctions():
         )
         return True
 
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     def save_project(self, project: p.Project) -> bool:
         """Save the current project to a file, optionally with a new filename."""
         if not project.metadata["saved"]:
@@ -95,6 +104,9 @@ class MenuFunctions():
                 project.metadata["saved"] = True
         return True
 
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     # TODO Add more info when multiple mods are selected
     def search_mods(self, project: p.Project) -> bool:
         """Search for mods based on user input and add selected mods to the project."""
@@ -117,7 +129,7 @@ class MenuFunctions():
             temp = [[f"{key}:{item}" for item in value.split()] for key, value in zip(["categories", "versions"], facets.split(','))]
             kwargs["facets"] = [item for facet in temp for item in facet] + ["project_type:mod"]
 
-        results = project.search_project(**kwargs)
+        results = project.api.search_project(**kwargs)
 
         while True:
             selected_indices = self.display_menu(
@@ -142,7 +154,9 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 res = self.add_mods(project, results["hits"][i]["slug"])
             return res
 
-
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     def add_mods_input(self, project: p.Project) -> bool:
         """Add multiple mods to the current project based on user input."""
         names = std.get_input("Please enter mod slugs or IDs (e.g., name1 name2 ...): ")
@@ -152,14 +166,17 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         return all(self.add_mods(project, name) for name in names.split())
 
 
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     # TODO: Ask for user confirmation when selecting mod to add 
     def add_mods(self, project: p.Project, name: str) -> bool:
         """Add a mod to the current project by its name."""
-        if not project.is_slug_valid(name):
+        if not project.api.is_slug_valid(name):
             std.eprint("[ERROR] Invalid mod name/id.")
             return False
 
-        versions = project.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
+        versions = project.api.list_versions(name, loaders=[project.mp.mod_loader], game_versions=[project.mp.mc_version])
         if versions is None:
             std.eprint(f"[ERROR] No mod called {name} found.")
             return False
@@ -177,17 +194,19 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 return project.add_mod(name, versions, selected_index)
 
 
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     def remove_mods(self, project: p.Project, indices) -> bool:
         """Remove mods from the current project based on their indices."""
         if indices is None or len(project.mp.mod_list) == 0:
             return False
 
-        for i in sorted(indices, reverse=True):
-            res = project.rm_mod(i)
-        
-        project.metadata["saved"] = False
-        return res
+        return all(project.rm_mod(i) for i in sorted(indices, reverse=True))
     
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     def update_mods(self, project: p.Project, indices) -> bool:
         """Update all mods in the current project."""
         if indices is None or len(project.mp.mod_list) == 0:
@@ -195,13 +214,18 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
 
         return project.update_mod(indices)
     
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     def list_mods(self, project: p.Project, index) -> bool:
         """View all mods in the current project."""
         if index is None or len(project.mp.mod_list) == 0:
             return False
         return True
 
-
+    # 
+    # TODO: Move all important functions to Project class
+    # 
     def change_project_attribute(self, project: p.Project, attribute: str, prompt: str) -> bool:
         """Change a project attribute based on user input."""
         new_value = std.get_input(prompt)
