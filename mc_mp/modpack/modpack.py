@@ -48,6 +48,8 @@ class Modpack:
     build_version: str = "0.1"
     mc_version: str = "1.19"
     mod_loader: str = "fabric"
+    client_side: str = "required"
+    server_side: str = "optional"
     mod_list: List[mod.Mod] = []
 
     def __init__(self, **kwargs: Any) -> None:

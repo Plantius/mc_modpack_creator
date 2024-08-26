@@ -44,19 +44,17 @@ class Mod:
         Loads the provided JSON data into the mod's attributes.
     """
 
-    mod_name: str = "Mod"
-    description: str = "A mod"
-    mod_version: str = "1.0"
-    dependencies: list = []
+    name: str = "Mod 1.0.0"
+    changelog: str = "Changes"
+    version_number: str = "1.0"
+    dependencies: list[dict] = []
     mc_versions: list = ["1.19"]
     version_type: str = "release"
-    client_side: str = "required"
-    server_side: str = "optional"
     mod_loaders: list = []
-    mod_id: str = "IIJJKKLL"
+    id: str = "IIJJKKLL"
     project_id: str = "AABBCCDD"
     date_published: str = ""
-    files: list = []
+    files: list[dict] = []
 
     def __init__(self, **kwargs) -> None:
         """Initializes the mod with the given attributes."""

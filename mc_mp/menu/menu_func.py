@@ -67,24 +67,24 @@ class MenuFunctions():
     # 
     def create_project(self, project: p.Project) -> bool:
         """Create a new project with user-defined details and save it."""
-        if project.metadata["loaded"] and not self.save_project(project):
-            std.eprint("[ERROR] Could not save current project.")
-            return False
-        print("Create a new project. Please enter the following details:")
-        title = std.get_input("1. Project Title: ")
-        description = std.get_input("2. Project Description: ")
-        mc_version = std.get_input("3. Minecraft Version (e.g., 1.16.5): ")
-        mod_loader = std.get_input("4. Mod Loader (e.g., forge, fabric): ")
+        if not project.save_project():
+       
+        
+            print("Create a new project. Please enter the following details:")
+            title = std.get_input("1. Project Title: ")
+            description = std.get_input("2. Project Description: ")
+            mc_version = std.get_input("3. Minecraft Version (e.g., 1.16.5): ")
+            mod_loader = std.get_input("4. Mod Loader (e.g., forge, fabric): ")
 
-        if any(value == "" or None for value in [title, description, mc_version, mod_loader]):
-            return False
+            if any(value == "" or None for value in [title, description, mc_version, mod_loader]):
+                return False
 
-        project.create_project(
-            title=title,
-            description=description,
-            mc_version=mc_version,
-            mod_loader=mod_loader,
-        )
+            project.create_project(
+                title=title,
+                description=description,
+                mc_version=mc_version,
+                mod_loader=mod_loader,
+            )
         return True
 
     # 
@@ -101,7 +101,6 @@ class MenuFunctions():
                     project.save_project(filename)
                 else:
                     project.save_project(project.metadata["filename"])
-                project.metadata["saved"] = True
         return True
 
     # 

@@ -2,6 +2,7 @@ from .modpack import Modpack
 from .mod import Mod
 import standard as std
 import json
+import os
 from dateutil import parser
 from typing import Optional, Dict, Any
 from . import DEF_FILENAME, ACCEPT
@@ -87,56 +88,39 @@ class Project:
         if not self.mp.check_compatibility():
             print("Invalid project created.")
             exit(1)
+        
 
     def load_project(self, filename: str) -> None:
         """Loads project data from a file and initializes the modpack."""
-        try:
+        if os.path.exists(filename):
             with open(filename, 'r') as file:
                 data = json.load(file)
                 if not std.is_valid_project_id(data["metadata"]["project_id"]):
                     std.eprint("[ERROR] Invalid project file.")
                     exit(1)
 
-                self.metadata = data["metadata"]
-                del data["metadata"]
+                self.metadata = data["metadata"]; del data["metadata"]
                 self.mp = Modpack(**data)
                 
                 if not self.mp.check_compatibility():
                     print("Invalid project loaded.")
                     exit(1)
-        except Exception as e:
-            std.eprint(f"[ERROR] Error processing file: {e}")
-            exit(1)
 
-    def save_project(self, filename: Optional[str] = None) -> None:
+    def save_project(self, filename: Optional[str]=None) -> bool:
         """Saves the current project state to a file."""
-        if filename is None:
-            filename = DEF_FILENAME
-        self.metadata["filename"] = filename
+        if filename:
+            self.metadata["filename"] = filename
+        if not self.metadata["filename"]:
+            return False
+
+        project_data = self.mp.export_json(); project_data["metadata"] = self.metadata
+        with open(self.metadata["filename"], 'w') as file:
+            json.dump(project_data, file, indent=4)
         self.metadata["saved"] = True
-        project_data = self.mp.export_json()
-        project_data["metadata"] = self.metadata
-        with open(filename, 'w') as file:
-            json.dump(project_data, file)
+        return True
 
-    def list_projects(self) -> list[str]:
-        valid_projects: list[str] = []
-        for filename in std.get_project_files():
-            try:
-                with open(filename, 'r') as file:
-                    data = json.load(file)
-                    if std.is_valid_project_id(data["metadata"]["project_id"]):
-                        valid_projects.append(f'{filename}: {data["title"]}, {data["description"]}')
-            except:
-                continue
-        return valid_projects
-    
-    def list_mods(self) -> list[str]:
-        if self.metadata["loaded"]:
-            return [f'{m}:\n\t{d}' for m,d in zip(self.mp.get_mod_list_names(), self.mp.get_mod_list_descriptions())]
-        return None
 
-    def add_mod(self, name: str, versions: Dict[str, Any], mod_index: int) -> bool:
+    def add_mod(self, name: str, versions: json, mod_index: int) -> bool:
         """Adds a mod to the project's modpack."""
         project_info = self.api.get_project(name)
         if project_info is None:
@@ -150,8 +134,6 @@ class Project:
             mod_version=mod_details["version_number"],
             dependencies=mod_details["dependencies"],
             mc_versions=mod_details["game_versions"],
-            client_side=project_info["client_side"],
-            server_side=project_info["server_side"], 
             mod_loaders=mod_details["loaders"], 
             mod_id=mod_details["id"],
             project_id=mod_details["project_id"],
@@ -185,3 +167,20 @@ class Project:
                 print(f"{self.mp.get_mod_list_names()[index]} is up to date")
                 
         return True
+    
+    def list_projects(self) -> list[str]:
+        valid_projects: list[str] = []
+        for filename in std.get_project_files():
+            try:
+                with open(filename, 'r') as file:
+                    data = json.load(file)
+                    if std.is_valid_project_id(data["metadata"]["project_id"]):
+                        valid_projects.append(f'{filename}: {data["title"]}, {data["description"]}')
+            except:
+                continue
+        return valid_projects
+    
+    def list_mods(self) -> list[str]:
+        if self.metadata["loaded"]:
+            return [f'{m}:\n\t{d}' for m,d in zip(self.mp.get_mod_list_names(), self.mp.get_mod_list_descriptions())]
+        return None
