@@ -1,3 +1,4 @@
+from os import stat
 from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
@@ -33,7 +34,7 @@ class Menu:
         self.multi_select: bool = multi_select
         self.clear_screen: bool = clear_screen
         self.cursor_index: int = cursor_index
-        self.status_bar: callable = status_bar
+        self.status_bar: callable = status_bar or self.get_entry_help
 
         self.actions: list = actions or []
         self.help: list = help or []
@@ -55,7 +56,7 @@ class Menu:
             title = (f"{self.project.modpack.title}: {self.project.modpack.description} | "
                     f"{self.project.modpack.mc_version} | {self.project.modpack.mod_loader} | "
                     f"{len(self.project.modpack.mod_data)} mods | "
-                    f"Version {self.project.modpack.build_version} | {self.project.modpack.build_date}")
+                    f"Version {self.project.modpack.build_version}")
             return title + '\n' + len(title) * '-'
         return "No project loaded"
     
@@ -75,6 +76,7 @@ class Menu:
             self.add_option("List current mods", self.list_mods_action, "List all mods in the current project")
             self.add_option("Remove mod(s)", self.remove_mods_action, "Remove mods from the current project")
             self.add_option("Update mod(s)", self.update_mods_action, "Update mods in the current project")
+            self.add_option("Change project settings", self.change_settings_menu, "Change the project's title, description, etc.")
         
         self.add_option("Exit", self.close_self, "Exit the current menu")
     
@@ -244,8 +246,8 @@ class Menu:
             title="Add mod options",
             parent_menu=self
         )
-        submenu.add_option("Add mods by id/slug", lambda: self.add_mods_id_action())
-        submenu.add_option("Search for mods", lambda: self.search_mods_action())
+        submenu.add_option("Add mods by id/slug", self.add_mods_id_action)
+        submenu.add_option("Search for mods", self.search_mods_action)
         submenu.display()
         return OPEN  # Keep main menu open
     
@@ -342,6 +344,18 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu.display()
         return OPEN
     
+    def change_settings_menu(self) -> bool:
+        submenu = Menu(
+            project=self.project, 
+            title="Change current project's settings: " + self.get_project_title(),
+            parent_menu=self
+        )
+        submenu.add_option("Change Title", self.change_project_setting)
+        submenu.display()
+    
+    def change_project_setting(self):
+        pass
+    
     def list_mods_action(self) -> bool:
         """View all mods in the current project."""
         if len(self.project.modpack.mod_data) == 0:
@@ -360,6 +374,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu.handle_selection = handle_selection
         submenu.display()
         return OPEN
+    
     
     def remove_mods_action(self) -> bool:
         """View all mods in the current project."""
