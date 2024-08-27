@@ -1,4 +1,3 @@
-import select
 from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
@@ -10,7 +9,7 @@ class Menu:
     # Static variable to hold the main menu instance
     main_menu_instance = None
     
-    def __init__(self, project: p.Project, title: str = None, menu_entries: list = None,
+    def __init__(self, project: p.Project, title: str = None, menu_entries= None,
                  multi_select: bool = False, clear_screen: bool = CLEAR_SCREEN,
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
                  parent_menu=None, help: list=None) -> None:
@@ -30,7 +29,7 @@ class Menu:
         """
         self.project: p.Project = project
         self.title: str = title
-        self.menu_entries: list = menu_entries or []
+        self.menu_entries = menu_entries or []
         self.multi_select: bool = multi_select
         self.clear_screen: bool = clear_screen
         self.cursor_index: int = cursor_index
@@ -101,7 +100,7 @@ class Menu:
             self.title = self.get_project_title()
             terminal_menu = TerminalMenu(
                 title=self.title,
-                menu_entries=self.menu_entries,
+                menu_entries=self.menu_entries() if callable(self.menu_entries) else self.menu_entries,
                 multi_select=self.multi_select,
                 clear_screen=self.clear_screen,
                 cursor_index=self.cursor_index,
@@ -352,7 +351,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu = Menu(
                 project=self.project, 
                 title="Current mods in this project.",
-                menu_entries=self.project.modpack.get_mod_list_names()
+                menu_entries=self.project.modpack.get_mod_list_names  # Updatable
             )
           
         def handle_selection(selected_index):
@@ -371,7 +370,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu = Menu(
                 project=self.project, 
                 title="Select which mods to remove.",
-                menu_entries=self.project.modpack.get_mod_list_names(),
+                menu_entries=self.project.modpack.get_mod_list_names,  # Updatable
                 multi_select=True
             )
           
@@ -380,7 +379,6 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 return CLOSE
             for i in sorted(selected_index, reverse=True):
                 self.project.rm_mod(i) 
-
             return OPEN  # Keep sub menu open (remove mod list)
 
         submenu.handle_selection = handle_selection
@@ -395,7 +393,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu = Menu(
                 project=self.project, 
                 title="Update mods in the current project.",
-                menu_entries=self.project.modpack.get_mod_list_names(),
+                menu_entries=self.project.modpack.get_mod_list_names,  # Updatable
                 multi_select=True,
             )
           
@@ -404,7 +402,6 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 return CLOSE
             for i in selected_index:
                 self.project.update_mod(i) 
-
             return OPEN  # Keep sub menu open (remove mod list)
 
         submenu.handle_selection = handle_selection
