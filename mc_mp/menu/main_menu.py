@@ -10,7 +10,7 @@ class Menu:
     main_menu_instance = None
     
     def __init__(self, project: p.Project, title: str = None, menu_entries: list = None,
-                 multiselect: bool = False, clear_screen: bool = CLEAR_SCREEN,
+                 multi_select: bool = False, clear_screen: bool = CLEAR_SCREEN,
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
                  parent_menu=None) -> None:
         """
@@ -30,7 +30,7 @@ class Menu:
         self.project: p.Project = project
         self.title: str = title
         self.menu_entries: list = menu_entries or []
-        self.multi_select: bool = multiselect
+        self.multi_select: bool = multi_select
         self.clear_screen: bool = clear_screen
         self.cursor_index: int = cursor_index
         self.status_bar: callable = status_bar
@@ -66,7 +66,7 @@ class Menu:
         self.add_option("Save project", lambda: self.save_project_action())
         self.add_option("Create project", lambda: self.create_project_action())
         if self.project.metadata["loaded"]:
-            self.add_option("Add mod(s)", lambda: self.add_mods_action())
+            self.add_option("Add mod(s)", lambda: self.add_mods_menu())
         self.add_option("Exit", self.go_back)
     
     def add_option(self, option: str, action=None) -> None:
@@ -225,7 +225,7 @@ class Menu:
                 self.project.save_project(filename)
         return OPEN  # Keep main menu open
     
-    def add_mods_action(self) -> bool:
+    def add_mods_menu(self) -> bool:
         """
         Handle the action to add mods to the current project.
         Displays a submenu to select the method of adding mods.
@@ -243,7 +243,7 @@ class Menu:
         submenu.display()
         return OPEN  # Keep main menu open
     
-    def add_mods_id_action(self) -> bool:
+    def add_mods_action(self, name: str) -> bool:
         """
         Handle the action to add mods by their IDs or slugs.
         Prompts the user to enter mod slugs or IDs and then selects versions to add to the project.
@@ -251,39 +251,41 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
+        versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
+                                            game_versions=[self.project.modpack.mc_version])
+        if not versions:
+            std.eprint(f"[ERROR] No mod called {name} found.")
+            return OPEN
+
+        submenu = Menu(
+            project=self.project, 
+            title=f"Which version of {name} do you want to add?",
+            menu_entries=[f'{version["name"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
+            parent_menu=self
+        )
+        
+        def handle_selection(selected_index):
+            version = versions[selected_index]
+            if std.get_input(f'''{version["name"]}:
+{version["changelog"]}
+Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
+                self.project.add_mod(name, versions, selected_index)
+                submenu.menu_active = False
+                return CLOSE  # Close sub menu (version list)
+
+        submenu.handle_selection = handle_selection
+        submenu.display()
+        return OPEN  # Keep main menu open
+    
+    def add_mods_id_action(self) -> bool:
         names = std.get_input("Please enter mod slugs or IDs (e.g., name1 name2 ...): ")
         if not names:
             return OPEN
+
+        return all([self.add_mods_id_action(name) for name in names.split()])
         
-        for name in names.split():
-            versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
-                                                game_versions=[self.project.modpack.mc_version])
-            if not versions:
-                std.eprint(f"[ERROR] No mod called {name} found.")
-                continue
-
-            submenu = Menu(
-                project=self.project, 
-                title=f"Which version of {name} do you want to add?",
-                menu_entries=[f'{version["name"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
-                parent_menu=self
-            )
-            
-            def handle_selection(selected_index):
-                version = versions[selected_index]
-                if std.get_input(f'''{version["name"]}:
-{version["changelog"]}
-Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                    self.project.add_mod(name, versions, selected_index)
-                    submenu.menu_active = False
-                    return CLOSE  # Close sub menu (version list)
-
-            submenu.handle_selection = handle_selection
-            submenu.display()
-            if not submenu.menu_active:
-                continue
-            
-        return OPEN  # Keep main menu open
+        
+    
     # TODO Unify search mods and add mods
     def search_mods_action(self):
         """Placeholder for a future feature to search for mods."""
@@ -328,13 +330,12 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     Do you want to add this mod to the current project? y/n ''') != ACCEPT:
                     return OPEN
             for i in selected_index:
-                self.add_mods_id_action()
-                self.project.add_mod(name, versions, selected_index)
-                res = self.add_mods(self.project, results["hits"][i]["slug"])
+                self.add_mods_action(results["hits"][i]["slug"])
+            return OPEN  # Keep sub menu open (search mod list)
 
         submenu.handle_selection = handle_selection
         submenu.display()
-            
+        return OPEN
                 
     # def get_options(self, flags: dict) -> list:
     #     """Returns a list of options based on the provided flags."""
