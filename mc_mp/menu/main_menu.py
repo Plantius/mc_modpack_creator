@@ -1,3 +1,4 @@
+import select
 from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
@@ -59,6 +60,10 @@ class Menu:
             return title + '\n' + len(title) * '-'
         return "No project loaded"
     
+    def get_entry_help(self, entry) -> str:
+        """Retrieves the status description for a given project menu entry."""
+        return self.help[std.get_index(self.menu_entries, entry)]
+    
     def update_entries(self):
         """Update the menu entries and associated actions based on the current project state."""
         self.menu_entries.clear()
@@ -70,6 +75,8 @@ class Menu:
         if self.project.metadata["loaded"]:
             self.add_option("Add mod(s)", self.add_mods_menu, "Add new mods to the current project")
             self.add_option("List current mods", self.list_mods_action, "List all mods in the current project")
+            self.add_option("Remove mod(s)", self.remove_mods_action, "Remove mods from the current project")
+            self.add_option("Update mod(s)", self.update_mods_action, "Update mods in the current project")
         
         self.add_option("Exit", self.close_self, "Exit the current menu")
     
@@ -285,7 +292,6 @@ Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
 
         return all([self.add_mods_id_action(name) for name in names.split()])
         
-        
     
     # TODO Unify search mods and add mods
     def search_mods_action(self):
@@ -346,12 +352,60 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu = Menu(
                 project=self.project, 
                 title="Current mods in this project.",
-                menu_entries=self.project.modpack.get_mod_list_names() or ["No mods in project"]
+                menu_entries=self.project.modpack.get_mod_list_names()
             )
           
         def handle_selection(selected_index):
             std.get_input(f"Changelog of {self.project.modpack.mod_data[selected_index].name}: {self.project.modpack.mod_data[selected_index].changelog}")
             return OPEN  # Keep sub menu open (mod list)
+
+        submenu.handle_selection = handle_selection
+        submenu.display()
+        return OPEN
+    
+    def remove_mods_action(self) -> bool:
+        """View all mods in the current project."""
+        if len(self.project.modpack.mod_data) == 0:
+            return OPEN  # Keep main menu open
+        
+        submenu = Menu(
+                project=self.project, 
+                title="Select which mods to remove.",
+                menu_entries=self.project.modpack.get_mod_list_names(),
+                multi_select=True
+            )
+          
+        def handle_selection(selected_index):
+            if len(self.project.modpack.mod_data) == 0:
+                return CLOSE
+            for i in sorted(selected_index, reverse=True):
+                self.project.rm_mod(i) 
+
+            return OPEN  # Keep sub menu open (remove mod list)
+
+        submenu.handle_selection = handle_selection
+        submenu.display()
+        return OPEN
+    
+    def update_mods_action(self) -> bool:
+        """View all mods in the current project."""
+        if len(self.project.modpack.mod_data) == 0:
+            return OPEN  # Keep main menu open
+        
+        submenu = Menu(
+                project=self.project, 
+                title="Update mods in the current project.",
+                menu_entries=self.project.modpack.get_mod_list_names(),
+                multi_select=True,
+            )
+          
+        def handle_selection(selected_index):
+            if len(self.project.modpack.mod_data) == 0:
+                return CLOSE
+            for i in selected_index:
+                self.project.update_mod(i) 
+
+            return OPEN  # Keep sub menu open (remove mod list)
 
         submenu.handle_selection = handle_selection
         submenu.display()
@@ -374,9 +428,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
 
     #     return options + [None] + mo.OPT_MISC["exit"]
 
-    def get_entry_help(self, entry) -> str:
-        """Retrieves the status description for a given project menu entry."""
-        return self.help[std.get_index(self.menu_entries, entry)]
+    
 
 
     # def get_mod_status(self, entry: str) -> str:
