@@ -1,4 +1,5 @@
-from os import stat
+import concurrent.futures as cf
+from itertools import repeat
 from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
@@ -34,7 +35,7 @@ class Menu:
         self.multi_select: bool = multi_select
         self.clear_screen: bool = clear_screen
         self.cursor_index: int = cursor_index
-        self.status_bar: callable = status_bar or self.get_entry_help
+        self.status_bar: callable = status_bar
 
         self.actions: list = actions or []
         self.help: list = help or []
@@ -251,7 +252,7 @@ class Menu:
         submenu.display()
         return OPEN  # Keep main menu open
     
-    def add_mods_action(self, name: str) -> bool:
+    def add_mods_action(self, names: list[str]) -> bool:
         """
         Handle the action to add mods by their IDs or slugs.
         Prompts the user to enter mod slugs or IDs and then selects versions to add to the project.
@@ -259,30 +260,37 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
-        versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
-                                            game_versions=[self.project.modpack.mc_version])
-        if not versions:
-            std.eprint(f"[ERROR] No mod called {name} found.")
-            return OPEN
-
-        submenu = Menu(
-            project=self.project, 
-            title=f"Which version of {name} do you want to add?",
-            menu_entries=[f'{version["name"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
-            parent_menu=self
-        )
+        with cf.ThreadPoolExecutor(max_workers=200) as pool:
+            versions = pool.map(lambda x: self.project.api.list_versions(**x), [{"project_name":name, 
+                                                                  "loaders":[self.project.modpack.mod_loader], 
+                                                                  "game_versions":[self.project.modpack.mc_version]}  
+                                                                 for name in names])
         
-        def handle_selection(selected_index):
-            version = versions[selected_index]
-            if std.get_input(f'''{version["name"]}:
-{version["changelog"]}
-Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                self.project.add_mod(name, versions, selected_index)
-                submenu.menu_active = False
-                return CLOSE  # Close sub menu (version list)
+        print([res for res in versions])
+        # versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
+#         #                                     game_versions=[self.project.modpack.mc_version])
+#         if not versions:
+#             std.eprint(f"[ERROR] No mod called {name} found.")
+#             return OPEN
 
-        submenu.handle_selection = handle_selection
-        submenu.display()
+#         submenu = Menu(
+#             project=self.project, 
+#             title=f"Which version of {name} do you want to add?",
+#             menu_entries=[f'{version["name"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
+#             parent_menu=self
+#         )
+        
+#         def handle_selection(selected_index):
+#             version = versions[selected_index]
+#             if std.get_input(f'''{version["name"]}:
+# {version["changelog"]}
+# Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
+#                 self.project.add_mod(name, versions, selected_index)
+#                 submenu.menu_active = False
+#                 return CLOSE  # Close sub menu (version list)
+
+#         submenu.handle_selection = handle_selection
+#         submenu.display()
         return OPEN  # Keep main menu open
     
     def add_mods_id_action(self) -> bool:
@@ -290,7 +298,7 @@ Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
         if not names:
             return OPEN
 
-        return all([self.add_mods_id_action(name) for name in names.split()])
+        return self.add_mods_action(names.split())
         
     
     # TODO Unify search mods and add mods
@@ -336,8 +344,8 @@ Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
 Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     Do you want to add this mod to the current project? y/n ''') != ACCEPT:
                     return OPEN
-            for i in selected_index:
-                self.add_mods_action(results["hits"][i]["slug"])
+
+            self.add_mods_action([results["hits"][i]["slug"] for i in selected_index])
             return OPEN  # Keep sub menu open (search mod list)
 
         submenu.handle_selection = handle_selection
@@ -350,7 +358,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
             title="Change current project's settings: " + self.get_project_title(),
             parent_menu=self
         )
-        submenu.add_option("Change Title", self.change_project_setting)
+        submenu.add_option("Change Title", self.change_project_setting, "Change the modpack title")
         submenu.display()
     
     def change_project_setting(self):
@@ -414,8 +422,8 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return CLOSE
-            for i in selected_index:
-                self.project.update_mod(i) 
+            with cf.ThreadPoolExecutor(max_workers=200) as pool:
+                pool.map(self.project.update_mod, selected_index)
             return OPEN  # Keep sub menu open (remove mod list)
 
         submenu.handle_selection = handle_selection

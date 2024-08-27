@@ -25,7 +25,7 @@ def main():
     # Initialize and display main menu
     if arguments.menu_disable:
         menu = main_menu.Menu(p)
-        # menu.status_bar = menu.get_entry_help
+        menu.status_bar = menu.get_entry_help
         menu.display()
         
 

@@ -160,7 +160,7 @@ class Project:
             return False
 
     def update_mod(self, index: int) -> bool:
-        new_versions = self.api.list_versions(self.modpack.mod_data[index].project_id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]) 
+        new_versions = self.api.list_versions(project_name=self.modpack.mod_data[index].project_id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]) 
         if new_versions is not None:
             new_mod_date = parser.parse(new_versions[0]["date_published"])
             current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)

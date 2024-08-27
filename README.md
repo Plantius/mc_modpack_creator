@@ -88,13 +88,11 @@ In the `menu` package, configuration constants for user input are defined:
 
 ## TODO
 
-- Change how mod updates are handled
-- Rework whole menu system to streamline it and remove useless code
+- Add info bar for sub menu's which need them
 - Show Modname when update is found
 - Show more info about newer mod version when update is found
 - Correctly download dependencies for mods that have them
 - Check if a mod is already in the project
-- Add `View mods` menu
 - Validate user input more robustly.
 - Expand the menu with additional options.
 - Implement comprehensive tests.
