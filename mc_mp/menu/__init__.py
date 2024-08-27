@@ -11,17 +11,12 @@ REJECT : str
     Represents rejection, typically 'n'.
 """
 
-# Indicates acceptance of a prompt
-from multiprocessing.pool import CLOSE
-
-
+# Accept prompt
 ACCEPT = 'y'
-
-# Indicates rejection of a prompt
-REJECT = 'n'
 
 # Clear screen
 CLEAR_SCREEN = False
 
+# Define Open or Close for menu's 
 OPEN = True
 CLOSE = False

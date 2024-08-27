@@ -9,10 +9,10 @@ class Menu:
     # Static variable to hold the main menu instance
     main_menu_instance = None
     
-    def __init__(self, project: p.Project, title: str = None, menu_entries= None,
+    def __init__(self, project: p.Project, title: str = None, menu_entries=None,
                  multi_select: bool = False, clear_screen: bool = CLEAR_SCREEN,
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
-                 parent_menu=None, help: list=None) -> None:
+                 parent_menu=None, help: list[str]=None) -> None:
         """
         Initialize a Menu instance with the provided parameters.
 
@@ -42,8 +42,8 @@ class Menu:
         
         # Set this instance as the main menu instance if none exists
         if Menu.main_menu_instance is None:
-            Menu.main_menu_instance = self
-
+            Menu.main_menu_instance = self   
+    
     def get_project_title(self) -> str:
         """
         Generate the title string for the main menu based on the project's current status.
@@ -63,14 +63,13 @@ class Menu:
         """Retrieves the status description for a given project menu entry."""
         return self.help[std.get_index(self.menu_entries, entry)]
     
-    def update_entries(self):
-        """Update the menu entries and associated actions based on the current project state."""
-        self.menu_entries.clear()
-        self.actions.clear()
+    def initialize_main_menu_entries(self) -> None:
+        """Initialize the main menu entries and associated actions."""
+        self.menu_entries.clear(); self.actions.clear(); self.help.clear()
+
         self.add_option("Load project", self.load_project_action, "Load a project file")
         self.add_option("Save project", self.save_project_action, "Save the current project")
-        self.add_option("Create project", self.create_project_action, "Create a new project"),
-         
+        self.add_option("Create project", self.create_project_action, "Create a new project")
         if self.project.metadata["loaded"]:
             self.add_option("Add mod(s)", self.add_mods_menu, "Add new mods to the current project")
             self.add_option("List current mods", self.list_mods_action, "List all mods in the current project")
@@ -98,6 +97,8 @@ class Menu:
         """
         while self.menu_active:
             self.title = self.get_project_title()
+            if self is Menu.main_menu_instance:
+                self.initialize_main_menu_entries()
             terminal_menu = TerminalMenu(
                 title=self.title,
                 menu_entries=self.menu_entries() if callable(self.menu_entries) else self.menu_entries,
@@ -183,7 +184,6 @@ class Menu:
             
         submenu.handle_selection = handle_selection
         submenu.display()
-        self.update_entries()  # Update menu_entries
         return OPEN  # Keep main menu open
         
     def create_project_action(self) -> bool:
@@ -213,7 +213,6 @@ class Menu:
             mc_version=mc_version,
             mod_loader=mod_loader,
         )
-        self.update_entries()  # Update menu_entries
         return OPEN  # Keep main menu open
     
     def save_project_action(self) -> bool:
