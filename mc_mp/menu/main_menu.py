@@ -12,7 +12,7 @@ class Menu:
     def __init__(self, project: p.Project, title: str = None, menu_entries: list = None,
                  multi_select: bool = False, clear_screen: bool = CLEAR_SCREEN,
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
-                 parent_menu=None) -> None:
+                 parent_menu=None, help: list=None) -> None:
         """
         Initialize a Menu instance with the provided parameters.
 
@@ -36,6 +36,7 @@ class Menu:
         self.status_bar: callable = status_bar
 
         self.actions: list = actions or []
+        self.help: list = help or []
         self.parent_menu: Menu = parent_menu
         self.menu_active = True
         
@@ -62,14 +63,17 @@ class Menu:
         """Update the menu entries and associated actions based on the current project state."""
         self.menu_entries.clear()
         self.actions.clear()
-        self.add_option("Load project", lambda: self.load_project_action())
-        self.add_option("Save project", lambda: self.save_project_action())
-        self.add_option("Create project", lambda: self.create_project_action())
+        self.add_option("Load project", self.load_project_action, "Load a project file")
+        self.add_option("Save project", self.save_project_action, "Save the current project")
+        self.add_option("Create project", self.create_project_action, "Create a new project"),
+         
         if self.project.metadata["loaded"]:
-            self.add_option("Add mod(s)", lambda: self.add_mods_menu())
-        self.add_option("Exit", self.go_back)
+            self.add_option("Add mod(s)", self.add_mods_menu, "Add new mods to the current project")
+            self.add_option("List current mods", self.list_mods_action, "List all mods in the current project")
+        
+        self.add_option("Exit", self.close_self, "Exit the current menu")
     
-    def add_option(self, option: str, action=None) -> None:
+    def add_option(self, option: str, action=None, help: str=None) -> None:
         """
         Add a new option to the menu.
 
@@ -79,6 +83,7 @@ class Menu:
         """
         self.menu_entries.append(option)
         self.actions.append(action)
+        self.help.append(help)
     
     def display(self) -> None:
         """
@@ -99,7 +104,7 @@ class Menu:
             if selected_index is not None:
                 self.handle_selection(selected_index)
             else:
-                self.exit_submenu()
+                self.exit_menu()
 
     def handle_selection(self, selected_index) -> None:
         """
@@ -121,21 +126,17 @@ class Menu:
         else:
             std.eprint("[ERROR] Invalid menu selection.")
 
-    def exit_submenu(self) -> None:
+    def exit_menu(self) -> None:
         """
         Handle the action to exit a submenu.
         If this menu has a parent, it will return to the parent menu; otherwise, it performs a normal exit.
         """
         if self.parent_menu:
-            # Exiting a submenu
             self.menu_active = False  # Close the current menu
         else:
-            # No parent menu, treat as a normal go_back
-            if not self.project.metadata["saved"]:
-                self.save_project_action()
-            self.menu_active = False
+            self.close_self()
     
-    def go_back(self) -> None:
+    def close_self(self) -> None:
         """
         Handle the action to go back to the parent menu or exit.
         If the current project is unsaved, prompt to save it before exiting.
@@ -143,8 +144,6 @@ class Menu:
         if not self.project.metadata["saved"]:
             self.save_project_action()
         self.menu_active = False
-        if self.parent_menu:
-            self.parent_menu.display()
     
     def load_project_action(self) -> bool:
         """
@@ -338,7 +337,27 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu.handle_selection = handle_selection
         submenu.display()
         return OPEN
-                
+    
+    def list_mods_action(self) -> bool:
+        """View all mods in the current project."""
+        if len(self.project.modpack.mod_data) == 0:
+            return OPEN  # Keep main menu open
+        
+        submenu = Menu(
+                project=self.project, 
+                title="Current mods in this project.",
+                menu_entries=self.project.modpack.get_mod_list_names() or ["No mods in project"]
+            )
+          
+        def handle_selection(selected_index):
+            std.get_input(f"Changelog of {self.project.modpack.mod_data[selected_index].name}: {self.project.modpack.mod_data[selected_index].changelog}")
+            return OPEN  # Keep sub menu open (mod list)
+
+        submenu.handle_selection = handle_selection
+        submenu.display()
+        return OPEN
+    
+    
     # def get_options(self, flags: dict) -> list:
     #     """Returns a list of options based on the provided flags."""
     #     options = []
@@ -355,17 +374,9 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
 
     #     return options + [None] + mo.OPT_MISC["exit"]
 
-    # def get_project_status(self, entry) -> str:
-    #     """Retrieves the status description for a given project menu entry."""
-    #     for lst in [mo.OPT_PROJECT, mo.OPT_MODPACK, mo.OPT_ADD_MOD, mo.OPT_CONFIG]:
-    #         i = std.get_index(mo.get_options(lst)["names"], entry)
-    #         if i is not None:
-    #             return mo.get_options(lst)["help"][i]
-
-    #     for option in mo.OPT_MISC.keys():
-    #         i = std.get_index(mo.get_options(mo.OPT_MISC[option])["names"], entry)
-    #         if i is not None:
-    #             return mo.get_options(mo.OPT_MISC[option])["help"][i]
+    def get_entry_help(self, entry) -> str:
+        """Retrieves the status description for a given project menu entry."""
+        return self.help[std.get_index(self.menu_entries, entry)]
 
 
     # def get_mod_status(self, entry: str) -> str:
