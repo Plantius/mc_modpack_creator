@@ -131,7 +131,9 @@ class Menu:
             self.menu_active = False  # Close the current menu
         else:
             # No parent menu, treat as a normal go_back
-            self.go_back()
+            if not self.project.metadata["saved"]:
+                self.save_project_action()
+            self.menu_active = False
     
     def go_back(self) -> None:
         """
@@ -306,9 +308,9 @@ Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
                 std.eprint("[ERROR] No facets given.")
                 return False
             temp = [[f"{key}:{item}" for item in value.split()] for key, value in zip(["categories", "versions"], facets.split(','))]
-            kwargs["facets"] = [item for facet in temp for item in facet] + ["project_type:mod"]
-
+            kwargs["facets"] = [[item] for facet in temp for item in facet] + [["project_type:mod"]]
         results = self.project.api.search_project(**kwargs)
+        # print(kwargs, results)
         if not results:
             return OPEN
         submenu = Menu(
