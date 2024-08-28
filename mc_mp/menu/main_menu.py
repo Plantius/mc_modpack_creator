@@ -268,38 +268,38 @@ class Menu:
         
         # versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
 #         #                                     game_versions=[self.project.modpack.mc_version])
+            project_info_all = pool.map(self.project.api.get_project, slugs)
         
-        # if all([versions for versions in versions_all]) is None:
-        #     std.eprint(f"[ERROR] Could not retrieve mods.")
-        #     return OPEN
+        project_info_slugs: list[dict] = []
+        # print([i for i in project_info_all])
+        for j in [i for i in project_info_all]:
+            if j is None:
+                std.eprint(f"[ERROR] Could not retrieve mods.")
+                return OPEN
+            project_info_slugs.append(j)
 
         
-        project_info_slugs = self.project.api.get_projects(ids=slugs)
-        for slug, id in zip(slugs, ids):
-            versions: list[dict] = []
-            for versions_slug, id in zip(versions_all, ids):
-                if(id == versions_slug[0]["project_id"]):
-                    versions = versions_slug
+        for versions, slug in zip(versions_all, slugs):
             submenu = Menu(
                 project=self.project, 
                 title=f"Which version of {slug} do you want to add?",
-                menu_entries=[f'{version["name"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
+                menu_entries=[f'{project_info_slugs[std.get_index([i["slug"] for i in project_info_slugs], slug)]["title"]} - {version["version_number"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}' for version in versions],
                 parent_menu=self
             )
             
             def handle_selection(selected_index):
                 version = versions[selected_index]
+                print(version["name"])
                 if std.get_input(f'''{version["name"]}:
     {version["changelog"]}
     Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
                     self.project.add_mod(slug, version, project_info=project_info_slugs[std.get_index([i["slug"] for i in project_info_slugs], slug)])
                     submenu.menu_active = False
                     return CLOSE  # Close sub menu (version list)
-                return OPEN
+                return CLOSE
 
             submenu.handle_selection = handle_selection
             submenu.display()
-            continue
         return OPEN  # Keep main menu open
     
     def add_mods_id_action(self) -> bool:
