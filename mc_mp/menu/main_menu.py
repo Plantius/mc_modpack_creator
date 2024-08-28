@@ -3,7 +3,7 @@ from itertools import repeat
 from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
-from . import CLEAR_SCREEN, ACCEPT, OPEN, CLOSE
+from . import CLEAR_SCREEN, ACCEPT, OPEN, CLOSE, MAX_WORKERS
 
 class Menu:
     """Class to manage terminal-based menus for interacting with modpack projects."""
@@ -260,7 +260,7 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
-        with cf.ThreadPoolExecutor(max_workers=len(slugs)) as pool:
+        with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
             versions_all = pool.map(lambda x: self.project.api.list_versions(**x), [{"project_name":name, 
                                                                   "loaders":[self.project.modpack.mod_loader], 
                                                                   "game_versions":[self.project.modpack.mc_version]}  
@@ -268,12 +268,18 @@ class Menu:
         
         # versions = self.project.api.list_versions(name, loaders=[self.project.modpack.mod_loader],
 #         #                                     game_versions=[self.project.modpack.mc_version])
-        if all() is None:
-            std.eprint(f"[ERROR] Could not retrieve mods.")
-            return OPEN
+        
+        # if all([versions for versions in versions_all]) is None:
+        #     std.eprint(f"[ERROR] Could not retrieve mods.")
+        #     return OPEN
 
-        for slug in slugs:
-            version = [version for version in [versions for versions in versions_all]]
+        
+        project_info_slugs = self.project.api.get_projects(ids=slugs)
+        for slug, id in zip(slugs, ids):
+            versions: list[dict] = []
+            for versions_slug, id in zip(versions_all, ids):
+                if(id == versions_slug[0]["project_id"]):
+                    versions = versions_slug
             submenu = Menu(
                 project=self.project, 
                 title=f"Which version of {slug} do you want to add?",
@@ -286,12 +292,14 @@ class Menu:
                 if std.get_input(f'''{version["name"]}:
     {version["changelog"]}
     Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                    self.project.add_mod(slug, versions, selected_index)
+                    self.project.add_mod(slug, version, project_info=project_info_slugs[std.get_index([i["slug"] for i in project_info_slugs], slug)])
                     submenu.menu_active = False
                     return CLOSE  # Close sub menu (version list)
+                return OPEN
 
             submenu.handle_selection = handle_selection
             submenu.display()
+            continue
         return OPEN  # Keep main menu open
     
     def add_mods_id_action(self) -> bool:
@@ -299,7 +307,7 @@ class Menu:
         if not names:
             return OPEN
         names = names.split()    
-        with cf.ThreadPoolExecutor(max_workers=len(names)) as pool:
+        with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
             ids_all = pool.map(self.project.api.is_slug_valid, names)
         return self.add_mods_action(names, [ids for ids in ids_all])
         
@@ -426,7 +434,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return CLOSE
-            with cf.ThreadPoolExecutor(max_workers=len(selected_index)) as pool:
+            with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
                 pool.map(self.project.update_mod, selected_index)
             return OPEN  # Keep sub menu open (remove mod list)
 

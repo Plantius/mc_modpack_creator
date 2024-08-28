@@ -42,6 +42,14 @@ class ProjectAPI:
         if ProjectAPI.is_slug_valid(project_name) is None:
             return None
         return ProjectAPI.request(f"/project/{project_name}")
+    
+    @staticmethod
+    def get_projects(**kwargs) -> Optional[Dict[str, Any]]:
+        """Retrieves information about a specific project."""
+        params = {k: v for k, v in kwargs.items() if v is not None}
+        if all([ProjectAPI.is_slug_valid(project_name) for project_name in params["ids"]]) is None:
+            return None
+        return ProjectAPI.request(f"/projects", params=ProjectAPI.parse_url(params))
 
     @staticmethod
     def list_versions(**kwargs) -> Optional[Dict[str, Any]]:

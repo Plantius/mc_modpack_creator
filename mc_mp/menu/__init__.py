@@ -18,5 +18,7 @@ ACCEPT = 'y'
 CLEAR_SCREEN = False
 
 # Define Open or Close for menu's 
-OPEN = True
-CLOSE = False
+OPEN: bool = True
+CLOSE: bool = False
+
+MAX_WORKERS: int = 200
