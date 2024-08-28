@@ -125,28 +125,27 @@ class Project:
         return True
 
 
-    def add_mod(self, name: str, versions: dict, mod_index: int) -> bool:
+    def add_mod(self, name: str, version: dict) -> bool:
         """Adds a mod to the project's modpack."""
         #TODO
-        mod_info = versions[mod_index]
         project_info = self.api.get_project(name)
-        if any([project_info, mod_info]) is None:
+        if any([project_info, version]) is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
             return False
         
         self.modpack.mod_data.append(Mod(
             title=project_info["title"],
             description=project_info["description"],
-            name=mod_info["name"], 
-            changelog=mod_info["changelog"], 
-            version_number=mod_info["version_number"],
-            dependencies=mod_info["dependencies"],
-            mc_versions=mod_info["game_versions"],
-            mod_loaders=mod_info["loaders"], 
-            id=mod_info["id"],
-            project_id=mod_info["project_id"],
-            date_published=mod_info["date_published"], 
-            files=mod_info["files"]
+            name=version["name"], 
+            changelog=version["changelog"], 
+            version_number=version["version_number"],
+            dependencies=version["dependencies"],
+            mc_versions=version["game_versions"],
+            mod_loaders=version["loaders"], 
+            id=version["id"],
+            project_id=version["project_id"],
+            date_published=version["date_published"], 
+            files=version["files"]
         ))
         self.metadata["saved"] = False
         return True
@@ -160,16 +159,16 @@ class Project:
             return False
 
     def update_mod(self, index: int) -> bool:
-        new_versions = self.api.list_versions(project_name=self.modpack.mod_data[index].project_id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]) 
-        if new_versions is not None:
-            new_mod_date = parser.parse(new_versions[0]["date_published"])
+        new_version = self.api.list_versions(project_name=self.modpack.mod_data[index].project_id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version])[0]
+        if new_version is not None:
+            new_mod_date = parser.parse(new_version["date_published"])
             current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)
             if new_mod_date > current_mod_date:
-                inp = std.get_input(f"There is a newer version available for {self.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.modpack.mod_data[index].version_number} -> {new_versions[0]['version_number']} ")
+                inp = std.get_input(f"There is a newer version available for {self.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.modpack.mod_data[index].version_number} -> {new_version['version_number']} ")
                 if inp == ACCEPT:
                     name = self.modpack.mod_data[index].project_id
                     self.metadata["saved"] = False
-                    return any([self.rm_mod(index), self.add_mod(name, new_versions, 0)])
+                    return any([self.rm_mod(index), self.add_mod(name, new_version)])
             print(f"{self.modpack.get_mod_list_names()[index]} is up to date")
     
     def list_projects(self) -> list[str]:

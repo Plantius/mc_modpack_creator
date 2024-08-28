@@ -46,7 +46,7 @@ class ProjectAPI:
     @staticmethod
     def list_versions(**kwargs) -> Optional[Dict[str, Any]]:
         """Lists versions of a given project with optional filtering."""
-        params = {k: v for k, v in kwargs.items() if v is not None and k is not "project_name"}
+        params = {k: v for k, v in kwargs.items() if v is not None and k != "project_name"}
         if ProjectAPI.is_slug_valid(kwargs["project_name"]) is None:
             return None
         return ProjectAPI.request(f"/project/{kwargs['project_name']}/version", params=ProjectAPI.parse_url(params))
