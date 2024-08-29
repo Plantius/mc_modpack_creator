@@ -53,17 +53,15 @@ class Menu:
             str: The formatted title string including project metadata.
         """
         if self.project.metadata["loaded"]:
-            title = (f"{self.project.modpack.title}: {self.project.modpack.description} | "
+            return (f"{self.project.modpack.title}: {self.project.modpack.description} | "
                     f"{self.project.modpack.mc_version} | {self.project.modpack.mod_loader} | "
                     f"{len(self.project.modpack.mod_data)} mods | "
                     f"Version {self.project.modpack.build_version}")
-            return title + '\n' + len(title) * '-'
         return "No project loaded"
     
     def get_entry_help(self, entry) -> str:
         """Retrieves the status description for a given project menu entry."""
         return self.help[std.get_index(self.menu_entries, entry)]
-    
     
     def get_main_menu_entries(self) -> None:
         """Initialize the main menu entries and associated actions."""
@@ -81,7 +79,7 @@ class Menu:
         
         self.add_option("Exit", self.close_self, "Exit the current menu")
     
-    def mod_descriptions(self, entry) -> str:
+    def get_entry_description(self, entry) -> str:
         """Retrieves the description for a given mod entry."""
         index = std.get_index(self.project.modpack.get_mods_name_ver(), entry)
         return self.project.modpack.get_mods_descriptions()[index]
@@ -105,8 +103,8 @@ class Menu:
         The menu remains active until the user decides to exit.
         """
         while self.menu_active:
-            self.title = self.get_project_title()
             if self is Menu.main_menu_instance:
+                self.title = self.get_project_title()
                 self.get_main_menu_entries()
             terminal_menu = TerminalMenu(
                 title=self.title,
@@ -249,7 +247,7 @@ class Menu:
         """
         submenu = Menu(
             project=self.project, 
-            title="Add mod options",
+            title=self.get_project_title(),
             parent_menu=self
         )
         submenu.add_option("Add mods by id/slug", self.add_mods_id_action)
@@ -362,7 +360,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     def change_settings_menu(self) -> bool:
         submenu = Menu(
             project=self.project, 
-            title="Change current project's settings: " + self.get_project_title(),
+            title="Change current project's settings.",
             parent_menu=self
         )
         submenu.add_option("Change Title", self.change_project_setting, "Change the modpack title")
@@ -379,9 +377,9 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         
         submenu = Menu(
                 project=self.project, 
-                title="Current mods in this project.",
+                title=f"The mods currently in this project.",
                 menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
-                status_bar=self.mod_descriptions
+                status_bar=self.get_entry_description
             )
           
         def handle_selection(selected_index):
@@ -399,9 +397,9 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         
         submenu = Menu(
                 project=self.project, 
-                title="Select which mods to remove.",
+                title="Select which mods to remove:",
                 menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
-                status_bar=self.mod_descriptions,
+                status_bar=self.get_entry_description,
                 multi_select=True
             )
         def handle_selection(selected_index):
@@ -421,9 +419,9 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         
         submenu = Menu(
                 project=self.project, 
-                title="Update mods in the current project.",
+                title="Update mods in the current project:",
                 menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
-                status_bar=self.mod_descriptions,
+                status_bar=self.get_entry_description,
                 multi_select=True
             )
           
