@@ -68,10 +68,10 @@ class Modpack:
         """Checks if the current mods in the modpack are compatible (always returns `True`)."""
         return True
 
-    def get_mod_list_names(self) -> List[str]:
+    def get_mods_name_ver(self) -> List[str]:
         """Returns a list of all mod names"""
         return [f"{item.title} - {item.version_number}" for item in self.mod_data]
 
-    def get_mod_list_descriptions(self) -> List[str]:
+    def get_mods_descriptions(self) -> List[str]:
         """Returns a list of all mod descriptions."""
         return [item.description for item in self.mod_data]

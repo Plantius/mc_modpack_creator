@@ -125,11 +125,8 @@ class Project:
         return True
 
 
-    def add_mod(self, name: str, version: dict, project_info: dict=None) -> bool:
+    def add_mod(self, name: str, version: dict, project_info: dict) -> bool:
         """Adds a mod to the project's modpack."""
-        #TODO
-        if project_info is None:
-            project_info = self.api.get_project(name)
         if any([project_info, version]) is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
             return False

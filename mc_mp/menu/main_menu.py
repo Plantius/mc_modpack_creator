@@ -81,9 +81,9 @@ class Menu:
         
         self.add_option("Exit", self.close_self, "Exit the current menu")
     
-    def get_mod_description(self, entry) -> str:
+    def mod_descriptions(self, entry) -> str:
         """Retrieves the description for a given mod entry."""
-        return self.project.modpack.mod_data[std.get_index([f"{m.title} - {m.version_number}" for m in self.project.modpack.mod_data], entry)].description
+        return self.project.modpack.get_mods_descriptions()[std.get_index(self.project.modpack.get_mods_name_ver(), entry)]
  
     def get_update_mods_entries(self) -> None:
         pass
@@ -386,8 +386,8 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu = Menu(
                 project=self.project, 
                 title="Current mods in this project.",
-                menu_entries=self.project.modpack.get_mod_list_names,  # Updatable
-                status_bar=self.get_mod_description
+                menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
+                status_bar=self.mod_descriptions
             )
           
         def handle_selection(selected_index):
@@ -407,8 +407,8 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu = Menu(
                 project=self.project, 
                 title="Select which mods to remove.",
-                menu_entries=self.project.modpack.get_mod_list_names,  # Updatable
-                status_bar=self.get_mod_description,
+                menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
+                status_bar=self.mod_descriptions,
                 multi_select=True
             )
           
@@ -431,8 +431,8 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu = Menu(
                 project=self.project, 
                 title="Update mods in the current project.",
-                menu_entries=self.project.modpack.get_mod_list_names,  # Updatable
-                status_bar=self.get_mod_description,
+                menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
+                status_bar=self.mod_descriptions,
                 multi_select=True
             )
           
@@ -477,7 +477,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
 
     # def get_mod_status(self, entry: str) -> str:
     #     """Retrieves the status of a mod based on the provided entry."""
-    #     index = std.get_index(project.mp.get_mod_list_names(), entry)
+    #     index = std.get_index(project.mp.get_mods_name_ver(), entry)
     #     if index is not None:
     #         return f'{entry}: ' + tw.fill(project.mp.mod_list[index].description, width=100, fix_sentence_endings=True)
     #     return entry
@@ -520,7 +520,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     #     while True:
     #         selected_index = self.display_menu(
     #             title="Select which mods to remove.",
-    #             menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
+    #             menu_entries=self.p.mp.get_mods_name_ver() or ["No mods in project"],
     #             multi_select=True,
     #             status_func=self.get_mod_status
     #         )
@@ -554,7 +554,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     #     while True:
     #         selected_indices = self.display_menu(
     #             title="Update mods in the current project.",
-    #             menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
+    #             menu_entries=self.p.mp.get_mods_name_ver() or ["No mods in project"],
     #             multi_select=True,
     #             status_func=self.get_mod_status
     #         )
@@ -570,7 +570,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     #     while True:
     #         selected_index = self.display_menu(
     #             title="Current mods in this project.",
-    #             menu_entries=self.p.mp.get_mod_list_names() or ["No mods in project"],
+    #             menu_entries=self.p.mp.get_mods_name_ver() or ["No mods in project"],
     #             status_func=self.get_mod_status,
     #             cursor_index=cursor_index
     #         )
