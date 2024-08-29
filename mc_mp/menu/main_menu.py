@@ -1,6 +1,7 @@
 import concurrent.futures as cf
 from simple_term_menu import TerminalMenu
 from modpack import project as p
+from dateutil import parser
 import standard as std
 from . import CLEAR_SCREEN, ACCEPT, OPEN, CLOSE, MAX_WORKERS
 
@@ -465,9 +466,16 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 project_info_all = list(pool.map(self.project.api.get_project, [id.project_id for id in self.project.modpack.mod_data]))
             
             latest_version_all = [versions[0] for versions in versions_all if versions is not None]
+            
             for index, latest_version, project_info in zip(selected_index, latest_version_all, project_info_all):
-                self.project.update_mod(latest_version, index, project_info)
-
+                new_mod_date = parser.parse(latest_version["date_published"])
+                current_mod_date = parser.parse(self.project.modpack.mod_data[index].date_published)
+                if new_mod_date > current_mod_date:
+                    inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ")
+                    if inp == ACCEPT:
+                        self.project.update_mod(latest_version, index, project_info)
+                print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
+        
         submenu.handle_selection = handle_selection
         submenu.display()
         return OPEN

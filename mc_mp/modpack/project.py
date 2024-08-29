@@ -3,7 +3,6 @@ from .mod import Mod
 import standard as std
 import json
 import os
-from dateutil import parser
 from typing import Optional, Dict, Any
 from . import DEF_FILENAME, ACCEPT
 from .project_api import ProjectAPI  # Import the new ProjectAPI 
@@ -157,17 +156,8 @@ class Project:
             return False
 
     def update_mod(self, new_version: dict, index: int, project_info: dict) -> bool:
-        new_mod_date = parser.parse(new_version["date_published"])
-        current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)
-        if new_mod_date > current_mod_date:
-            inp = std.get_input(f"There is a newer version available for {self.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.modpack.mod_data[index].version_number} -> {new_version['version_number']} ")
-            if inp == ACCEPT:
-                print(project_info["slug"], index)
-                name = self.modpack.mod_data[index].project_id
-                self.metadata["saved"] = False
-                self.rm_mod(index)
-                self.add_mod(name, new_version, project_info, index)
-        print(f"{self.modpack.get_mods_name_ver()[index]} is up to date")
+        name = self.modpack.mod_data[index].project_id
+        self.rm_mod(index); self.add_mod(name, new_version, project_info, index)
     
     def list_projects(self) -> list[str]:
         valid_projects: list[str] = []
