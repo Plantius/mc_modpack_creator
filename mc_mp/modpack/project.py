@@ -165,7 +165,7 @@ class Project:
                 name = self.modpack.mod_data[index].project_id
                 self.metadata["saved"] = False
                 return any([self.rm_mod(index), self.add_mod(name, new_version)])
-        print(f"{self.modpack.get_mod_list_names()[index]} is up to date")
+        print(f"{self.modpack.get_mods_name_ver()[index]} is up to date")
     
     def list_projects(self) -> list[str]:
         valid_projects: list[str] = []

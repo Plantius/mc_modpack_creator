@@ -10,7 +10,7 @@ class Menu:
     # Static variable to hold the main menu instance
     main_menu_instance = None
     
-    def __init__(self, project: p.Project, title: str = None, menu_entries=None,
+    def __init__(self, project: p.Project, title: str="", menu_entries=None,
                  multi_select: bool = False, clear_screen: bool = CLEAR_SCREEN,
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
                  parent_menu=None, help: list[str]=None) -> None:
@@ -83,13 +83,11 @@ class Menu:
     
     def mod_descriptions(self, entry) -> str:
         """Retrieves the description for a given mod entry."""
-        return self.project.modpack.get_mods_descriptions()[std.get_index(self.project.modpack.get_mods_name_ver(), entry)]
- 
-    def get_update_mods_entries(self) -> None:
-        pass
+        index = std.get_index(self.project.modpack.get_mods_name_ver(), entry)
+        return self.project.modpack.get_mods_descriptions()[index]
     
     
-    def add_option(self, option: str, action=None, help: str=None) -> None:
+    def add_option(self, option: str, action=None, help: str="") -> None:
         """
         Add a new option to the menu.
 
@@ -191,7 +189,6 @@ class Menu:
             if filename:
                 self.project.load_project(filename)
                 submenu.menu_active = False
-                return CLOSE  # Close sub menu (project list)
             
         submenu.handle_selection = handle_selection
         submenu.display()
@@ -269,16 +266,15 @@ class Menu:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
         with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-            versions_all = pool.map(lambda x: self.project.api.list_versions(**x), 
+            versions_all = list(pool.map(lambda x: self.project.api.list_versions(**x), 
                                     [{"project_name":name, 
                                       "loaders":[self.project.modpack.mod_loader], 
                                       "game_versions":[self.project.modpack.mc_version]} 
-                                     for name in slugs])
+                                     for name in slugs]))
         
-            project_info_all = pool.map(self.project.api.get_project, slugs)
+            project_info_all = list(pool.map(self.project.api.get_project, slugs))
 
-        p_info_slugs = [i for i in project_info_all]
-        if not any([i for i in p_info_slugs]):
+        if not any(project_info_all):
             std.eprint(f"[ERROR] Could not retrieve mods.")
             return OPEN
         
@@ -286,7 +282,7 @@ class Menu:
             submenu = Menu(
                 project=self.project, 
                 title=f"Which version of {slug} do you want to add?",
-                menu_entries=[f'''{p_info_slugs[std.get_index([i["slug"] for i in p_info_slugs], slug)]["title"]} - \
+                menu_entries=[f'''{project_info_all[std.get_index([i["slug"] for i in project_info_all], slug)]["title"]} - \
 {version["version_number"]}: Minecraft version(s): \
 {version["game_versions"]}, {version["version_type"]}''' 
                     for version in versions],
@@ -298,10 +294,8 @@ class Menu:
 {version["changelog"]}
     Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
                     self.project.add_mod(slug, version, 
-                                         project_info=p_info_slugs[std.get_index([i["slug"] for i in p_info_slugs], slug)])
-                    submenu.menu_active = False
-                    return CLOSE  # Close sub menu (version list)
-                return OPEN  # Close sub menu (version list)
+                                         project_info=project_info_all[std.get_index([i["slug"] for i in project_info_all], slug)])
+                    submenu.menu_active = False  # Close sub menu (version list)
 
             submenu.handle_selection = handle_selection
             submenu.display()
@@ -357,10 +351,9 @@ class Menu:
 {selected_mod["description"]}
 Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     Do you want to add this mod to the current project? y/n ''') != ACCEPT:
-                    return OPEN
+                    return
 
             self.add_mods_action([results["hits"][i]["slug"] for i in selected_index])
-            return OPEN  # Keep sub menu open (search mod list)
 
         submenu.handle_selection = handle_selection
         submenu.display()
@@ -374,6 +367,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         )
         submenu.add_option("Change Title", self.change_project_setting, "Change the modpack title")
         submenu.display()
+        return OPEN
     
     def change_project_setting(self):
         pass
@@ -392,7 +386,6 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
           
         def handle_selection(selected_index):
             std.get_input(f"Changelog of {self.project.modpack.mod_data[selected_index].name}: {self.project.modpack.mod_data[selected_index].changelog}")
-            return OPEN  # Keep sub menu open (mod list)
 
         submenu.handle_selection = handle_selection
         submenu.display()
@@ -411,13 +404,11 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 status_bar=self.mod_descriptions,
                 multi_select=True
             )
-          
         def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
-                return CLOSE
+                return
             for i in sorted(selected_index, reverse=True):
                 self.project.rm_mod(i) 
-            return OPEN  # Keep sub menu open (remove mod list)
 
         submenu.handle_selection = handle_selection
         submenu.display()
@@ -438,18 +429,17 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
           
         def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
-                return CLOSE
+                return
             with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-                versions_all = pool.map(lambda x :self.project.api.list_versions(**x), 
+                versions_all = list(pool.map(lambda x :self.project.api.list_versions(**x), 
                                         [{"project_name":self.project.modpack.mod_data[i].project_id, 
                                           "loaders":[self.project.modpack.mod_loader], 
                                           "game_versions":[self.project.modpack.mc_version]} 
-                                         for i in selected_index])
+                                         for i in selected_index]))
                 
-            latest_version_all = [v[0] for v in list(versions_all)]
+            latest_version_all = [versions[0] for versions in versions_all]
             for index, latest_version in zip(selected_index, latest_version_all):
                 self.project.update_mod(latest_version, index)
-            return OPEN  # Keep sub menu open (remove mod list)
 
         submenu.handle_selection = handle_selection
         submenu.display()
@@ -477,7 +467,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
 
     # def get_mod_status(self, entry: str) -> str:
     #     """Retrieves the status of a mod based on the provided entry."""
-    #     index = std.get_index(project.mp.get_mods_name_ver(), entry)
+    #     index = std.get_index(project.mp.mod_name_version(), entry)
     #     if index is not None:
     #         return f'{entry}: ' + tw.fill(project.mp.mod_list[index].description, width=100, fix_sentence_endings=True)
     #     return entry
@@ -520,7 +510,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     #     while True:
     #         selected_index = self.display_menu(
     #             title="Select which mods to remove.",
-    #             menu_entries=self.p.mp.get_mods_name_ver() or ["No mods in project"],
+    #             menu_entries=self.p.mp.mod_name_version() or ["No mods in project"],
     #             multi_select=True,
     #             status_func=self.get_mod_status
     #         )
@@ -554,7 +544,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     #     while True:
     #         selected_indices = self.display_menu(
     #             title="Update mods in the current project.",
-    #             menu_entries=self.p.mp.get_mods_name_ver() or ["No mods in project"],
+    #             menu_entries=self.p.mp.mod_name_version() or ["No mods in project"],
     #             multi_select=True,
     #             status_func=self.get_mod_status
     #         )
@@ -570,7 +560,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     #     while True:
     #         selected_index = self.display_menu(
     #             title="Current mods in this project.",
-    #             menu_entries=self.p.mp.get_mods_name_ver() or ["No mods in project"],
+    #             menu_entries=self.p.mp.mod_name_version() or ["No mods in project"],
     #             status_func=self.get_mod_status,
     #             cursor_index=cursor_index
     #         )

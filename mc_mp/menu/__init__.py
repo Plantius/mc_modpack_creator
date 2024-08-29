@@ -10,7 +10,6 @@ ACCEPT : str
 REJECT : str
     Represents rejection, typically 'n'.
 """
-
 # Accept prompt
 ACCEPT = 'y'
 
