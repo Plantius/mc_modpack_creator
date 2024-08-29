@@ -125,13 +125,13 @@ class Project:
         return True
 
 
-    def add_mod(self, name: str, version: dict, project_info: dict) -> bool:
+    def add_mod(self, name: str, version: dict, project_info: dict, index: int=-1) -> bool:
         """Adds a mod to the project's modpack."""
         if any([project_info, version]) is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
             return False
         
-        self.modpack.mod_data.append(Mod(
+        self.modpack.mod_data.insert(index, Mod(
             title=project_info["title"],
             description=project_info["description"],
             name=version["name"], 
@@ -156,15 +156,17 @@ class Project:
         except:
             return False
 
-    def update_mod(self, new_version: dict, index: int) -> bool:
+    def update_mod(self, new_version: dict, index: int, project_info: dict) -> bool:
         new_mod_date = parser.parse(new_version["date_published"])
         current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)
         if new_mod_date > current_mod_date:
             inp = std.get_input(f"There is a newer version available for {self.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.modpack.mod_data[index].version_number} -> {new_version['version_number']} ")
             if inp == ACCEPT:
+                print(project_info["slug"], index)
                 name = self.modpack.mod_data[index].project_id
                 self.metadata["saved"] = False
-                return any([self.rm_mod(index), self.add_mod(name, new_version)])
+                self.rm_mod(index)
+                self.add_mod(name, new_version, project_info, index)
         print(f"{self.modpack.get_mods_name_ver()[index]} is up to date")
     
     def list_projects(self) -> list[str]:

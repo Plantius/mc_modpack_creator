@@ -104,10 +104,10 @@ class Menu:
         """
         while self.menu_active:
             if self is Menu.main_menu_instance:
-                self.title = self.get_project_title()
+                self.title = self.get_project_title
                 self.get_main_menu_entries()
             terminal_menu = TerminalMenu(
-                title=self.title,
+                title=self.title() if callable(self.title) else self.title,
                 menu_entries=self.menu_entries() if callable(self.menu_entries) else self.menu_entries,
                 multi_select=self.multi_select,
                 clear_screen=self.clear_screen,
@@ -247,7 +247,7 @@ class Menu:
         """
         submenu = Menu(
             project=self.project, 
-            title=self.get_project_title(),
+            title=self.get_project_title,
             parent_menu=self
         )
         submenu.add_option("Add mods by id/slug", self.add_mods_id_action)
@@ -360,15 +360,43 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     def change_settings_menu(self) -> bool:
         submenu = Menu(
             project=self.project, 
-            title="Change current project's settings.",
+            title=self.get_project_title,
             parent_menu=self
         )
-        submenu.add_option("Change Title", self.change_project_setting, "Change the modpack title")
+        submenu.add_option("Change Title", self.change_title_action, "Change the modpack title")
+        submenu.add_option("Change Description", self.change_description_action, "Change the modpack's description")
+        submenu.add_option("Change Minecraft Version", self.change_mc_version_action, "Change the modpack's minecraft version")
+        submenu.add_option("Change Modloader", self.change_modloader_action, "Change the modpack's modloader")
+        submenu.add_option("Change Build Version", self.change_build_action, "Change the modpack's build version")
         submenu.display()
         return OPEN
     
-    def change_project_setting(self):
-        pass
+    def change_project_attribute(self, attribute: str, prompt: str) -> bool:
+        """Change a project attribute based on user input."""
+        new_value = std.get_input(prompt)
+        if not new_value:
+            return OPEN
+
+        setattr(self.project.modpack, attribute, new_value)
+        self.project.metadata["saved"] = False
+        return OPEN
+    
+    def change_title_action(self) -> bool:
+        return self.change_project_attribute("title", "Please enter a new title: ")
+
+    def change_description_action(self) -> bool:
+        return self.change_project_attribute("description", "Please enter the new description: ")
+
+    def change_modloader_action(self) -> bool:
+        return self.change_project_attribute("mod_loader", "Please enter a new modloader: ")
+
+    def change_mc_version_action(self) -> bool:
+        return self.change_project_attribute("mc_version", "Please enter a new Minecraft version: ")
+    
+    def change_build_action(self) -> bool:
+        return self.change_project_attribute("build_version", "Please enter the new version: ")
+
+   
     
     def list_mods_action(self) -> bool:
         """View all mods in the current project."""
@@ -434,10 +462,11 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                                           "loaders":[self.project.modpack.mod_loader], 
                                           "game_versions":[self.project.modpack.mc_version]} 
                                          for i in selected_index]))
-                
-            latest_version_all = [versions[0] for versions in versions_all]
-            for index, latest_version in zip(selected_index, latest_version_all):
-                self.project.update_mod(latest_version, index)
+                project_info_all = list(pool.map(self.project.api.get_project, [id.project_id for id in self.project.modpack.mod_data]))
+            
+            latest_version_all = [versions[0] for versions in versions_all if versions is not None]
+            for index, latest_version, project_info in zip(selected_index, latest_version_all, project_info_all):
+                self.project.update_mod(latest_version, index, project_info)
 
         submenu.handle_selection = handle_selection
         submenu.display()

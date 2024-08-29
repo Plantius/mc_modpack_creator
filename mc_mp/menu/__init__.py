@@ -14,7 +14,7 @@ REJECT : str
 ACCEPT = 'y'
 
 # Clear screen
-CLEAR_SCREEN = True
+CLEAR_SCREEN = False
 
 # Define Open or Close for menu's 
 OPEN: bool = True
