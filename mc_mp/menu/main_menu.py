@@ -64,7 +64,8 @@ class Menu:
         """Retrieves the status description for a given project menu entry."""
         return self.help[std.get_index(self.menu_entries, entry)]
     
-    def initialize_main_menu_entries(self) -> None:
+    
+    def get_main_menu_entries(self) -> None:
         """Initialize the main menu entries and associated actions."""
         self.menu_entries.clear(); self.actions.clear(); self.help.clear()
 
@@ -79,6 +80,14 @@ class Menu:
             self.add_option("Change project settings", self.change_settings_menu, "Change the project's title, description, etc.")
         
         self.add_option("Exit", self.close_self, "Exit the current menu")
+    
+    def get_mod_description(self, entry) -> str:
+        """Retrieves the description for a given mod entry."""
+        return self.project.modpack.mod_data[std.get_index([f"{m.title} - {m.version_number}" for m in self.project.modpack.mod_data], entry)].description
+ 
+    def get_update_mods_entries(self) -> None:
+        pass
+    
     
     def add_option(self, option: str, action=None, help: str=None) -> None:
         """
@@ -100,7 +109,7 @@ class Menu:
         while self.menu_active:
             self.title = self.get_project_title()
             if self is Menu.main_menu_instance:
-                self.initialize_main_menu_entries()
+                self.get_main_menu_entries()
             terminal_menu = TerminalMenu(
                 title=self.title,
                 menu_entries=self.menu_entries() if callable(self.menu_entries) else self.menu_entries,
@@ -277,22 +286,22 @@ class Menu:
             submenu = Menu(
                 project=self.project, 
                 title=f"Which version of {slug} do you want to add?",
-                menu_entries=[f'''{p_info_slugs[std.get_index([i["slug"] for i in p_info_slugs], slug)]["title"]} - 
-{version["version_number"]}: Minecraft version(s): 
+                menu_entries=[f'''{p_info_slugs[std.get_index([i["slug"] for i in p_info_slugs], slug)]["title"]} - \
+{version["version_number"]}: Minecraft version(s): \
 {version["game_versions"]}, {version["version_type"]}''' 
                     for version in versions],
                 parent_menu=self)
             
             def handle_selection(selected_index):
                 version = versions[selected_index]
-                print(version["name"])
                 if std.get_input(f'''{version["name"]}:
 {version["changelog"]}
     Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
                     self.project.add_mod(slug, version, 
                                          project_info=p_info_slugs[std.get_index([i["slug"] for i in p_info_slugs], slug)])
                     submenu.menu_active = False
-                return CLOSE  # Close sub menu (version list)
+                    return CLOSE  # Close sub menu (version list)
+                return OPEN  # Close sub menu (version list)
 
             submenu.handle_selection = handle_selection
             submenu.display()
@@ -328,7 +337,7 @@ class Menu:
             temp = [[f"{key}:{item}" for item in value.split()] for key, value in zip(["categories", "versions"], facets.split(','))]
             kwargs["facets"] = [[item] for facet in temp for item in facet] + [["project_type:mod"]]
         results = self.project.api.search_project(**kwargs)
-        # print(kwargs, results)
+
         if not results:
             return OPEN
         submenu = Menu(
@@ -377,7 +386,8 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu = Menu(
                 project=self.project, 
                 title="Current mods in this project.",
-                menu_entries=self.project.modpack.get_mod_list_names  # Updatable
+                menu_entries=self.project.modpack.get_mod_list_names,  # Updatable
+                status_bar=self.get_mod_description
             )
           
         def handle_selection(selected_index):
@@ -398,6 +408,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 project=self.project, 
                 title="Select which mods to remove.",
                 menu_entries=self.project.modpack.get_mod_list_names,  # Updatable
+                status_bar=self.get_mod_description,
                 multi_select=True
             )
           
@@ -421,6 +432,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 project=self.project, 
                 title="Update mods in the current project.",
                 menu_entries=self.project.modpack.get_mod_list_names,  # Updatable
+                status_bar=self.get_mod_description,
                 multi_select=True
             )
           
