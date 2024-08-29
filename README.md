@@ -87,7 +87,10 @@ In the `menu` package, configuration constants for user input are defined:
 - **REJECT:** Default rejection input (e.g., `'n'`).
 
 ## TODO
-
+- Auto add dependencies
+- Download modpack!!
+- Mod checker (correct version and modloader)
+- Down/upgrade mods
 - Check project id against version to determine correct data
 - Show more info about newer mod version when update is found
 - Correctly download dependencies for mods that have them
