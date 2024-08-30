@@ -19,6 +19,3 @@ CLEAR_SCREEN = False
 # Define Open or Close for menu's 
 OPEN: bool = True
 CLOSE: bool = False
-
-# Max number of threads 
-MAX_WORKERS: int = 200

@@ -6,40 +6,40 @@ import standard as std
 
 class Modpack:
     """
-    Represents a Minecraft modpack with attributes like title, description, 
-    build date, version, Minecraft version, mod loader, and included mods. 
+    Represents a Minecraft modpack with attributes such as title, description, 
+    build date, version, Minecraft version, mod loader, and included mods.
 
-    Attributes
-    ----------
+    Attributes:
+    ------------
     title : str
-        The title of the modpack. Defaults to "Modpack".
+        The title of the modpack (default is "Modpack").
     description : str
-        A brief description of the modpack. Defaults to "A modpack".
+        A brief description of the modpack (default is "A modpack").
     build_date : str
-        The build date of the modpack in 'YYYY-MM-DD' format. Defaults to the current date.
+        The build date of the modpack in 'YYYY-MM-DD' format (default is the current date).
     build_version : str
-        The version of the modpack. Defaults to "0.1".
+        The version of the modpack (default is "0.1").
     mc_version : str
-        The Minecraft version that the modpack is built for. Defaults to "1.19".
+        The Minecraft version that the modpack is built for (default is "1.19").
     mod_loader : str
-        The mod loader used by the modpack (e.g., "fabric"). Defaults to "fabric".
-    mod_list : List[mod.Mod]
-        A list of `mod.Mod` objects included in the modpack. Defaults to an empty list.
+        The mod loader used by the modpack (e.g., "fabric") (default is "fabric").
+    client_side : str
+        Specifies if the modpack is required on the client side (default is "required").
+    server_side : str
+        Specifies if the modpack is required on the server side (default is "optional").
+    mod_data : List[mod.Mod]
+        A list of `Mod` objects included in the modpack (default is an empty list).
 
-
-    Methods
-    -------
+    Methods:
+    ---------
     __init__(**kwargs: Any) -> None
         Initializes the Modpack with optional parameters.
-
     export_json() -> Dict[str, Any]
-        Exports the Modpack attributes as a JSON object.
-
+        Exports the Modpack attributes as a JSON-compatible dictionary.
     check_compatibility() -> bool
-        Checks if the current mods in the modpack are compatible (always returns `True`).
-
+        Checks if the current mods in the modpack are compatible (currently always returns `True`).
     get_mod_list_names() -> List[str]
-        Returns a list of all mod names and their versions.
+        Returns a list of all mod names and their versions in the modpack.
     """
 
     title: str = "Modpack"

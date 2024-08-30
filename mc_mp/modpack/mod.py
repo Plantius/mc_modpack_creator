@@ -4,43 +4,47 @@ from dataclasses import dataclass, field
 @dataclass
 class Mod:
     """
-    Represents a mod with attributes and methods for JSON export and import.
+    Represents a mod with various attributes and methods to handle JSON serialization and deserialization.
 
-    Attributes
-    ----------
-    mod_name : str
-        The name of the mod. Defaults to "Mod".
+    Attributes:
+    ------------
+    title : str
+        The title of the mod (default is "Mod").
     description : str
-        A brief description of the mod. Defaults to "A mod".
-    mod_version : str
-        The version of the mod. Defaults to "1.0".
-    dependencies : list
-        A list of dependencies required by the mod. Defaults to an empty list.
-    mc_versions : list
-        A list of supported Minecraft versions. Defaults to ["1.19"].
+        A brief description of the mod (default is "This is a mod").
+    name : str
+        The name of the mod version (default is "Mod 1.0.0").
+    changelog : str
+        A description of the changes in the current mod version (default is "Changes").
+    version_number : str
+        The version number of the mod (default is "1.0").
+    dependencies : list[dict]
+        A list of dictionaries representing the mod's dependencies (default is an empty list).
+    mc_versions : list[str]
+        A list of supported Minecraft versions (default is ["1.19"]).
     version_type : str
-        The type of version (e.g., "release", "beta", "alpha"). Defaults to "release".
+        The type of the mod's version (e.g., "release", "beta", "alpha") (default is "release").
     client_side : str
-        Specifies if the mod is required on the client side. Defaults to "required".
+        Specifies if the mod is required on the client side (default is "required").
     server_side : str
-        Specifies if the mod is required on the server side. Defaults to "optional".
-    mod_loaders : list
-        A list of mod loaders compatible with the mod. Defaults to an empty list.
+        Specifies if the mod is required on the server side (default is "optional").
+    mod_loaders : list[str]
+        A list of mod loaders that are compatible with this mod (default is an empty list).
     mod_id : str
-        A unique identifier for the mod. Defaults to "IIJJKKLL".
+        A unique identifier for the mod (default is "IIJJKKLL").
     project_id : str
-        A unique identifier for the project associated with the mod. Defaults to "AABBCCDD".
+        A unique identifier for the associated project (default is "AABBCCDD").
     date_published : str
-        The date when the mod was published. Defaults to an empty string.
-    files : list
-        A list of files associated with the mod. Defaults to an empty list.
+        The date the mod was published (default is an empty string).
+    files : list[str]
+        A list of files associated with the mod (default is an empty list).
 
-    Methods
-    -------
+    Methods:
+    ---------
     __init__(**kwargs) -> None
-        Initializes the mod with the given attributes.
+        Initializes a new instance of the Mod class with the provided attributes.
     export_json() -> dict
-        Exports the mod's attributes as a JSON object.
+        Exports the mod's attributes as a JSON-compatible dictionary.
     load_json(data: dict) -> None
         Loads the provided JSON data into the mod's attributes.
     """
@@ -57,11 +61,6 @@ class Mod:
     project_id: str = "AABBCCDD"
     date_published: str = ""
     files: list[dict] = field(default_factory=list)
-
-    # def __init__(self, **kwargs) -> None:
-    #     """Initializes the mod with the given attributes."""
-    #     for key, value in kwargs.items():
-    #         setattr(self, key, value)
 
     def export_json(self) -> dict:
         """Exports the mod's attributes as a JSON object."""
