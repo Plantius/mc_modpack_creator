@@ -124,12 +124,12 @@ class Project:
         return True
 
 
-    def add_mod(self, name: str, version: dict, project_info: dict, index: int=-1) -> bool:
+    def add_mod(self, name: str, version: dict, project_info: dict, index: int=0) -> bool:
         """Adds a mod to the project's modpack."""
         if any([project_info, version]) is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
             return False
-        
+
         self.modpack.mod_data.insert(index, Mod(
             title=project_info["title"],
             description=project_info["description"],

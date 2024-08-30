@@ -1,5 +1,7 @@
 import standard as std
+from dataclasses import dataclass, field
 
+@dataclass
 class Mod:
     """
     Represents a mod with attributes and methods for JSON export and import.
@@ -47,19 +49,19 @@ class Mod:
     name: str = "Mod 1.0.0"
     changelog: str = "Changes"
     version_number: str = "1.0"
-    dependencies: list[dict] = []
-    mc_versions: list = ["1.19"]
+    dependencies: list[dict] = field(default_factory=list)
+    mc_versions: list = field(default_factory=lambda: ["1.19"])
     version_type: str = "release"
-    mod_loaders: list = []
+    mod_loaders: list = field(default_factory=list)
     id: str = "IIJJKKLL"
     project_id: str = "AABBCCDD"
     date_published: str = ""
-    files: list[dict] = []
+    files: list[dict] = field(default_factory=list)
 
-    def __init__(self, **kwargs) -> None:
-        """Initializes the mod with the given attributes."""
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    # def __init__(self, **kwargs) -> None:
+    #     """Initializes the mod with the given attributes."""
+    #     for key, value in kwargs.items():
+    #         setattr(self, key, value)
 
     def export_json(self) -> dict:
         """Exports the mod's attributes as a JSON object."""

@@ -256,7 +256,7 @@ class Menu:
         submenu.display()
         return OPEN  # Keep main menu open
     
-    def add_mods_action(self, slugs: list[str]) -> bool:
+    def add_mods_action(self, ids: list[str]) -> bool:
         """
         Handle the action to add mods by their IDs or slugs.
         Prompts the user to enter mod slugs or IDs and then selects versions to add to the project.
@@ -264,24 +264,26 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
+        ids = [id for id in ids if std.get_index([m.project_id for m in self.project.modpack.mod_data], id) is None]
+        print(ids)
         with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
             versions_all = list(pool.map(lambda x: self.project.api.list_versions(**x), 
-                                    [{"project_name":name, 
+                                    [{"id":id, 
                                       "loaders":[self.project.modpack.mod_loader], 
                                       "game_versions":[self.project.modpack.mc_version]} 
-                                     for name in slugs]))
+                                     for id in ids]))
         
-            project_info_all = list(pool.map(self.project.api.get_project, slugs))
+            project_info_all = list(pool.map(self.project.api.get_project, ids))
 
         if not any(project_info_all):
             std.eprint(f"[ERROR] Could not retrieve mods.")
             return OPEN
         
-        for versions, slug in zip(versions_all, slugs):
+        for versions, project_info in zip(versions_all, project_info_all):
             submenu = Menu(
                 project=self.project, 
-                title=f"Which version of {slug} do you want to add?",
-                menu_entries=[f'''{project_info_all[std.get_index([i["slug"] for i in project_info_all], slug)]["title"]} - \
+                title=f"Which version of {project_info['title']} do you want to add?",
+                menu_entries=[f'''{project_info["title"]} - \
 {version["version_number"]}: Minecraft version(s): \
 {version["game_versions"]}, {version["version_type"]}''' 
                     for version in versions],
@@ -292,8 +294,14 @@ class Menu:
                 if std.get_input(f'''{version["name"]}:
 {version["changelog"]}
     Do you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                    self.project.add_mod(slug, version, 
-                                         project_info=project_info_all[std.get_index([i["slug"] for i in project_info_all], slug)])
+                    self.project.add_mod(project_info["slug"], version, 
+                                         project_info=project_info)
+                    
+                    # TODO: Auto add dependencies
+                    if len(version["dependencies"]) > 0:
+                        required_ids = [p["project_id"] for p in version["dependencies"] if p["dependency_type"] == "required" and std.get_index([m.project_id for m in self.project.modpack.mod_data], p["project_id"]) is None]
+                        if len(required_ids) > 0:
+                            self.add_mods_action(required_ids)
                     submenu.menu_active = False  # Close sub menu (version list)
 
             submenu.handle_selection = handle_selection
@@ -352,7 +360,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
     Do you want to add this mod to the current project? y/n ''') != ACCEPT:
                     return
 
-            self.add_mods_action([results["hits"][i]["slug"] for i in selected_index])
+            self.add_mods_action([results["hits"][i]["project_id"] for i in selected_index])
 
         submenu.handle_selection = handle_selection
         submenu.display()
@@ -459,7 +467,7 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
                 return
             with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
                 versions_all = list(pool.map(lambda x :self.project.api.list_versions(**x), 
-                                        [{"project_name":self.project.modpack.mod_data[i].project_id, 
+                                        [{"id":self.project.modpack.mod_data[i].project_id, 
                                           "loaders":[self.project.modpack.mod_loader], 
                                           "game_versions":[self.project.modpack.mc_version]} 
                                          for i in selected_index]))
@@ -479,178 +487,3 @@ Link to mod https://modrinth.com/mod/{selected_mod["slug"]}
         submenu.handle_selection = handle_selection
         submenu.display()
         return OPEN
-    
-    
-    # def get_options(self, flags: dict) -> list:
-    #     """Returns a list of options based on the provided flags."""
-    #     options = []
-
-    #     if flags["config"]:
-    #         options.extend(mo.OPT_CONFIG)
-    #     elif not flags["mod"]:
-    #         if flags["loaded"]:
-    #             options.extend(mo.OPT_PROJECT + mo.OPT_MODPACK + mo.OPT_MISC["config"])
-    #         else:
-    #             options.extend(mo.OPT_PROJECT)
-    #     else:
-    #         options.extend(mo.OPT_ADD_MOD)
-
-    #     return options + [None] + mo.OPT_MISC["exit"]
-
-    
-
-
-    # def get_mod_status(self, entry: str) -> str:
-    #     """Retrieves the status of a mod based on the provided entry."""
-    #     index = std.get_index(project.mp.mod_name_version(), entry)
-    #     if index is not None:
-    #         return f'{entry}: ' + tw.fill(project.mp.mod_list[index].description, width=100, fix_sentence_endings=True)
-    #     return entry
-
-    # def create_config(self, title="A Menu", menu_entries=["Exit"], cursor_index=0, 
-    #                   clear_screen=CLEAR_SCREEN, multi_select=False, show_multi_select_hint=False,
-    #                   status_bar="No project loaded") -> dict:
-    #     """Creates a configuration dictionary for a menu."""
-    #     return self.mf.create_config(title, menu_entries, cursor_index, clear_screen, multi_select, show_multi_select_hint, status_bar)
-
-    # def display_menu(self, title: str, menu_entries: list, multi_select=False, status_func=None, clear_screen=CLEAR_SCREEN, cursor_index=0) -> int:
-    #     """Displays a menu based on provided options and returns the selected index."""
-    #     return self.mf.display_menu(title, menu_entries, multi_select, status_func, clear_screen, cursor_index)
-
-
-    # # Move to menu_func
-    # # 
-    # # 
-    # # 
-    # def config_menu(self, config_options: dict) -> None:
-    #     """Displays a menu for editing project settings."""
-    #     while True:
-    #         selected_index = self.display_menu(
-    #             title="Edit project settings.",
-    #             menu_entries=mo.get_options(config_options)["names"],
-    #             status_func=self.get_project_status
-    #         )
-    #         if selected_index is None:
-    #             break
-
-    #         option = mo.get_options(config_options)["ids"][selected_index]
-    #         func = getattr(self.mf, mo.get_options(config_options)["functions"][selected_index])
-    #         if option is mo.Option.SETTINGS and not func(self.p):
-    #             print(f"[ERROR] Could not execute {mo.get_options(config_options)['functions'][selected_index]}")
-    #         elif option is mo.Option.EXIT:
-    #             break
-
-    # def rm_mod_menu(self, main_options: dict, main_index: int, func: callable) -> None:
-    #     """Displays a menu for removing mods from the project."""
-    #     while True:
-    #         selected_index = self.display_menu(
-    #             title="Select which mods to remove.",
-    #             menu_entries=self.p.mp.mod_name_version() or ["No mods in project"],
-    #             multi_select=True,
-    #             status_func=self.get_mod_status
-    #         )
-    #         if selected_index is None:
-    #             break
-
-    #         if not func(self.p, selected_index):
-    #             print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
-
-    # def add_mod_menu(self, mod_options: dict) -> None:
-    #     """Displays a menu for adding new mods to the project."""
-    #     while True:
-    #         selected_index = self.display_menu(
-    #             title="Search for new mods to add to the project.",
-    #             menu_entries=mo.get_options(mod_options)["names"],
-    #             status_func=self.get_project_status
-    #         )
-    #         if selected_index is None:
-    #             break
-
-    #         option = mo.get_options(mod_options)["ids"][selected_index]
-    #         func = getattr(self.mf, mo.get_options(mod_options)["functions"][selected_index])
-    #         if option is mo.Option.ADD_MODS and not func(self.p):
-    #             print(f"[ERROR] Could not execute {mo.get_options(mod_options)['functions'][selected_index]}")
-
-    #         elif option is mo.Option.EXIT:
-    #             break
-    
-    # def update_mods_menu(self, main_options: dict, main_index: int, func: callable) -> None:
-    #     """Displays a menu for adding new mods to the project."""
-    #     while True:
-    #         selected_indices = self.display_menu(
-    #             title="Update mods in the current project.",
-    #             menu_entries=self.p.mp.mod_name_version() or ["No mods in project"],
-    #             multi_select=True,
-    #             status_func=self.get_mod_status
-    #         )
-    #         if selected_indices is None:
-    #             break
-
-    #         if not func(self.p, selected_indices):
-    #             print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
-
-    # def list_mods_menu(self, main_options: dict, main_index: int, func: callable) -> None:
-    #     """Displays a menu for adding new mods to the project."""
-    #     cursor_index: int = 0
-    #     while True:
-    #         selected_index = self.display_menu(
-    #             title="Current mods in this project.",
-    #             menu_entries=self.p.mp.mod_name_version() or ["No mods in project"],
-    #             status_func=self.get_mod_status,
-    #             cursor_index=cursor_index
-    #         )
-    #         if selected_index is None:
-    #             break
-    #         cursor_index = selected_index
-
-    #         if not func(self.p, selected_index):
-    #             print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
-    # # 
-    # # 
-    # # 
-    # # Move to menu_func
-
-    #     """Displays the main menu and handles user interactions with different options."""
-        # cursor_index: int = 0
-        # while True:
-        #     title = self.get_project_title()
-        #     main_options = self.get_options({"loaded": self.p.metadata["loaded"], "config": False, "mod": False})
-        #     config_options = self.get_options({"loaded": self.p.metadata["loaded"], "config": True, "mod": False})
-        #     mod_options = self.get_options({"loaded": self.p.metadata["loaded"], "config": False, "mod": True})
-
-        #     main_index = self.display_menu(
-        #         title=title,
-        #         menu_entries=mo.get_options(main_options)["names"],
-        #         status_func=self.get_project_status,
-        #         cursor_index=cursor_index
-        #     )
-            
-        #     if main_index is None:
-        #         func = getattr(self.mf, mo.get_options(mo.OPT_MISC["exit"])["functions"][0])
-        #         if not func(self.p):
-        #             print(f"[ERROR] Could not execute exit function")
-        #         break
-
-        #     cursor_index = main_index
-        #     option = mo.get_options(main_options)["ids"][main_index]
-        #     func = getattr(self.mf, mo.get_options(main_options)["functions"][main_index])
-
-        #     if option is mo.Option.CONFIG:
-        #         self.config_menu(config_options)
-        #     elif option is mo.Option.PROJECT:
-        #         if not func(self.p):
-        #             print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
-        #     elif option is mo.Option.ADD_MODS:
-        #         self.add_mod_menu(mod_options) # Contains sub menu
-        #     elif option is mo.Option.RM_MODS:
-        #         self.rm_mod_menu(main_options, main_index, func) # Contains sub menu
-        #     elif option is mo.Option.UPDATE_MODS:
-        #         self.update_mods_menu(main_options, main_index, func) # Contains sub menu
-        #     elif option is mo.Option.LIST_MODS:
-        #         self.list_mods_menu(main_options, main_index, func) # Contains sub menu
-        #     elif option is mo.Option.EXIT:
-        #         if not func(self.p):
-        #             print(f"[ERROR] Could not execute {mo.get_options(main_options)['functions'][main_index]}")
-        #         break
-
-    
