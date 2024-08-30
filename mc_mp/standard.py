@@ -63,6 +63,9 @@ def get_project_files() -> list:
     """Returns a sorted list of JSON files in the current directory."""
     return sorted(glob.glob("./*.json"))
 
+def has_duplicates(lst: list) -> bool:
+    return len(lst) != len(set(lst))
+
 def eprint(*args, **kwargs) -> None:
     """Print errors to standard error."""
     print(*args, file=sys.stderr, **kwargs)
