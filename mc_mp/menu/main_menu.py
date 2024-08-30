@@ -334,6 +334,7 @@ class Menu:
 
         if not results:
             return OPEN
+        
         submenu = Menu(
                 project=self.project, 
                 title="Which entries do you want to add? Select one option to see its details.",
@@ -370,7 +371,6 @@ class Menu:
         async def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return
-            
             await self.project.update_mod(selected_index)
             
         
@@ -394,7 +394,7 @@ class Menu:
             if len(self.project.modpack.mod_data) == 0:
                 return
             for i in sorted(selected_index, reverse=True):
-                self.project.rm_mod(i) 
+                await self.project.rm_mod(i) 
 
         submenu.handle_selection = handle_selection
         await submenu.display()

@@ -157,7 +157,7 @@ class Project:
         self.metadata["saved"] = False
         return True
     
-    def rm_mod(self, index: int) -> bool:
+    async def rm_mod(self, index: int) -> bool:
         try:
             del self.modpack.mod_data[index]
             self.metadata["saved"] = False
@@ -177,11 +177,13 @@ class Project:
         for index, latest_version, project_info in zip(selected_index, latest_version_all, project_info_all):
             new_mod_date = parser.parse(latest_version["date_published"])
             current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)
+            print(new_mod_date > current_mod_date)
             if new_mod_date > current_mod_date:
                 inp = std.get_input(f"There is a newer version available for {self.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ")
                 if inp == ACCEPT:
                     name = self.modpack.mod_data[index].project_id
-                    self.rm_mod(index); self.add_mod(name, latest_version, project_info, index)
+                    await self.rm_mod(index); 
+                    await self.add_mod(name, latest_version, project_info, index)
             print(f"{self.modpack.get_mods_name_ver()[index]} is up to date")
     
     def list_projects(self) -> list[str]:
