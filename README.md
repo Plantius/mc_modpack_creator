@@ -87,14 +87,14 @@ In the `menu` package, configuration constants for user input are defined:
 - **REJECT:** Default rejection input (e.g., `'n'`).
 
 ## TODO
-
-- Change how mod updates are handled
-- Rework whole menu system to streamline it and remove useless code
-- Show Modname when update is found
+- Auto add dependencies
+- Download modpack!!
+- Mod checker (correct version and modloader)
+- Down/upgrade mods
+- Check project id against version to determine correct data
 - Show more info about newer mod version when update is found
 - Correctly download dependencies for mods that have them
 - Check if a mod is already in the project
-- Add `View mods` menu
 - Validate user input more robustly.
 - Expand the menu with additional options.
 - Implement comprehensive tests.

@@ -42,14 +42,22 @@ class ProjectAPI:
         if ProjectAPI.is_slug_valid(project_name) is None:
             return None
         return ProjectAPI.request(f"/project/{project_name}")
+    
+    @staticmethod
+    def get_projects(**kwargs) -> Optional[Dict[str, Any]]:
+        """Retrieves information about a specific project."""
+        params = {k: v for k, v in kwargs.items() if v is not None}
+        if any([ProjectAPI.is_slug_valid(project_name) for project_name in params["ids"]]):
+            return None
+        return ProjectAPI.request(f"/projects", params=ProjectAPI.parse_url(params))
 
     @staticmethod
-    def list_versions(project_name: str, **kwargs) -> Optional[Dict[str, Any]]:
+    def list_versions(**kwargs) -> Optional[Dict[str, Any]]:
         """Lists versions of a given project with optional filtering."""
-        params = {k: v for k, v in kwargs.items() if v is not None}
-        if ProjectAPI.is_slug_valid(project_name) is None:
+        params = {k: v for k, v in kwargs.items() if v is not None and k != "id"}
+        if ProjectAPI.is_slug_valid(kwargs["id"]) is None:
             return None
-        return ProjectAPI.request(f"/project/{project_name}/version", params=ProjectAPI.parse_url(params))
+        return ProjectAPI.request(f"/project/{kwargs['id']}/version", params=ProjectAPI.parse_url(params))
 
     @staticmethod
     def get_version(version_id: str) -> Optional[Dict[str, Any]]:
@@ -61,3 +69,5 @@ class ProjectAPI:
         """Retrieves information about multiple versions by their IDs."""
         params = {k: v for k, v in kwargs.items() if v is not None}
         return ProjectAPI.request(f"/versions", params=ProjectAPI.parse_url(params))
+
+    

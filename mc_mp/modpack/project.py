@@ -2,7 +2,7 @@ from .modpack import Modpack
 from .mod import Mod
 import standard as std
 import json
-from dateutil import parser
+import os
 from typing import Optional, Dict, Any
 from . import DEF_FILENAME, ACCEPT
 from .project_api import ProjectAPI  # Import the new ProjectAPI 
@@ -64,7 +64,8 @@ class Project:
         Retrieves details of multiple versions using the ProjectAPI instance.
     """
 
-    mp: Modpack
+    modpack: Modpack
+    api: ProjectAPI
     metadata: Dict[str, Any] = {
         "loaded": False,
         "saved": True,
@@ -78,47 +79,86 @@ class Project:
 
     def create_project(self, **kwargs) -> None:
         """Creates a new project and updates metadata."""
-        self.mp = Modpack(**kwargs)
+        self.modpack = Modpack(**kwargs)
         self.metadata.update({
             "loaded": True,
             "saved": False,
             "project_id": std.generate_project_id()
         })
-        if not self.mp.check_compatibility():
-            print("Invalid project created.")
+        if not self.modpack.check_compatibility():
+            std.eprint("[ERROR]: Invalid project created.")
             exit(1)
+        
 
-    def load_project(self, filename: str) -> None:
+    def load_project(self, filename: str) -> bool:
         """Loads project data from a file and initializes the modpack."""
-        try:
+        if os.path.exists(filename):
             with open(filename, 'r') as file:
                 data = json.load(file)
                 if not std.is_valid_project_id(data["metadata"]["project_id"]):
                     std.eprint("[ERROR] Invalid project file.")
                     exit(1)
 
-                self.metadata = data["metadata"]
-                del data["metadata"]
-                self.mp = Modpack(**data)
+                self.metadata = data["metadata"]; del data["metadata"]
+                self.modpack = Modpack(**data)
                 
-                if not self.mp.check_compatibility():
+                if not self.modpack.check_compatibility():
                     print("Invalid project loaded.")
                     exit(1)
-        except Exception as e:
-            std.eprint(f"[ERROR] Error processing file: {e}")
-            exit(1)
+            self.metadata["loaded"] = True
+            self.metadata["saved"] = True
+            return True
+        return False
 
-    def save_project(self, filename: Optional[str] = None) -> None:
+    def save_project(self, filename: Optional[str]=DEF_FILENAME) -> bool:
         """Saves the current project state to a file."""
-        if filename is None:
-            filename = DEF_FILENAME
-        self.metadata["filename"] = filename
-        self.metadata["saved"] = True
-        project_data = self.mp.export_json()
-        project_data["metadata"] = self.metadata
-        with open(filename, 'w') as file:
-            json.dump(project_data, file)
+        if filename:
+            self.metadata["filename"] = filename
+        if not self.metadata["filename"]:
+            return False
 
+        project_data = self.modpack.export_json(); project_data["metadata"] = self.metadata
+        with open(self.metadata["filename"], 'w') as file:
+            json.dump(project_data, file, indent=4)
+        self.metadata["saved"] = True
+        return True
+
+
+    def add_mod(self, name: str, version: dict, project_info: dict, index: int=0) -> bool:
+        """Adds a mod to the project's modpack."""
+        if any([project_info, version]) is None:
+            std.eprint(f"[ERROR] Could not find mod with name: {name}")
+            return False
+
+        self.modpack.mod_data.insert(index, Mod(
+            title=project_info["title"],
+            description=project_info["description"],
+            name=version["name"], 
+            changelog=version["changelog"], 
+            version_number=version["version_number"],
+            dependencies=version["dependencies"],
+            mc_versions=version["game_versions"],
+            mod_loaders=version["loaders"], 
+            id=version["id"],
+            project_id=version["project_id"],
+            date_published=version["date_published"], 
+            files=version["files"]
+        ))
+        self.metadata["saved"] = False
+        return True
+    
+    def rm_mod(self, index: int) -> bool:
+        try:
+            del self.modpack.mod_data[index]
+            self.metadata["saved"] = False
+            return True
+        except:
+            return False
+
+    def update_mod(self, new_version: dict, index: int, project_info: dict) -> bool:
+        name = self.modpack.mod_data[index].project_id
+        self.rm_mod(index); self.add_mod(name, new_version, project_info, index)
+    
     def list_projects(self) -> list[str]:
         valid_projects: list[str] = []
         for filename in std.get_project_files():
@@ -133,55 +173,5 @@ class Project:
     
     def list_mods(self) -> list[str]:
         if self.metadata["loaded"]:
-            return [f'{m}:\n\t{d}' for m,d in zip(self.mp.get_mod_list_names(), self.mp.get_mod_list_descriptions())]
+            return [f'{m}:\n\t{d}' for m,d in zip(self.modpack.get_mod_list_names(), self.modpack.get_mod_list_descriptions())]
         return None
-
-    def add_mod(self, name: str, versions: Dict[str, Any], mod_index: int) -> bool:
-        """Adds a mod to the project's modpack."""
-        project_info = self.api.get_project(name)
-        if project_info is None:
-            std.eprint(f"[ERROR] Could not find mod with name: {name}")
-            return False
-        
-        mod_details = versions[mod_index]
-        new_mod = Mod(
-            mod_name=project_info["title"], 
-            description=project_info["description"],
-            mod_version=mod_details["version_number"],
-            dependencies=mod_details["dependencies"],
-            mc_versions=mod_details["game_versions"],
-            client_side=project_info["client_side"],
-            server_side=project_info["server_side"], 
-            mod_loaders=mod_details["loaders"], 
-            mod_id=mod_details["id"],
-            project_id=mod_details["project_id"],
-            date_published=mod_details["date_published"], 
-            files=mod_details["files"]
-        )
-        self.mp.mod_list.append(new_mod)
-        self.metadata["saved"] = False
-        return True
-    
-    def rm_mod(self, index) -> bool:
-        try:
-            del self.mp.mod_list[index]
-            self.metadata["saved"] = False
-            return True
-        except:
-            return False
-
-    def update_mod(self, indices) -> bool:
-        for index in indices:
-            new_versions = self.list_versions(self.mp.mod_list[index].project_id, loaders=[self.mp.mod_loader], game_versions=[self.mp.mc_version]) 
-            if new_versions is not None:
-                new_mod_date = parser.parse(new_versions[0]["date_published"])
-                current_mod_date = parser.parse(self.mp.mod_list[index].date_published)
-                if new_mod_date > current_mod_date:
-                    inp = std.get_input(f"There is a newer version available for {self.mp.mod_list[index].mod_name}, do you want to upgrade? y/n {self.mp.mod_list[index].mod_version} -> {new_versions[0]['version_number']} ")
-                    if inp == ACCEPT:
-                        name = self.mp.mod_list[index].project_id
-                        self.metadata["saved"] = False
-                        return any([self.rm_mod(index), self.add_mod(name, new_versions, 0)])
-                print(f"{self.mp.get_mod_list_names()[index]} is up to date")
-                
-        return True
