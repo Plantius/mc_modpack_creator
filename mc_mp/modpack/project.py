@@ -7,7 +7,7 @@ from . import DEF_FILENAME, ACCEPT
 from .project_api import ProjectAPI
 import concurrent.futures as cf
 from dateutil import parser
-
+import asyncio
 
 
 class Project:
@@ -129,12 +129,12 @@ class Project:
         self.metadata["saved"] = True
         return True
 
-    def search_mods(self, **kwargs) -> dict:
+    async def search_mods(self, **kwargs) -> dict:
         """Search for mods using the API."""
-        return self.api.search_project(**kwargs)
+        return await self.api.search_project(**kwargs)
     
     
-    def add_mod(self, name: str, version: dict, project_info: dict, index: int=0) -> bool:
+    async def add_mod(self, name: str, version: dict, project_info: dict, index: int=0) -> bool:
         """Adds a mod to the project's modpack."""
         if any([project_info, version]) is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
@@ -165,9 +165,9 @@ class Project:
         except:
             return False
 
-    def update_mod(self, selected_index) -> bool:
+    async def update_mod(self, selected_index) -> bool:
         ids = [id.project_id for id in self.modpack.mod_data]
-        mods_versions_info_all = self.fetch_mods_by_ids(ids)
+        mods_versions_info_all = await self.fetch_mods_by_ids(ids)
         if not any(mods_versions_info_all):
             std.eprint("[ERROR] Could not find mods.")            
             return False
@@ -185,7 +185,7 @@ class Project:
             print(f"{self.modpack.get_mods_name_ver()[index]} is up to date")
     
     def list_projects(self) -> list[str]:
-        valid_projects: list[str] = []
+        valid_projects: list[str] = []; 
         for filename in std.get_project_files():
             try:
                 with open(filename, 'r') as file:
@@ -201,18 +201,15 @@ class Project:
             return [f'{m}:\n\t{d}' for m,d in zip(self.modpack.get_mod_list_names(), self.modpack.get_mod_list_descriptions())]
         return None
     
-    def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
+    async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         ids = [id for id in ids if not self.is_mod_installed(id)]
-        mods_ver_info = []
-        with cf.ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
-            versions_all = list(pool.map(lambda x: self.api.list_versions(**x), 
-                                    [{"id":id, 
-                                        "loaders":[self.modpack.mod_loader], 
-                                        "game_versions":[self.modpack.mc_version]} 
-                                        for id in ids]))
+        tasks: list = []; mods_ver_info: list[dict] = []
+        for id in ids:
+            tasks.append(self.api.list_versions(id=id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]))
+            tasks.append(self.api.get_project(id))
         
-            project_info_all = list(pool.map(self.api.get_project, ids))    
-        
+        res = await asyncio.gather(*tasks)
+        versions_all = res[::2]; project_info_all = res[1::2]
         for versions, project_info in zip(versions_all, project_info_all):
             if versions and project_info:
                 mods_ver_info.append({"project_info": project_info,

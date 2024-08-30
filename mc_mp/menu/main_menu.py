@@ -1,6 +1,7 @@
 from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
+import asyncio
 from . import CLEAR_SCREEN, ACCEPT, OPEN
 
 class Menu:
@@ -61,7 +62,7 @@ class Menu:
     def get_entry_help(self, entry) -> str:
         """Retrieves the status description for a given project menu entry."""
         index = std.get_index(self.menu_entries, entry)
-        if index < 0:
+        if index is None:
             std.eprint("Could not find entry.")
             return entry
         return self.help[index]
@@ -103,7 +104,7 @@ class Menu:
         self.actions.append(action)
         self.help.append(help)
     
-    def display(self) -> None:
+    async def display(self) -> None:
         """
         Display the menu and handle user input through TerminalMenu.
         The menu remains active until the user decides to exit.
@@ -122,11 +123,11 @@ class Menu:
             )
             selected_index = terminal_menu.show()
             if selected_index is not None:
-                self.handle_selection(selected_index)
+                await self.handle_selection(selected_index)
             else:
-                self.exit_menu()
+                await self.exit_menu()
 
-    def handle_selection(self, selected_index) -> None:
+    async def handle_selection(self, selected_index) -> None:
         """
         Handle the user's selection from the menu.
 
@@ -135,18 +136,21 @@ class Menu:
         """
         if selected_index < len(self.actions):
             action = self.actions[selected_index]
-            if callable(action):
-                if not action():
-                    self.menu_active = False
-                    if self.parent_menu:
-                        self.parent_menu.menu_active = True
-                        self.parent_menu.display()
+            if asyncio.iscoroutinefunction(action):
+                await action()
+            elif callable(action):
+                action_result = action()
+                if asyncio.iscoroutine(action_result):
+                    await action_result
             elif isinstance(action, Menu):
-                action.display()
+                await action.display()
+            if not self.menu_active and self.parent_menu:
+                self.parent_menu.menu_active = True
+                await self.parent_menu.display()
         else:
             std.eprint("[ERROR] Invalid menu selection.")
 
-    def exit_menu(self) -> None:
+    async def exit_menu(self) -> None:
         """
         Handle the action to exit a submenu.
         If this menu has a parent, it will return to the parent menu; otherwise, it performs a normal exit.
@@ -154,18 +158,18 @@ class Menu:
         if self.parent_menu:
             self.menu_active = False  # Close the current menu
         else:
-            self.close_self()
+            await self.close_self()
     
-    def close_self(self) -> None:
+    async def close_self(self) -> None:
         """
         Handle the action to go back to the parent menu or exit.
         If the current project is unsaved, prompt to save it before exiting.
         """
         if not self.project.metadata["saved"]:
-            self.save_project_action()
+            await self.save_project_action()
         self.menu_active = False
     
-    def load_project_action(self) -> bool:
+    async def load_project_action(self) -> bool:
         """
         Handle the action to load a project from a file.
         Prompts the user to select or enter the filename of the project to load.
@@ -173,7 +177,7 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
-        if self.project.metadata["loaded"] and not self.save_project_action():
+        if self.project.metadata["loaded"] and not await self.save_project_action():
             std.eprint("[ERROR] Could not save current project.")
             return OPEN  # Keep menu open
 
@@ -184,7 +188,7 @@ class Menu:
             parent_menu=self
         )
         
-        def handle_selection(selected_index):
+        async def handle_selection(selected_index):
             filename = None
             if submenu.menu_entries[selected_index] == "Enter filename":
                 filename = std.get_input("Please enter a project file: ")
@@ -195,10 +199,10 @@ class Menu:
                 submenu.menu_active = False
             
         submenu.handle_selection = handle_selection
-        submenu.display()
+        await submenu.display()
         return OPEN  # Keep main menu open
         
-    def create_project_action(self) -> bool:
+    async def create_project_action(self) -> bool:
         """
         Handle the action to create a new project.
         Prompts the user to enter the details required to create a new project.
@@ -206,7 +210,7 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
-        if not self.project.metadata["saved"] and not self.save_project_action():
+        if not self.project.metadata["saved"] and not await self.save_project_action():
             std.eprint("[ERROR] Could not save current project.")
             return OPEN  # Keep main menu open
 
@@ -227,7 +231,7 @@ class Menu:
         )
         return OPEN  # Keep main menu open
     
-    def save_project_action(self) -> bool:
+    async def save_project_action(self) -> bool:
         """
         Handle the action to save the current project.
         Prompts the user to confirm saving and enter a filename if necessary.
@@ -243,7 +247,7 @@ class Menu:
                 self.project.save_project(filename)
         return OPEN  # Keep main menu open
     
-    def add_mods_menu(self) -> bool:
+    async def add_mods_menu(self) -> bool:
         """
         Handle the action to add mods to the current project.
         Displays a submenu to select the method of adding mods.
@@ -258,10 +262,10 @@ class Menu:
         )
         submenu.add_option("Add mods by id/slug", self.add_mods_id_action)
         submenu.add_option("Search for mods", self.search_mods_action)
-        submenu.display()
+        await submenu.display()
         return OPEN  # Keep main menu open
     
-    def add_mods_action(self, ids: list[str]) -> bool:
+    async def add_mods_action(self, ids: list[str]) -> bool:
         """
         Handle the action to add mods by their IDs or slugs.
         Prompts the user to enter mod slugs or IDs and then selects versions to add to the project.
@@ -269,7 +273,7 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
-        mods_versions_info_all = self.project.fetch_mods_by_ids(ids)
+        mods_versions_info_all = await self.project.fetch_mods_by_ids(ids)
 
         if not any(mods_versions_info_all):
             std.eprint(f"[ERROR] Could not retrieve mods.")
@@ -282,20 +286,20 @@ class Menu:
                 menu_entries=[f'''{project_info["title"]} - {version["version_number"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}''' for version in versions],
                 parent_menu=self)
             
-            def handle_selection(selected_index):
+            async def handle_selection(selected_index):
                 version = versions[selected_index]
                 if std.get_input(f'''{version["name"]}: \n{version["changelog"]}\n\tDo you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                    self.project.add_mod(project_info["slug"], version, 
+                    await self.project.add_mod(project_info["slug"], version, 
                                          project_info=project_info)
                     
                     if len(version["dependencies"]) > 0:
                         required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and not self.project.is_mod_installed(dep["project_id"])]
                         if required_ids:
-                            self.add_mods_action(required_ids)
+                            await self.add_mods_action(required_ids)
                     submenu.menu_active = False  # Close sub menu (version list)
 
             submenu.handle_selection = handle_selection
-            submenu.display()
+            await submenu.display()
         return OPEN  # Keep main menu open
     
     def add_mods_id_action(self) -> bool:
@@ -306,7 +310,7 @@ class Menu:
         
     
     # TODO Unify search mods and add mods
-    def search_mods_action(self):
+    async def search_mods_action(self):
         """Placeholder for a future feature to search for mods."""
         query = std.get_input("Please enter a term to search for: ")
 
@@ -326,7 +330,7 @@ class Menu:
                 return False
             temp = [[f"{key}:{item}" for item in value.split()] for key, value in zip(["categories", "versions"], facets.split(','))]
             kwargs["facets"] = [[item] for facet in temp for item in facet] + [["project_type:mod"]]
-        results = self.project.search_mods(**kwargs)
+        results = await self.project.search_mods(**kwargs)
 
         if not results:
             return OPEN
@@ -337,20 +341,20 @@ class Menu:
                 multi_select=True
             )
           
-        def handle_selection(selected_index):
+        async def handle_selection(selected_index):
             selected_mod_ids = [results["hits"][i]["project_id"] for i in selected_index]
             if len(selected_index) == 1:
                 selected_mod = results["hits"][selected_index[0]]
                 if input(f'''{selected_mod["title"]} \nClient side: {selected_mod["client_side"]}\nServer side: {selected_mod["server_side"]}\n\n{selected_mod["description"]}\nLink to mod https://modrinth.com/mod/{selected_mod["slug"]}\n\tDo you want to add this mod to the current project? y/n ''') != ACCEPT:
                     return
 
-            self.add_mods_action(selected_mod_ids)
+            await self.add_mods_action(selected_mod_ids)
 
         submenu.handle_selection = handle_selection
-        submenu.display()
+        await submenu.display()
         return OPEN
     
-    def update_mods_action(self) -> bool:
+    async def update_mods_action(self) -> bool:
         """View all mods in the current project."""
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
@@ -363,18 +367,18 @@ class Menu:
                 multi_select=True
             )
           
-        def handle_selection(selected_index):
+        async def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return
             
-            self.project.update_mod(selected_index)
+            await self.project.update_mod(selected_index)
             
         
         submenu.handle_selection = handle_selection
-        submenu.display()
+        await submenu.display()
         return OPEN
     
-    def remove_mods_action(self) -> bool:
+    async def remove_mods_action(self) -> bool:
         """View all mods in the current project."""
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
@@ -386,18 +390,18 @@ class Menu:
                 status_bar=self.get_entry_description,
                 multi_select=True
             )
-        def handle_selection(selected_index):
+        async def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return
             for i in sorted(selected_index, reverse=True):
                 self.project.rm_mod(i) 
 
         submenu.handle_selection = handle_selection
-        submenu.display()
+        await submenu.display()
         return OPEN
     
     
-    def change_settings_menu(self) -> bool:
+    async def change_settings_menu(self) -> bool:
         submenu = Menu(
             project=self.project, 
             title=self.get_project_title,
@@ -408,7 +412,7 @@ class Menu:
         submenu.add_option("Change Minecraft Version", self.change_mc_version_action, "Change the modpack's minecraft version")
         submenu.add_option("Change Modloader", self.change_modloader_action, "Change the modpack's modloader")
         submenu.add_option("Change Build Version", self.change_build_action, "Change the modpack's build version")
-        submenu.display()
+        await submenu.display()
         return OPEN
     
     def change_project_attribute(self, attribute: str, prompt: str) -> bool:
@@ -421,23 +425,23 @@ class Menu:
         self.project.metadata["saved"] = False
         return OPEN
     
-    def change_title_action(self) -> bool:
+    async def change_title_action(self) -> bool:
         return self.change_project_attribute("title", "Please enter a new title: ")
 
-    def change_description_action(self) -> bool:
+    async def change_description_action(self) -> bool:
         return self.change_project_attribute("description", "Please enter the new description: ")
 
-    def change_modloader_action(self) -> bool:
+    async def change_modloader_action(self) -> bool:
         return self.change_project_attribute("mod_loader", "Please enter a new modloader: ")
 
-    def change_mc_version_action(self) -> bool:
+    async def change_mc_version_action(self) -> bool:
         return self.change_project_attribute("mc_version", "Please enter a new Minecraft version: ")
     
-    def change_build_action(self) -> bool:
+    async def change_build_action(self) -> bool:
         return self.change_project_attribute("build_version", "Please enter the new version: ")
 
     
-    def list_mods_action(self) -> bool:
+    async def list_mods_action(self) -> bool:
         """View all mods in the current project."""
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
@@ -449,9 +453,9 @@ class Menu:
                 status_bar=self.get_entry_description
             )
           
-        def handle_selection(selected_index):
+        async def handle_selection(selected_index):
             std.get_input(f"Changelog of {self.project.modpack.mod_data[selected_index].name}: {self.project.modpack.mod_data[selected_index].changelog}")
 
         submenu.handle_selection = handle_selection
-        submenu.display()
+        await submenu.display()
         return OPEN

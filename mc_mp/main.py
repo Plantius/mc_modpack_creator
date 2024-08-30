@@ -1,8 +1,9 @@
 from modpack import project
 from args_parser import args_parser as args
 from menu import main_menu
+import asyncio
 
-def main():
+async def main():
     # Initialize project and flags
     p = project.Project()
 
@@ -26,8 +27,8 @@ def main():
     if arguments.menu_disable:
         menu = main_menu.Menu(p)
         menu.status_bar = menu.get_entry_help
-        menu.display()
+        await menu.display()
         
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
