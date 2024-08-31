@@ -30,8 +30,6 @@ class ProjectAPI:
     @staticmethod
     async def get_dependencies(project_name: str) -> Optional[Dict[str, Any]]:
         """Retrieves all dependencies of a given project."""
-        if await ProjectAPI.is_slug_valid(project_name) is None:
-            return None
         try:
             return await ProjectAPI.request(f"/project/{project_name}/dependencies")
         except:
@@ -50,16 +48,15 @@ class ProjectAPI:
     @staticmethod
     async def get_project(project_name: str) -> Optional[Dict[str, Any]]:
         """Retrieves information about a specific project."""
-        if await ProjectAPI.is_slug_valid(project_name) is None:
+        try: 
+            return await ProjectAPI.request(f"/project/{project_name}")
+        except:
             return None
-        return await ProjectAPI.request(f"/project/{project_name}")
-    
+        
     @staticmethod
     async def get_projects(**kwargs) -> Optional[Dict[str, Any]]:
         """Retrieves information about a list of projects."""
         params = {k: v for k, v in kwargs.items() if v is not None}
-        # if any([await ProjectAPI.is_slug_valid(project_name) for project_name in params["ids"]]):
-        #     return None
         return await ProjectAPI.request(f"/projects", params=ProjectAPI.parse_url(params))
 
     @staticmethod
