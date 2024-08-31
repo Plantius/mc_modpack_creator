@@ -2,6 +2,7 @@ from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
 import asyncio
+import numpy as np
 from . import CLEAR_SCREEN, ACCEPT, OPEN
 
 class Menu:
@@ -274,13 +275,13 @@ class Menu:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
         ids = [id for id in ids if not self.project.is_mod_installed(id)]
-        mods_versions_info_all = await self.project.fetch_mods_by_ids(ids)
+        info = await self.project.fetch_mods_by_ids(ids)
 
-        if not any(mods_versions_info_all):
+        if not any(info["project_info"]) or not any(info["versions"]):
             std.eprint(f"[ERROR] Could not retrieve mods.")
             return OPEN
         
-        for versions, project_info in [(p["versions"], p["project_info"]) for p in mods_versions_info_all]:
+        for versions, project_info in zip(info["versions"], info["project_info"]):
             submenu = Menu(
                 project=self.project, 
                 title=f"Which version of {project_info['title']} do you want to add?",

@@ -32,12 +32,5 @@ async def main():
         menu.status_bar = menu.get_entry_help
         await menu.display()
     
-    start_time = time.perf_counter()
-    for i in range(tests):
-        # ids = [id.project_id for id in p.modpack.mod_data]
-        m = await p.search_mods()
-    end_time = time.perf_counter()
-    print(f"Avg time taken for test: {(end_time - start_time)/tests:.4f} seconds")
-
 if __name__ == "__main__":
     asyncio.run(main())
