@@ -1,3 +1,11 @@
+"""
+Author: Plantius (https://github.com/Plantius)
+Filename: ./mc_mp/standard.py
+Last Edited: 2024-08-31
+
+This module is part of the MC Modpack Creator project. For more details, visit:
+https://github.com/Plantius/mc_modpack_creator
+"""
 import sys
 import inspect
 import json
@@ -64,6 +72,7 @@ def get_project_files() -> list:
     return sorted(glob.glob("./*.json"))
 
 def has_duplicates(lst: list) -> bool:
+    """Check if there are duplicates in the list."""
     return len(lst) != len(set(lst))
 
 def eprint(*args, **kwargs) -> None:

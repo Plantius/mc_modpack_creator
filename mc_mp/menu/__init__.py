@@ -1,15 +1,12 @@
 """
-Constants for user responses in the menu module.
+Author: Plantius (https://github.com/Plantius)
+Filename: ./mc_mp/menu/__init__.py
+Last Edited: 2024-08-31
 
-Defines standard responses for user prompts in the menu package.
-
-Constants
-----------
-ACCEPT : str
-    Represents acceptance, typically 'y'.
-REJECT : str
-    Represents rejection, typically 'n'.
+This module is part of the MC Modpack Creator project. For more details, visit:
+https://github.com/Plantius/mc_modpack_creator
 """
+
 # Accept prompt
 ACCEPT = 'y'
 

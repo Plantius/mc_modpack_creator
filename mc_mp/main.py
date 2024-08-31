@@ -1,4 +1,11 @@
-import time
+"""
+Author: Plantius (https://github.com/Plantius)
+Filename: ./mc_mp/main.py
+Last Edited: 2024-08-31
+
+This module is part of the MC Modpack Creator project. For more details, visit:
+https://github.com/Plantius/mc_modpack_creator
+"""
 from modpack import project
 from args_parser import args_parser as args
 from menu import main_menu

@@ -1,3 +1,11 @@
+"""
+Author: Plantius (https://github.com/Plantius)
+Filename: ./mc_mp/modpack/project.py
+Last Edited: 2024-08-31
+
+This module is part of the MC Modpack Creator project. For more details, visit:
+https://github.com/Plantius/mc_modpack_creator
+"""
 from .modpack import Modpack
 from .mod import Mod
 import standard as std
@@ -33,7 +41,7 @@ class Project:
         return result
     
     def create_project(self, **kwargs) -> None:
-        """Creates a new project and updates metadata. Checks modpack compatibility."""
+        """Creates a new project and updates metadata; checks modpack compatibility."""
         self.modpack = Modpack(**kwargs)
         self.metadata.update({
             "loaded": True,
@@ -66,7 +74,7 @@ class Project:
         return False
 
     def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
-        """Saves the current project state to a file. Uses a default filename if none is provided."""
+        """Saves the current project state to a file."""
         if filename:
             self.metadata["filename"] = filename
         if not self.metadata["filename"]:

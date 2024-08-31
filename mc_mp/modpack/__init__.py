@@ -1,16 +1,10 @@
 """
-Configuration constants for the modpack package.
+Author: Plantius (https://github.com/Plantius)
+Filename: ./mc_mp/modpack/__init__.py
+Last Edited: 2024-08-31
 
-Defines constants for API endpoints, request headers, and default filenames.
-
-Constants
-----------
-API_BASE : str
-    Base URL for the Modrinth API.
-HEADERS : dict
-    Default HTTP headers with a custom User-Agent.
-DEF_FILENAME : str
-    Default filename for project files.
+This module is part of the MC Modpack Creator project. For more details, visit:
+https://github.com/Plantius/mc_modpack_creator
 """
 
 # Base URL for Modrinth API
