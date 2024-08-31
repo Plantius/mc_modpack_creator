@@ -2,10 +2,11 @@ import time
 from modpack import project
 from args_parser import args_parser as args
 from menu import main_menu
+import asyncio
+import time
 
 tests = 5
-
-def main():
+async def main():
     # Initialize project and flags
     p = project.Project()
 
@@ -29,13 +30,14 @@ def main():
     if arguments.menu_disable:
         menu = main_menu.Menu(p)
         menu.status_bar = menu.get_entry_help
-        menu.display()
-    start_time = time.time()
+        await menu.display()
+    
+    start_time = time.perf_counter()
     for i in range(tests):
-        m = p.search_mods()
-    end_time = time.time()
+        # ids = [id.project_id for id in p.modpack.mod_data]
+        m = await p.search_mods()
+    end_time = time.perf_counter()
     print(f"Avg time taken for test: {(end_time - start_time)/tests:.4f} seconds")
 
-
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
