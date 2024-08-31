@@ -2,13 +2,12 @@ from .modpack import Modpack
 from .mod import Mod
 import standard as std
 import json, os
+import time
 from typing import Optional, Dict, Any
 from . import DEF_FILENAME, ACCEPT
 from .project_api import ProjectAPI
 import concurrent.futures as cf
 from dateutil import parser
-
-
 
 class Project:
     """
@@ -78,13 +77,21 @@ class Project:
 
     def __init__(self, **kwargs) -> None:
         """Initializes a Project instance."""
+        start_time = time.time()
         self.api = ProjectAPI()  # Instantiate the ProjectAPI class
+        end_time = time.time()
+        print(f"Time taken for __init__: {end_time - start_time:.4f} seconds")
 
     def is_mod_installed(self, id: str) -> int:
-        return std.get_index([m.project_id for m in self.modpack.mod_data], id)
+        start_time = time.time()
+        result = std.get_index([m.project_id for m in self.modpack.mod_data], id)
+        end_time = time.time()
+        print(f"Time taken for is_mod_installed: {end_time - start_time:.4f} seconds")
+        return result
     
     def create_project(self, **kwargs) -> None:
         """Creates a new project and updates metadata."""
+        start_time = time.time()
         self.modpack = Modpack(**kwargs)
         self.metadata.update({
             "loaded": True,
@@ -94,10 +101,12 @@ class Project:
         if not self.modpack.check_compatibility():
             std.eprint("[ERROR]: Invalid project created.")
             exit(1)
-        
+        end_time = time.time()
+        print(f"Time taken for create_project: {end_time - start_time:.4f} seconds")
 
     def load_project(self, filename: str) -> bool:
         """Loads project data from a file and initializes the modpack."""
+        start_time = time.time()
         if os.path.exists(filename):
             with open(filename, 'r') as file:
                 data = json.load(file)
@@ -113,31 +122,46 @@ class Project:
                     exit(1)
             self.metadata["loaded"] = True
             self.metadata["saved"] = True
+            end_time = time.time()
+            print(f"Time taken for load_project: {end_time - start_time:.4f} seconds")
             return True
+        end_time = time.time()
+        print(f"Time taken for load_project (file not found): {end_time - start_time:.4f} seconds")
         return False
 
     def save_project(self, filename: Optional[str]=DEF_FILENAME) -> bool:
         """Saves the current project state to a file."""
+        start_time = time.time()
         if filename:
             self.metadata["filename"] = filename
         if not self.metadata["filename"]:
+            end_time = time.time()
+            print(f"Time taken for save_project (filename not set): {end_time - start_time:.4f} seconds")
             return False
 
         project_data = self.modpack.export_json(); project_data["metadata"] = self.metadata
         with open(self.metadata["filename"], 'w') as file:
             json.dump(project_data, file, indent=4)
         self.metadata["saved"] = True
+        end_time = time.time()
+        print(f"Time taken for save_project: {end_time - start_time:.4f} seconds")
         return True
 
     def search_mods(self, **kwargs) -> dict:
         """Search for mods using the API."""
-        return self.api.search_project(**kwargs)
-    
+        start_time = time.time()
+        result = self.api.search_project(**kwargs)
+        end_time = time.time()
+        print(f"Time taken for search_mods: {end_time - start_time:.4f} seconds")
+        return result
     
     def add_mod(self, name: str, version: dict, project_info: dict, index: int=0) -> bool:
         """Adds a mod to the project's modpack."""
+        start_time = time.time()
         if any([project_info, version]) is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
+            end_time = time.time()
+            print(f"Time taken for add_mod (mod not found): {end_time - start_time:.4f} seconds")
             return False
 
         self.modpack.mod_data.insert(index, Mod(
@@ -155,26 +179,40 @@ class Project:
             files=version["files"]
         ))
         self.metadata["saved"] = False
+        end_time = time.time()
+        print(f"Time taken for add_mod: {end_time - start_time:.4f} seconds")
         return True
     
     def rm_mod(self, index: int) -> bool:
+        """Removes a mod from the modpack by index."""
+        start_time = time.time()
         try:
             del self.modpack.mod_data[index]
             self.metadata["saved"] = False
+            end_time = time.time()
+            print(f"Time taken for rm_mod: {end_time - start_time:.4f} seconds")
             return True
-        except:
+        except Exception as e:
+            end_time = time.time()
+            print(f"Time taken for rm_mod (error): {end_time - start_time:.4f} seconds")
             return False
 
     def update_mod(self, selected_index) -> bool:
+        """Updates selected mods if newer versions are available."""
+        start_time = time.time()
         ids = [id.project_id for id in self.modpack.mod_data]
         ids = [ids[i] for i in selected_index]
         mods_versions_info_all = self.fetch_mods_by_ids(ids)
+        
         if not any(mods_versions_info_all):
-            std.eprint("[ERROR] Could not find mods.")            
+            std.eprint("[ERROR] Could not find mods.")
+            end_time = time.time()
+            print(f"Time taken for update_mod (mods not found): {end_time - start_time:.4f} seconds")
             return False
             
         latest_version_all = [versions[0] for versions in [p["versions"] for p in mods_versions_info_all] if versions is not None]
         project_info_all = [info["project_info"] for info in mods_versions_info_all]
+        
         for index, latest_version, project_info in zip(selected_index, latest_version_all, project_info_all):
             new_mod_date = parser.parse(latest_version["date_published"])
             current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)
@@ -182,10 +220,17 @@ class Project:
                 inp = std.get_input(f"There is a newer version available for {self.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ")
                 if inp == ACCEPT:
                     name = self.modpack.mod_data[index].project_id
-                    self.rm_mod(index); self.add_mod(name, latest_version, project_info, index)
+                    self.rm_mod(index)
+                    self.add_mod(name, latest_version, project_info, index)
             print(f"{self.modpack.get_mods_name_ver()[index]} is up to date")
+        
+        end_time = time.time()
+        print(f"Time taken for update_mod: {end_time - start_time:.4f} seconds")
+        return True
     
     def list_projects(self) -> list[str]:
+        """Lists all valid project files."""
+        start_time = time.time()
         valid_projects: list[str] = []
         for filename in std.get_project_files():
             try:
@@ -193,28 +238,44 @@ class Project:
                     data = json.load(file)
                     if std.is_valid_project_id(data["metadata"]["project_id"]):
                         valid_projects.append(f'{filename}: {data["title"]}, {data["description"]}')
-            except:
+            except Exception as e:
                 continue
+        end_time = time.time()
+        print(f"Time taken for list_projects: {end_time - start_time:.4f} seconds")
         return valid_projects
     
     def list_mods(self) -> list[str]:
+        """Lists all mods in the modpack."""
+        start_time = time.time()
         if self.metadata["loaded"]:
-            return [f'{m}:\n\t{d}' for m,d in zip(self.modpack.get_mod_list_names(), self.modpack.get_mod_list_descriptions())]
-        return None
+            result = [f'{m}:\n\t{d}' for m, d in zip(self.modpack.get_mod_list_names(), self.modpack.get_mod_list_descriptions())]
+        else:
+            result = None
+        end_time = time.time()
+        print(f"Time taken for list_mods: {end_time - start_time:.4f} seconds")
+        return result
     
     def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
+        """Fetches mods by their IDs concurrently and returns detailed information."""
+        start_time = time.time()
         mods_ver_info = []
+        
         with cf.ThreadPoolExecutor(max_workers=100) as pool:
             versions_all = list(pool.map(lambda x: self.api.list_versions(**x), 
-                                    [{"id":id, 
-                                        "loaders":[self.modpack.mod_loader], 
-                                        "game_versions":[self.modpack.mc_version]} 
+                                    [{"id": id, 
+                                        "loaders": [self.modpack.mod_loader], 
+                                        "game_versions": [self.modpack.mc_version]} 
                                         for id in ids]))
-        
+
             project_info_all = list(pool.map(self.api.get_project, ids))    
-        
+
         for versions, project_info in zip(versions_all, project_info_all):
             if versions and project_info:
-                mods_ver_info.append({"project_info": project_info,
-                                      "versions": versions})
+                mods_ver_info.append({
+                    "project_info": project_info,
+                    "versions": versions
+                })
+        
+        end_time = time.time()
+        print(f"Time taken for fetch_mods_by_ids: {end_time - start_time:.4f} seconds")
         return mods_ver_info
