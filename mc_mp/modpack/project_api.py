@@ -58,9 +58,9 @@ class ProjectAPI:
     async def get_projects(**kwargs) -> Optional[Dict[str, Any]]:
         """Retrieves information about a list of projects."""
         params = {k: v for k, v in kwargs.items() if v is not None}
-        if any([await ProjectAPI.is_slug_valid(project_name) for project_name in params["ids"]]):
-            return None
-        return await ProjectAPI.request(f"/projects", params=params)
+        # if any([await ProjectAPI.is_slug_valid(project_name) for project_name in params["ids"]]):
+        #     return None
+        return await ProjectAPI.request(f"/projects", params=ProjectAPI.parse_url(params))
 
     @staticmethod
     async def list_versions(**kwargs) -> Optional[Dict[str, Any]]:

@@ -213,7 +213,7 @@ class Project:
 
         # Create tasks to fetch versions and project info concurrently
         tasks = [self.api.list_versions(id=id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]) for id in ids]
-        tasks += [self.api.get_project(id) for id in ids]
+        tasks += [self.api.get_projects(ids=ids)]
 
         # Await all tasks to complete
         results = await asyncio.gather(*tasks)
