@@ -1,6 +1,9 @@
+import time
 from modpack import project
 from args_parser import args_parser as args
 from menu import main_menu
+
+tests = 5
 
 def main():
     # Initialize project and flags
@@ -27,7 +30,13 @@ def main():
         menu = main_menu.Menu(p)
         menu.status_bar = menu.get_entry_help
         menu.display()
-        
+    start_time = time.time()
+    for i in range(tests):
+        ids = [id.project_id for id in p.modpack.mod_data]
+        m = p.fetch_mods_by_ids(ids)
+    end_time = time.time()
+    print(f"Avg time taken for fetch_mods_by_ids: {(end_time - start_time)/tests:.4f} seconds")
+
 
 if __name__ == "__main__":
     main()
