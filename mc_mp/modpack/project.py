@@ -120,16 +120,13 @@ class Project:
         """Updates selected mods if newer versions are available."""
         ids = [id.project_id for id in self.modpack.mod_data]
         ids = [ids[i] for i in selected_index]
-        mods_versions_info_all = await self.fetch_mods_by_ids(ids)
+        info = await self.fetch_mods_by_ids(ids)
         
-        if not any(mods_versions_info_all):
-            std.eprint("[ERROR] Could not find mods.")
+        if not any(info["project_info"]) or not any(info["versions"]):
+            std.eprint(f"[ERROR] Could not retrieve mods.")
             return False
         
-        versions_all = [v["versions"] for v in mods_versions_info_all]
-        project_info_all = [i["project_info"] for i in mods_versions_info_all]
-        
-        for index, latest_version, project_info in zip(selected_index, versions_all, project_info_all):
+        for index, latest_version, project_info in zip(selected_index, info["versions"], info["project_info"]):
             new_mod_date = parser.parse(latest_version[0]["date_published"])
             current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)
             

@@ -2,12 +2,9 @@ from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
 import asyncio
-import numpy as np
 from . import CLEAR_SCREEN, ACCEPT, OPEN
 
 class Menu:
-    """Class to manage terminal-based menus for interacting with modpack projects."""
-    
     # Static variable to hold the main menu instance
     main_menu_instance = None
     
@@ -16,18 +13,7 @@ class Menu:
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
                  parent_menu=None, help: list[str]=None) -> None:
         """
-        Initialize a Menu instance with the provided parameters.
-
-        Args:
-            project (p.Project): The project instance associated with this menu.
-            title (str, optional): The title of the menu. Defaults to None.
-            menu_entries (list, optional): A list of menu option labels. Defaults to None.
-            multiselect (bool, optional): Whether multiple selections are allowed. Defaults to False.
-            clear_screen (bool, optional): Whether to clear the terminal screen before showing the menu. Defaults to CLEAR_SCREEN.
-            cursor_index (int, optional): The initial position of the cursor in the menu. Defaults to 0.
-            status_bar (callable, optional): A callable function to display a status bar. Defaults to None.
-            actions (list, optional): A list of actions corresponding to menu entries. Defaults to None.
-            parent_menu (Menu, optional): The parent menu, if this menu is a submenu. Defaults to None.
+        Initialize the menu with project details and menu options.
         """
         self.project: p.Project = project
         self.title: str = title
@@ -48,10 +34,7 @@ class Menu:
     
     def get_project_title(self) -> str:
         """
-        Generate the title string for the main menu based on the project's current status.
-
-        Returns:
-            str: The formatted title string including project metadata.
+        Get the title and details of the current project.
         """
         if self.project.metadata["loaded"]:
             return (f"{self.project.modpack.title}: {self.project.modpack.description} | "
@@ -61,7 +44,9 @@ class Menu:
         return "No project loaded"
     
     def get_entry_help(self, entry) -> str:
-        """Retrieves the status description for a given project menu entry."""
+        """
+        Get help text for a specific menu entry.
+        """
         index = std.get_index(self.menu_entries, entry)
         if index is None:
             std.eprint("Could not find entry.")
@@ -69,8 +54,12 @@ class Menu:
         return self.help[index]
     
     def get_main_menu_entries(self) -> None:
-        """Initialize the main menu entries and associated actions."""
-        self.menu_entries.clear(); self.actions.clear(); self.help.clear()
+        """
+        Populate the main menu with available options.
+        """
+        self.menu_entries.clear()
+        self.actions.clear()
+        self.help.clear()
 
         self.add_option("Load project", self.load_project_action, "Load a project file")
         self.add_option("Save project", self.save_project_action, "Save the current project")
@@ -85,21 +74,18 @@ class Menu:
         self.add_option("Exit", self.close_self, "Exit the current menu")
     
     def get_entry_description(self, entry) -> str:
-        """Retrieves the description for a given mod entry."""
+        """
+        Get description of a specific mod entry.
+        """
         index = std.get_index(self.project.modpack.get_mods_name_ver(), entry)
         if index < 0:
             std.eprint("Could not find entry.")
             return entry
         return self.project.modpack.get_mods_descriptions()[index]
     
-    
     def add_option(self, option: str, action=None, help: str="") -> None:
         """
-        Add a new option to the menu.
-
-        Args:
-            option (str): The label of the menu option.
-            action (callable, optional): The action to perform when this option is selected. Defaults to None.
+        Add an option to the menu with a corresponding action and help text.
         """
         self.menu_entries.append(option)
         self.actions.append(action)
@@ -107,8 +93,7 @@ class Menu:
     
     async def display(self) -> None:
         """
-        Display the menu and handle user input through TerminalMenu.
-        The menu remains active until the user decides to exit.
+        Display the menu and handle user selections asynchronously.
         """
         while self.menu_active:
             if self is Menu.main_menu_instance:
@@ -130,10 +115,7 @@ class Menu:
 
     async def handle_selection(self, selected_index) -> None:
         """
-        Handle the user's selection from the menu.
-
-        Args:
-            selected_index (int): The index of the selected menu option.
+        Handle the user's menu selection and invoke the corresponding action.
         """
         if selected_index < len(self.actions):
             action = self.actions[selected_index]
@@ -153,8 +135,7 @@ class Menu:
 
     async def exit_menu(self) -> None:
         """
-        Handle the action to exit a submenu.
-        If this menu has a parent, it will return to the parent menu; otherwise, it performs a normal exit.
+        Exit the current menu and return to the parent menu if available.
         """
         if self.parent_menu:
             self.menu_active = False  # Close the current menu
@@ -163,8 +144,7 @@ class Menu:
     
     async def close_self(self) -> None:
         """
-        Handle the action to go back to the parent menu or exit.
-        If the current project is unsaved, prompt to save it before exiting.
+        Save the project if necessary and close the menu.
         """
         if not self.project.metadata["saved"]:
             await self.save_project_action()
@@ -172,11 +152,7 @@ class Menu:
     
     async def load_project_action(self) -> bool:
         """
-        Handle the action to load a project from a file.
-        Prompts the user to select or enter the filename of the project to load.
-
-        Returns:
-            bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
+        Handle loading a project and prompt for a filename or select from existing files.
         """
         if self.project.metadata["loaded"] and not await self.save_project_action():
             std.eprint("[ERROR] Could not save current project.")
@@ -205,11 +181,7 @@ class Menu:
         
     async def create_project_action(self) -> bool:
         """
-        Handle the action to create a new project.
-        Prompts the user to enter the details required to create a new project.
-
-        Returns:
-            bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
+        Handle creating a new project by prompting for details.
         """
         if not self.project.metadata["saved"] and not await self.save_project_action():
             std.eprint("[ERROR] Could not save current project.")
@@ -234,11 +206,7 @@ class Menu:
     
     async def save_project_action(self) -> bool:
         """
-        Handle the action to save the current project.
-        Prompts the user to confirm saving and enter a filename if necessary.
-
-        Returns:
-            bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
+        Handle saving the current project to a specified filename.
         """
         if self is Menu.main_menu_instance and not self.project.metadata["saved"]:
             if std.get_input("Do you want to save the project? y/n: ") == ACCEPT:
@@ -250,11 +218,7 @@ class Menu:
     
     async def add_mods_menu(self) -> bool:
         """
-        Handle the action to add mods to the current project.
-        Displays a submenu to select the method of adding mods.
-
-        Returns:
-            bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
+        Display the submenu for adding mods by ID or searching for mods.
         """
         submenu = Menu(
             project=self.project, 
@@ -268,11 +232,7 @@ class Menu:
     
     async def add_mods_action(self, ids: list[str]) -> bool:
         """
-        Handle the action to add mods by their IDs or slugs.
-        Prompts the user to enter mod slugs or IDs and then selects versions to add to the project.
-
-        Returns:
-            bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
+        Add mods to the project based on provided IDs and handle dependencies.
         """
         ids = [id for id in ids if not self.project.is_mod_installed(id)]
         info = await self.project.fetch_mods_by_ids(ids)
@@ -305,6 +265,9 @@ class Menu:
         return OPEN  # Keep main menu open
     
     def add_mods_id_action(self) -> bool:
+        """
+        Prompt for mod IDs or slugs and initiate adding mods.
+        """
         names = std.get_input("Please enter mod slugs or IDs (e.g., name1 name2 ...): ")
         if not names:
             return OPEN
@@ -313,7 +276,9 @@ class Menu:
     
     # TODO Unify search mods and add mods
     async def search_mods_action(self):
-        """Placeholder for a future feature to search for mods."""
+        """
+        Search for mods based on a query and selected facets.
+        """
         query = std.get_input("Please enter a term to search for: ")
 
         kwargs = {
@@ -358,7 +323,9 @@ class Menu:
         return OPEN
     
     async def update_mods_action(self) -> bool:
-        """View all mods in the current project."""
+        """
+        Display submenu for updating mods in the current project.
+        """
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
         
@@ -381,7 +348,9 @@ class Menu:
         return OPEN
     
     async def remove_mods_action(self) -> bool:
-        """View all mods in the current project."""
+        """
+        Display submenu for removing mods from the current project.
+        """
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
         
@@ -403,48 +372,42 @@ class Menu:
         return OPEN
     
     
-    async def change_settings_menu(self) -> bool:
+    async def change_settings_menu(self) -> None:
+        """
+        Display submenu for changing project settings.
+        """
         submenu = Menu(
-            project=self.project, 
-            title=self.get_project_title,
+            project=self.project,
+            title="Change project settings",
+            menu_entries=["Change title", "Change description", "Change Minecraft version", "Change mod loader", "Change build version"],
             parent_menu=self
         )
-        submenu.add_option("Change Title", self.change_title_action, "Change the modpack title")
-        submenu.add_option("Change Description", self.change_description_action, "Change the modpack's description")
-        submenu.add_option("Change Minecraft Version", self.change_mc_version_action, "Change the modpack's minecraft version")
-        submenu.add_option("Change Modloader", self.change_modloader_action, "Change the modpack's modloader")
-        submenu.add_option("Change Build Version", self.change_build_action, "Change the modpack's build version")
+        
+        async def handle_selection(selected_index):
+            if selected_index == 0:
+                new_title = std.get_input("Enter new project title: ")
+                self.project.modpack.title = new_title
+            elif selected_index == 1:
+                new_description = std.get_input("Enter new project description: ")
+                self.project.modpack.description = new_description
+            elif selected_index == 2:
+                new_mc_version = std.get_input("Enter new Minecraft version: ")
+                self.project.modpack.mc_version = new_mc_version
+            elif selected_index == 3:
+                new_mod_loader = std.get_input("Enter new mod loader: ")
+                self.project.modpack.mod_loader = new_mod_loader
+            elif selected_index == 4:
+                new_build_version = std.get_input("Enter new build version: ")
+                self.project.modpack.build_version = new_build_version
+
+        
+        submenu.handle_selection = handle_selection
         await submenu.display()
-        return OPEN
-    
-    def change_project_attribute(self, attribute: str, prompt: str) -> bool:
-        """Change a project attribute based on user input."""
-        new_value = std.get_input(prompt)
-        if not new_value:
-            return OPEN
-
-        setattr(self.project.modpack, attribute, new_value)
-        self.project.metadata["saved"] = False
-        return OPEN
-    
-    async def change_title_action(self) -> bool:
-        return self.change_project_attribute("title", "Please enter a new title: ")
-
-    async def change_description_action(self) -> bool:
-        return self.change_project_attribute("description", "Please enter the new description: ")
-
-    async def change_modloader_action(self) -> bool:
-        return self.change_project_attribute("mod_loader", "Please enter a new modloader: ")
-
-    async def change_mc_version_action(self) -> bool:
-        return self.change_project_attribute("mc_version", "Please enter a new Minecraft version: ")
-    
-    async def change_build_action(self) -> bool:
-        return self.change_project_attribute("build_version", "Please enter the new version: ")
-
     
     async def list_mods_action(self) -> bool:
-        """View all mods in the current project."""
+        """
+        Display submenu for listing mods in the current project.
+        """
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
         
