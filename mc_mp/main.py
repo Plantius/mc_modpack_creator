@@ -32,10 +32,9 @@ def main():
         menu.display()
     start_time = time.time()
     for i in range(tests):
-        ids = [id.project_id for id in p.modpack.mod_data]
-        m = p.fetch_mods_by_ids(ids)
+        m = p.search_mods()
     end_time = time.time()
-    print(f"Avg time taken for fetch_mods_by_ids: {(end_time - start_time)/tests:.4f} seconds")
+    print(f"Avg time taken for test: {(end_time - start_time)/tests:.4f} seconds")
 
 
 if __name__ == "__main__":
