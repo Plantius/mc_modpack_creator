@@ -273,6 +273,7 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
+        ids = [id for id in ids if not self.project.is_mod_installed(id)]
         mods_versions_info_all = await self.project.fetch_mods_by_ids(ids)
 
         if not any(mods_versions_info_all):
@@ -343,7 +344,7 @@ class Menu:
             )
           
         async def handle_selection(selected_index):
-            selected_mod_ids = [results["hits"][i]["project_id"] for i in selected_index]
+            selected_mod_ids = [results["hits"][i]["project_id"] for i in selected_index if not self.project.is_mod_installed(results["hits"][i]["project_id"])]
             if len(selected_index) == 1:
                 selected_mod = results["hits"][selected_index[0]]
                 if input(f'''{selected_mod["title"]} \nClient side: {selected_mod["client_side"]}\nServer side: {selected_mod["server_side"]}\n\n{selected_mod["description"]}\nLink to mod https://modrinth.com/mod/{selected_mod["slug"]}\n\tDo you want to add this mod to the current project? y/n ''') != ACCEPT:
