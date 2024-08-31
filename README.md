@@ -75,6 +75,9 @@ Change project settings.
 List current mods.
 ```
 
+## Documentation
+See <https://plantius.github.io/mc_modpack_creator/>.
+
 ## License 📜
 
 This project is licensed under the MIT License. See the LICENSE file for details.
