@@ -167,6 +167,7 @@ class Project:
 
     def update_mod(self, selected_index) -> bool:
         ids = [id.project_id for id in self.modpack.mod_data]
+        ids = [ids[i] for i in selected_index]
         mods_versions_info_all = self.fetch_mods_by_ids(ids)
         if not any(mods_versions_info_all):
             std.eprint("[ERROR] Could not find mods.")            
@@ -202,9 +203,8 @@ class Project:
         return None
     
     def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
-        ids = [id for id in ids if not self.is_mod_installed(id)]
         mods_ver_info = []
-        with cf.ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
+        with cf.ThreadPoolExecutor(max_workers=100) as pool:
             versions_all = list(pool.map(lambda x: self.api.list_versions(**x), 
                                     [{"id":id, 
                                         "loaders":[self.modpack.mod_loader], 

@@ -269,6 +269,7 @@ class Menu:
         Returns:
             bool: Status indicating whether to keep the main menu open (OPEN) or close it (CLOSE).
         """
+        ids = [id for id in ids if not self.project.is_mod_installed(id)]
         mods_versions_info_all = self.project.fetch_mods_by_ids(ids)
 
         if not any(mods_versions_info_all):
