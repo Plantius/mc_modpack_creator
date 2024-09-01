@@ -40,6 +40,11 @@ class Project:
         result = std.get_index([m.project_id for m in self.modpack.mod_data], id)
         return result
     
+    def is_date_newer(self, new_date: str, current_date: str) -> bool:
+        new_mod_date = parser.parse(new_date)
+        current_mod_date = parser.parse(current_date)
+        return new_mod_date > current_mod_date
+    
     def create_project(self, **kwargs) -> None:
         """Creates a new project and updates metadata; checks modpack compatibility."""
         self.modpack = Modpack(**kwargs)
@@ -124,27 +129,13 @@ class Project:
         except IndexError:
             return False
 
-    async def update_mod(self, selected_index: list[int]) -> bool:
+    
+    
+    async def update_mod(self, latest_version: list[dict], project_info: dict, index: int) -> bool:
         """Updates selected mods if newer versions are available."""
-        ids = [id.project_id for id in self.modpack.mod_data]
-        ids = [ids[i] for i in selected_index]
-        info = await self.fetch_mods_by_ids(ids)
-        
-        if not any(info["project_info"]) or not any(info["versions"]):
-            std.eprint(f"[ERROR] Could not retrieve mods.")
-            return False
-        
-        for index, latest_version, project_info in zip(selected_index, info["versions"], info["project_info"]):
-            new_mod_date = parser.parse(latest_version[0]["date_published"])
-            current_mod_date = parser.parse(self.modpack.mod_data[index].date_published)
-            
-            if new_mod_date > current_mod_date:
-                inp = std.get_input(f"There is a newer version available for {self.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.modpack.mod_data[index].version_number} -> {latest_version[0]['version_number']} ")
-                if inp == ACCEPT:
-                    name = self.modpack.mod_data[index].project_id
-                    await self.rm_mod(index)
-                    await self.add_mod(name, latest_version[0], project_info, index)
-            print(f"{self.modpack.get_mods_name_ver()[index]} is up to date")
+        name = self.modpack.mod_data[index].project_id
+        await self.rm_mod(index)
+        await self.add_mod(name, latest_version[0], project_info, index)
     
     def list_projects(self) -> list[str]:
         """Lists all valid projects with their filenames and descriptions."""
@@ -187,3 +178,6 @@ class Project:
                 mods_ver_info["versions"].append(versions)
 
         return mods_ver_info
+    
+    async def export_modpack(self, filename):
+        pass

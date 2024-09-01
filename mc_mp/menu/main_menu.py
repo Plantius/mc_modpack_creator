@@ -348,8 +348,19 @@ class Menu:
         async def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return
-            await self.project.update_mod(selected_index)
+            ids = [[id.project_id for id in self.project.modpack.mod_data][i] for i in selected_index]
+            info = await self.project.fetch_mods_by_ids(ids)
+            if not any(info["project_info"]) or not any(info["versions"]):
+                std.eprint(f"[ERROR] Could not retrieve mods.")
+                return
             
+            for index, latest_version, project_info in zip(selected_index, info["versions"], info["project_info"]):
+                if self.project.is_date_newer(latest_version[0]["date_published"], self.project.modpack.mod_data[index].date_published):
+                    inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version[0]['version_number']} ")
+                    if inp == ACCEPT:
+                        await self.project.update_mod(latest_version, project_info, index)
+                print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
+
         
         submenu.handle_selection = handle_selection
         await submenu.display()
