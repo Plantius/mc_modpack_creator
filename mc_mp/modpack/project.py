@@ -11,7 +11,7 @@ from .mod import Mod
 import standard as std
 import json, os
 from typing import Optional, Dict, Any
-from . import DEF_FILENAME, ACCEPT
+from . import DEF_FILENAME, ACCEPT, PROJECT_DIR
 from .project_api import ProjectAPI
 from dateutil import parser
 import asyncio
@@ -179,5 +179,15 @@ class Project:
 
         return mods_ver_info
     
-    async def export_modpack(self, filename):
-        pass
+    async def export_modpack(self, filename: str):
+        try:
+            os.makedirs(PROJECT_DIR)
+        except FileExistsError:
+            # directory already exists
+            pass
+        
+        for file in [[file for file in m.files if file["primary"]] for m in self.modpack.mod_data]:
+            await self.api.get_url(**file[0])
+            if not std.check_hash(f'{PROJECT_DIR}{file[0]["filename"]}', file[0]["hashes"]):
+                std.eprint(f"[ERROR] Wrong hash for file: {file[0]['filename']}")
+                return

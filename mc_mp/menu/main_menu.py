@@ -77,6 +77,7 @@ class Menu:
             self.add_option("List current mods", self.list_mods_action, "List all mods in the current project")
             self.add_option("Remove mod(s)", self.remove_mods_action, "Remove mods from the current project")
             self.add_option("Update mod(s)", self.update_mods_action, "Update mods in the current project")
+            self.add_option("Export modpack", self.export_modpack_action, "Export the modpack into a zip or tar.gz file")
             self.add_option("Change project settings", self.change_settings_menu, "Change the project's title, description, etc.")
         
         self.add_option("Exit", self.close_self, "Exit the current menu")
@@ -442,4 +443,11 @@ class Menu:
 
         submenu.handle_selection = handle_selection
         await submenu.display()
+        return OPEN
+
+    async def export_modpack_action(self) -> bool:
+        if len(self.project.modpack.mod_data) == 0:
+            return OPEN  # Keep main menu open
+        await self.project.export_modpack("p1.json")
+        
         return OPEN

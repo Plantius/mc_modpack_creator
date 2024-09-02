@@ -10,7 +10,6 @@ from modpack import project
 from args_parser import args_parser as args
 from menu import main_menu
 import asyncio
-import time
 
 tests = 5
 async def main():

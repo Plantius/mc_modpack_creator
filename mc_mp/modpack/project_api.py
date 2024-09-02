@@ -8,7 +8,9 @@ https://github.com/Plantius/mc_modpack_creator
 """
 from aiohttp import ClientSession
 from typing import Optional, Dict, Any
-from . import API_BASE, HEADERS
+
+from standard import BUF_SIZE
+from . import API_BASE, HEADERS, PROJECT_DIR
 
 class ProjectAPI:
     """Handles interactions with the Modrinth API for project-related data."""
@@ -90,3 +92,14 @@ class ProjectAPI:
             return await ProjectAPI.request(f"/versions", params=params)
         except:
             return None
+    
+    @staticmethod
+    async def get_url(**kwargs) -> None:
+        """Retrieves information about multiple versions by their IDs."""
+        params = {k: v for k, v in kwargs.items() if v is not None}
+        async with ClientSession() as session:
+            async with session.get(params["url"]) as response:
+                if response.status == 200:
+                    data = await response.read()
+                    with open(f'{PROJECT_DIR}{params["filename"]}', "wb") as file:
+                        file.write(data)

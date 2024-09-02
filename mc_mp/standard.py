@@ -12,7 +12,9 @@ import json
 import glob
 from cryptography.fernet import Fernet
 import modpack.mod as mod
+import hashlib
 
+BUF_SIZE = 2 << 15
 SECRET_KEY = b'7rfdYCctHr9xCK2H4i92HLvxN4YzsTty4OrNaAC-bfc='
 UNIQUE_ID = "MC_MODPACK_CREATOR_ID"
 
@@ -78,3 +80,15 @@ def has_duplicates(lst: list) -> bool:
 def eprint(*args, **kwargs) -> None:
     """Print errors to standard error."""
     print(*args, file=sys.stderr, **kwargs)
+
+def check_hash(filename: str, hashes: dict) -> bool:
+    sha1 = hashlib.sha1()
+    sha512 = hashlib.sha512()
+    with open(filename, 'rb') as file:
+        while True:
+            data = file.read(BUF_SIZE)
+            if not data:
+                break
+            sha1.update(data)
+            sha512.update(data)
+    return sha1.hexdigest() == hashes["sha1"] and sha512.hexdigest() == hashes["sha512"]

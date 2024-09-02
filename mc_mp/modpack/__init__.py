@@ -20,3 +20,5 @@ DEF_FILENAME = "project_1.json"
 
 # Indicates acceptance of a prompt
 ACCEPT = 'y'
+
+PROJECT_DIR = "./mods/"
