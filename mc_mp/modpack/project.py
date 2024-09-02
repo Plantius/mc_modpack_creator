@@ -58,26 +58,32 @@ class Project:
             std.eprint("[ERROR]: Invalid project created.")
             exit(1)
 
-    def load_project(self, filename: str) -> bool:
+    async def load_project(self, filename: str) -> bool:
         """Loads project data from a file and initializes the modpack."""
-        if os.path.exists(filename):
-            with open(filename, 'r') as file:
-                data = json.load(file)
-                if not std.is_valid_project_id(data["metadata"]["project_id"]):
-                    std.eprint("[ERROR] Invalid project file.")
-                    exit(1)
+        if not os.path.exists(filename):
+            return False
+        loop = asyncio.get_running_loop()
+        with open(filename, 'r') as file:
+            
+            data = await loop.run_in_executor(None, json.load, file)
+        
+        if not std.is_valid_project_id(data["metadata"]["project_id"]):
+            std.eprint("[ERROR] Invalid project file.")
+            exit(1)
 
-                self.metadata = data["metadata"]
-                del data["metadata"]
-                self.modpack = Modpack(**data)
+        self.metadata = data["metadata"]
+        del data["metadata"]
+        self.modpack = Modpack(**data)
 
-                if not self.modpack.check_compatibility():
-                    print("Invalid project loaded.")
-                    exit(1)
-            self.metadata["loaded"] = True
-            self.metadata["saved"] = True
-            return True
-        return False
+        if not self.modpack.check_compatibility():
+            print("Invalid project loaded.")
+            exit(1)
+        self.metadata["loaded"] = True
+        self.metadata["saved"] = True
+        seen = set()
+        dupes = [x for x in [m.project_id for m in self.modpack.mod_data] if x in seen or seen.add(x)]   
+        print(dupes) 
+        return True
 
     def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
         """Saves the current project state to a file."""
@@ -193,7 +199,7 @@ class Project:
 
         return mods_ver_info
     
-    def download_and_check_file_sync(self, file_info, loop) -> bool:
+    def download_file(self, file_info, loop) -> bool:
         """Downloads a file and checks its hash."""
         # Use the provided loop to run the coroutine
         future = asyncio.run_coroutine_threadsafe(self.api.get_file_from_url(**file_info), loop)
@@ -220,7 +226,7 @@ class Project:
         # Use ThreadPoolExecutor to download and check files concurrently
         with cf.ThreadPoolExecutor() as executor:
             tasks = [
-                loop.run_in_executor(executor, self.download_and_check_file_sync, file, loop)
+                loop.run_in_executor(executor, self.download_file, file, loop)
                 for file in files
             ]
             results = await asyncio.gather(*tasks)

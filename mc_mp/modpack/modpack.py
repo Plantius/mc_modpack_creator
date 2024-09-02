@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 import modpack.mod as mod
 import standard as std
+import numpy as np
 
 class Modpack:
     """
@@ -41,6 +42,7 @@ class Modpack:
 
     def check_compatibility(self) -> bool:
         """Checks if the mods in the modpack are compatible (always returns `True`)."""
+        return True
         return not std.has_duplicates([m.project_id for m in self.mod_data])
 
     def get_mods_name_ver(self) -> List[str]:

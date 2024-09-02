@@ -181,7 +181,7 @@ class Menu:
             else:
                 filename = submenu.menu_entries[selected_index]
             if filename:
-                self.project.load_project(filename)
+                await self.project.load_project(filename)
                 submenu.menu_active = False
             
         submenu.handle_selection = handle_selection
@@ -264,7 +264,7 @@ class Menu:
                                          project_info=project_info)
                     
                     if len(version["dependencies"]) > 0:
-                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and not self.project.is_mod_installed(dep["project_id"])]
+                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required"]
                         if required_ids:
                             await self.add_mods_action(required_ids)
                     submenu.menu_active = False  # Close sub menu (version list)
