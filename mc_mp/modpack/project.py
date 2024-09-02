@@ -10,6 +10,7 @@ from .modpack import Modpack
 from .mod import Mod
 import standard as std
 import json, os
+import concurrent.futures as cf
 from typing import Optional, Dict, Any
 from . import DEF_FILENAME, ACCEPT, PROJECT_DIR
 from .project_api import ProjectAPI
@@ -45,6 +46,7 @@ class Project:
         current_mod_date = parser.parse(current_date)
         return new_mod_date > current_mod_date
     
+    @std.sync_timing
     def create_project(self, **kwargs) -> None:
         """Creates a new project and updates metadata; checks modpack compatibility."""
         self.modpack = Modpack(**kwargs)
@@ -57,6 +59,7 @@ class Project:
             std.eprint("[ERROR]: Invalid project created.")
             exit(1)
 
+    @std.sync_timing
     def load_project(self, filename: str) -> bool:
         """Loads project data from a file and initializes the modpack."""
         if os.path.exists(filename):
@@ -78,6 +81,7 @@ class Project:
             return True
         return False
 
+    @std.sync_timing
     def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
         """Saves the current project state to a file."""
         if filename:
@@ -140,6 +144,7 @@ class Project:
         await self.rm_mod(index)
         await self.add_mod(name, latest_version[0], project_info, index)
     
+    @std.sync_timing
     def list_projects(self) -> list[str]:
         """Lists all valid projects with their filenames and descriptions."""
         valid_projects = []
@@ -153,46 +158,88 @@ class Project:
                 continue
         return valid_projects
     
+    @std.sync_timing
     def list_mods(self) -> list[str]:
         """Lists all mods in the loaded project with their names and descriptions."""
         if self.metadata["loaded"]:
-            return [f'{m}:\n\t{d}' for m, d in zip(self.modpack.get_mod_list_names(), self.modpack.get_mod_list_descriptions())]
+            return [f'{m}:\n\t{d}' for m, d in zip(self.modpack.get_mods_name_ver(), self.modpack.get_mods_descriptions())]
         return None
     
-    @std.async_timing
+    def get_versions_id(self, id: str, loop) -> list[dict]:
+        future = asyncio.run_coroutine_threadsafe(self.api.list_versions(id=id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]), loop)
+        return future.result()  # Wait for the coroutine to finish
+
+    def get_project_info_ids(self, id: str, loop) -> list[dict]:
+        future = asyncio.run_coroutine_threadsafe(self.api.get_project(id), loop)
+        return future.result()  # Wait for the coroutine to finish
+    
+    @std.async_timingq
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         """Fetches mods by their IDs concurrently and returns detailed information."""
         mods_ver_info: dict[list] = {"project_info": [], "versions": []}
+        loop = asyncio.get_running_loop()
         
         # Create tasks to fetch versions and project info concurrently
-        tasks = [self.api.list_versions(id=id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]) for id in ids]
-        tasks.append(self.api.get_projects(ids=ids))
-
-        # Await all tasks to complete
-        results = await asyncio.gather(*tasks)
+        with cf.ThreadPoolExecutor() as executor:
+            tasks = [
+                loop.run_in_executor(executor, self.get_versions_id, id, loop)
+                for id in ids
+            ]
+            tasks += [
+                loop.run_in_executor(executor, self.get_project_info_ids, id, loop)
+                for id in ids
+            ]
+            results = await asyncio.gather(*tasks)
 
         # Separate the results into versions and project info
         versions_all = results[:len(ids)]
         project_info_all = results[len(ids):]
 
         # Combine results into the mods_ver_info list
-        for versions, project_info in zip(versions_all, project_info_all[0]):
+        for versions, project_info in zip(versions_all, project_info_all):
             if versions and project_info:
                 mods_ver_info["project_info"].append(project_info)
                 mods_ver_info["versions"].append(versions)
 
         return mods_ver_info
     
+    def download_and_check_file_sync(self, file_info, loop) -> bool:
+        """Downloads a file and checks its hash."""
+        # Use the provided loop to run the coroutine
+        future = asyncio.run_coroutine_threadsafe(self.api.get_file_from_url(**file_info), loop)
+        future.result()  # Wait for the coroutine to finish
+
+        if not std.check_hash(f'{PROJECT_DIR}/{file_info["filename"]}', file_info["hashes"]):
+            std.eprint(f"[ERROR] Wrong hash for file: {file_info['filename']}")
+            return False
+        return True
+
     @std.async_timing
     async def export_modpack(self, filename: str):
         try:
             os.makedirs(PROJECT_DIR)
         except FileExistsError:
-            # directory already exists
+            # Directory already exists
             pass
         
-        for file in [[file for file in m.files if file["primary"]] for m in self.modpack.mod_data]:
-            await self.api.get_url(**file[0])
-            if not std.check_hash(f'{PROJECT_DIR}/{file[0]["filename"]}', file[0]["hashes"]):
-                std.eprint(f"[ERROR] Wrong hash for file: {file[0]['filename']}")
-                return
+        # Prepare list of file information
+        files = [file[0] for file in [[file for file in m.files if file["primary"]] for m in self.modpack.mod_data]]
+
+        # Get the current event loop
+        loop = asyncio.get_running_loop()
+
+        # Use ThreadPoolExecutor to download and check files concurrently
+        with cf.ThreadPoolExecutor() as executor:
+            tasks = [
+                loop.run_in_executor(executor, self.download_and_check_file_sync, file, loop)
+                for file in files
+            ]
+            results = await asyncio.gather(*tasks)
+        
+        # Handle any errors
+        if not all(results):
+            std.eprint("[ERROR] One or more files failed to download or check correctly.")
+            return False
+        
+        print("[INFO] Modpack exported successfully.")
+        return True

@@ -37,6 +37,20 @@ def async_timing(func):
     
     return wrapper
 
+def sync_timing(func):
+    """Decorator to measure the execution time of a synchronous function."""
+    
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.monotonic()  # Start time measurement
+        result = func(*args, **kwargs)
+        end_time = time.monotonic()  # End time measurement
+        duration = end_time - start_time
+        print(f"[TIMER] {func.__name__} executed in {duration:.4f} seconds")
+        return result
+    
+    return wrapper
+
 class ProjectEncoder(json.JSONEncoder):
     """Custom JSON encoder for handling `mod.Mod` objects."""
 
