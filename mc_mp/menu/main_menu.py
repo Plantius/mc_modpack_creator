@@ -87,7 +87,7 @@ class Menu:
         Get description of a specific mod entry.
         """
         index = std.get_index(self.project.modpack.get_mods_name_ver(), entry)
-        if index < 0:
+        if index is None:
             std.eprint("Could not find entry.")
             return entry
         return self.project.modpack.get_mods_descriptions()[index]
@@ -244,6 +244,7 @@ class Menu:
         Add mods to the project based on provided IDs and handle dependencies.
         """
         ids = [id for id in ids if self.project.is_mod_installed(id) is None]
+        self.project.modpack._processing_mods.update(ids)
         info = await self.project.fetch_mods_by_ids(ids)
 
         if not any(info["project_info"]) or not any(info["versions"]):
@@ -259,28 +260,32 @@ class Menu:
             
             async def handle_selection(selected_index):
                 version = versions[selected_index]
+                if self.project.is_mod_installed(version["project_id"]):
+                    return
+                
                 if std.get_input(f'''{version["name"]}: \n{version["changelog"]}\n\tDo you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
                     await self.project.add_mod(project_info["slug"], version, 
                                          project_info=project_info)
-                    
                     if len(version["dependencies"]) > 0:
-                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) is None]
+                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) is None and dep["project_id"] not in self.project.modpack._processing_mods]
                         if required_ids:
                             await self.add_mods_action(required_ids)
+                    
+                    self.project.modpack._processing_mods.add(version["project_id"])
                     submenu.menu_active = False  # Close sub menu (version list)
 
             submenu.handle_selection = handle_selection
             await submenu.display()
         return OPEN  # Keep main menu open
     
-    def add_mods_id_action(self) -> bool:
+    async def add_mods_id_action(self) -> bool:
         """
         Prompt for mod IDs or slugs and initiate adding mods.
         """
         names = std.get_input("Please enter mod slugs or IDs (e.g., name1 name2 ...): ")
         if not names:
             return OPEN
-        return self.add_mods_action(names.split())
+        return await self.add_mods_action(names.split())
         
     
     # TODO Unify search mods and add mods
@@ -338,17 +343,27 @@ class Menu:
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
         
+        def get_menu_entries():
+            # Add the "Select All Mods" option dynamically
+            return ["[Select All Mods]"] + self.project.modpack.get_mods_name_ver()
+        
         submenu = Menu(
                 project=self.project, 
                 title="Update mods in the current project:",
-                menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
+                menu_entries=get_menu_entries,  # Updatable
                 status_bar=self.get_entry_description,
                 multi_select=True
             )
-          
+        
         async def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return
+            
+            if 0 in selected_index:
+                selected_index = list(range(1, len(self.project.modpack.get_mods_name_ver())))
+            else:
+                selected_index = [i-1 for i in selected_index]
+
             ids = [[id.project_id for id in self.project.modpack.mod_data][i] for i in selected_index]
             info = await self.project.fetch_mods_by_ids(ids)
             if not any(info["project_info"]) or not any(info["versions"]):

@@ -16,7 +16,7 @@ from . import DEF_FILENAME, ACCEPT, PROJECT_DIR
 from .project_api import ProjectAPI
 from dateutil import parser
 import asyncio
-
+import functools
 
 class Project:
     """
@@ -79,9 +79,6 @@ class Project:
             exit(1)
         self.metadata["loaded"] = True
         self.metadata["saved"] = True
-        seen = set()
-        dupes = [x for x in [m.project_id for m in self.modpack.mod_data] if x in seen or seen.add(x)]   
-        print(dupes) 
         return True
 
     async def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
@@ -96,7 +93,7 @@ class Project:
         
         loop = asyncio.get_running_loop()
         with open(self.metadata["filename"], 'w') as file:
-            await loop.run_in_executor(None, json.dump, project_data, file, indent=4)
+            await loop.run_in_executor(None, functools.partial(json.dump, project_data, file, indent=4))
         
         self.metadata["saved"] = True
         return True
@@ -138,25 +135,12 @@ class Project:
         except IndexError:
             return False
 
-    
     async def update_mod(self, latest_version: list[dict], project_info: dict, index: int) -> bool:
         """Updates selected mods if newer versions are available."""
         name = self.modpack.mod_data[index].project_id
         await self.rm_mod(index)
         await self.add_mod(name, latest_version[0], project_info, index)
     
-    def list_projects(self) -> list[str]:
-        """Lists all valid projects with their filenames and descriptions."""
-        valid_projects = []
-        for filename in std.get_project_files():
-            try:
-                with open(filename, 'r') as file:
-                    data = json.load(file)
-                    if std.is_valid_project_id(data["metadata"]["project_id"]):
-                        valid_projects.append(f'{filename}: {data["title"]}, {data["description"]}')
-            except json.JSONDecodeError:
-                continue
-        return valid_projects
     
     def list_mods(self) -> list[str]:
         """Lists all mods in the loaded project with their names and descriptions."""
@@ -172,13 +156,14 @@ class Project:
         future = asyncio.run_coroutine_threadsafe(self.api.get_project(id), loop)
         return future.result()  # Wait for the coroutine to finish
     
+    @std.async_timing
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         """Fetches mods by their IDs concurrently and returns detailed information."""
         mods_ver_info: dict[list] = {"project_info": [], "versions": []}
         loop = asyncio.get_running_loop()
         
         # Create tasks to fetch versions and project info concurrently
-        with cf.ThreadPoolExecutor() as executor:
+        with cf.ThreadPoolExecutor(max_workers=100) as executor:
             tasks = [
                 loop.run_in_executor(executor, self.get_versions_id, id, loop)
                 for id in ids

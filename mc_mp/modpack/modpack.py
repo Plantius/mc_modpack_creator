@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import List, Dict, Any
 import modpack.mod as mod
 import standard as std
-import numpy as np
 
 class Modpack:
     """
@@ -35,6 +34,7 @@ class Modpack:
                 setattr(self, key, [mod.Mod(**item) for item in value])
             else:
                 setattr(self, key, value)
+        self._processing_mods = set()
 
     def export_json(self) -> Dict[str, Any]:
         """Exports the Modpack attributes as a JSON-compatible dictionary."""
@@ -42,7 +42,6 @@ class Modpack:
 
     def check_compatibility(self) -> bool:
         """Checks if the mods in the modpack are compatible (always returns `True`)."""
-        return True
         return not std.has_duplicates([m.project_id for m in self.mod_data])
 
     def get_mods_name_ver(self) -> List[str]:

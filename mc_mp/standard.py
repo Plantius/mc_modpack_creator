@@ -63,7 +63,8 @@ class ProjectEncoder(json.JSONEncoder):
 def get_variables(obj) -> dict:
     """Get non-callable attributes of an object as a dictionary."""
     return {key: value for key, value in inspect.getmembers(obj) 
-            if not callable(getattr(obj, key)) and not key.startswith("__")}
+            if not callable(getattr(obj, key)) and not key.startswith("__")
+            and not key.startswith("_")}
 
 def get_functions(obj) -> list:
     """Get a list of callable methods, excluding special methods."""
