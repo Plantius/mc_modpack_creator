@@ -17,6 +17,7 @@ from .project_api import ProjectAPI
 from dateutil import parser
 import asyncio
 import functools
+import glob
 
 class Project:
     """
@@ -156,7 +157,6 @@ class Project:
         future = asyncio.run_coroutine_threadsafe(self.api.get_project(id), loop)
         return future.result()  # Wait for the coroutine to finish
     
-    @std.async_timing
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         """Fetches mods by their IDs concurrently and returns detailed information."""
         mods_ver_info: dict[list] = {"project_info": [], "versions": []}
@@ -197,12 +197,15 @@ class Project:
             return False
         return True
 
+    @std.async_timing
     async def export_modpack(self, filename: str):
         try:
             os.makedirs(PROJECT_DIR)
         except FileExistsError:
             # Directory already exists
-            pass
+            files = glob.glob(f'{PROJECT_DIR}/*')
+            for file in files:
+                os.remove(file)
         
         # Prepare list of file information
         files = [file[0] for file in [[file for file in m.files if file["primary"]] for m in self.modpack.mod_data]]
