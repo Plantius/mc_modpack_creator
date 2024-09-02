@@ -389,16 +389,25 @@ class Menu:
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
         
+        def get_menu_entries():
+            # Add the "Select All Mods" option dynamically
+            return ["[Remove All Mods]"] + self.project.modpack.get_mods_name_ver()
+        
         submenu = Menu(
                 project=self.project, 
                 title="Select which mods to remove:",
-                menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
+                menu_entries=get_menu_entries,  # Updatable
                 status_bar=self.get_entry_description,
                 multi_select=True
             )
         async def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return
+            if 0 in selected_index:
+                selected_index = list(range(len(self.project.modpack.get_mods_name_ver())))
+            else:
+                selected_index = [i-1 for i in selected_index]
+                
             for i in sorted(selected_index, reverse=True):
                 await self.project.rm_mod(i) 
 
