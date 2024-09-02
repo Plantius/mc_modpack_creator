@@ -222,7 +222,7 @@ class Menu:
                 filename = std.get_input("Please enter the filename to save to: ") \
                     if std.get_input("Do you want to save the project to a new file? y/n: ") == ACCEPT \
                     else self.project.metadata["filename"]
-                self.project.save_project(filename)
+                await self.project.save_project(filename)
         return OPEN  # Keep main menu open
     
     async def add_mods_menu(self) -> bool:
@@ -243,7 +243,7 @@ class Menu:
         """
         Add mods to the project based on provided IDs and handle dependencies.
         """
-        ids = [id for id in ids if not self.project.is_mod_installed(id)]
+        ids = [id for id in ids if self.project.is_mod_installed(id) is None]
         info = await self.project.fetch_mods_by_ids(ids)
 
         if not any(info["project_info"]) or not any(info["versions"]):
@@ -264,7 +264,7 @@ class Menu:
                                          project_info=project_info)
                     
                     if len(version["dependencies"]) > 0:
-                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required"]
+                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) is None]
                         if required_ids:
                             await self.add_mods_action(required_ids)
                     submenu.menu_active = False  # Close sub menu (version list)
@@ -319,7 +319,7 @@ class Menu:
             )
           
         async def handle_selection(selected_index):
-            selected_mod_ids = [results["hits"][i]["project_id"] for i in selected_index if not self.project.is_mod_installed(results["hits"][i]["project_id"])]
+            selected_mod_ids = [results["hits"][i]["project_id"] for i in selected_index if self.project.is_mod_installed(results["hits"][i]["project_id"]) is None]
             if len(selected_index) == 1:
                 selected_mod = results["hits"][selected_index[0]]
                 if input(f'''{selected_mod["title"]} \nClient side: {selected_mod["client_side"]}\nServer side: {selected_mod["server_side"]}\n\n{selected_mod["description"]}\nLink to mod https://modrinth.com/mod/{selected_mod["slug"]}\n\tDo you want to add this mod to the current project? y/n ''') != ACCEPT:

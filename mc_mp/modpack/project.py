@@ -38,8 +38,7 @@ class Project:
 
     def is_mod_installed(self, id: str) -> int:
         """Checks if a mod is installed by ID and returns its index."""
-        result = std.get_index([m.project_id for m in self.modpack.mod_data], id)
-        return result
+        return std.get_index([m.project_id for m in self.modpack.mod_data], id)
     
     def is_date_newer(self, new_date: str, current_date: str) -> bool:
         new_mod_date = parser.parse(new_date)
@@ -85,7 +84,7 @@ class Project:
         print(dupes) 
         return True
 
-    def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
+    async def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
         """Saves the current project state to a file."""
         if filename:
             self.metadata["filename"] = filename
@@ -94,8 +93,11 @@ class Project:
 
         project_data = self.modpack.export_json()
         project_data["metadata"] = self.metadata
+        
+        loop = asyncio.get_running_loop()
         with open(self.metadata["filename"], 'w') as file:
-            json.dump(project_data, file, indent=4)
+            await loop.run_in_executor(None, json.dump, project_data, file, indent=4)
+        
         self.metadata["saved"] = True
         return True
     
