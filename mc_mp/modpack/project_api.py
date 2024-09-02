@@ -9,7 +9,7 @@ https://github.com/Plantius/mc_modpack_creator
 from aiohttp import ClientSession
 from typing import Optional, Dict, Any
 
-from standard import BUF_SIZE
+from standard import BUF_SIZE, async_timing
 from . import API_BASE, HEADERS, PROJECT_DIR
 
 class ProjectAPI:
@@ -94,6 +94,7 @@ class ProjectAPI:
             return None
     
     @staticmethod
+    @async_timing
     async def get_url(**kwargs) -> None:
         """Retrieves information about multiple versions by their IDs."""
         params = {k: v for k, v in kwargs.items() if v is not None}

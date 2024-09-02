@@ -91,12 +91,14 @@ class Project:
             json.dump(project_data, file, indent=4)
         self.metadata["saved"] = True
         return True
-
+    
+    @std.async_timing
     async def search_mods(self, **kwargs) -> dict:
         """Searches for mods using the ProjectAPI."""
         result = await self.api.search_project(**kwargs)
         return result
     
+    @std.async_timing
     async def add_mod(self, name: str, version: dict, project_info: dict, index: int = 0) -> bool:
         """Adds a mod to the modpack with the given name and version information."""
         if any([project_info, version]) is None:
@@ -120,6 +122,7 @@ class Project:
         self.metadata["saved"] = False
         return True
 
+    @std.async_timing
     async def rm_mod(self, index: int) -> bool:
         """Removes a mod from the modpack by index."""
         try:
@@ -130,7 +133,7 @@ class Project:
             return False
 
     
-    
+    @std.async_timing
     async def update_mod(self, latest_version: list[dict], project_info: dict, index: int) -> bool:
         """Updates selected mods if newer versions are available."""
         name = self.modpack.mod_data[index].project_id
@@ -156,6 +159,7 @@ class Project:
             return [f'{m}:\n\t{d}' for m, d in zip(self.modpack.get_mod_list_names(), self.modpack.get_mod_list_descriptions())]
         return None
     
+    @std.async_timing
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         """Fetches mods by their IDs concurrently and returns detailed information."""
         mods_ver_info: dict[list] = {"project_info": [], "versions": []}
@@ -179,6 +183,7 @@ class Project:
 
         return mods_ver_info
     
+    @std.async_timing
     async def export_modpack(self, filename: str):
         try:
             os.makedirs(PROJECT_DIR)
@@ -188,6 +193,6 @@ class Project:
         
         for file in [[file for file in m.files if file["primary"]] for m in self.modpack.mod_data]:
             await self.api.get_url(**file[0])
-            if not std.check_hash(f'{PROJECT_DIR}{file[0]["filename"]}', file[0]["hashes"]):
+            if not std.check_hash(f'{PROJECT_DIR}/{file[0]["filename"]}', file[0]["hashes"]):
                 std.eprint(f"[ERROR] Wrong hash for file: {file[0]['filename']}")
                 return

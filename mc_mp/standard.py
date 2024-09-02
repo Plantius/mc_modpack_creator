@@ -13,6 +13,7 @@ import glob
 from cryptography.fernet import Fernet
 import modpack.mod as mod
 import hashlib
+import time, functools
 
 BUF_SIZE = 2 << 15
 SECRET_KEY = b'7rfdYCctHr9xCK2H4i92HLvxN4YzsTty4OrNaAC-bfc='
@@ -21,6 +22,20 @@ UNIQUE_ID = "MC_MODPACK_CREATOR_ID"
 cipher = Fernet(SECRET_KEY)
 
 ALLOWED_CATEGORIES = ["forge", "fabric", "neoforge", "quilt", "liteloader"]
+
+def async_timing(func):
+    """Decorator to measure the execution time of an async function."""
+    
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        start_time = time.monotonic()  # Start time measurement
+        result = await func(*args, **kwargs)
+        end_time = time.monotonic()  # End time measurement
+        duration = end_time - start_time
+        print(f"[TIMER] {func.__name__} executed in {duration:.4f} seconds")
+        return result
+    
+    return wrapper
 
 class ProjectEncoder(json.JSONEncoder):
     """Custom JSON encoder for handling `mod.Mod` objects."""
