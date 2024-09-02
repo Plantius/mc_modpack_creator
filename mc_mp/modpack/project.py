@@ -46,7 +46,6 @@ class Project:
         current_mod_date = parser.parse(current_date)
         return new_mod_date > current_mod_date
     
-    @std.sync_timing
     def create_project(self, **kwargs) -> None:
         """Creates a new project and updates metadata; checks modpack compatibility."""
         self.modpack = Modpack(**kwargs)
@@ -59,7 +58,6 @@ class Project:
             std.eprint("[ERROR]: Invalid project created.")
             exit(1)
 
-    @std.sync_timing
     def load_project(self, filename: str) -> bool:
         """Loads project data from a file and initializes the modpack."""
         if os.path.exists(filename):
@@ -81,7 +79,6 @@ class Project:
             return True
         return False
 
-    @std.sync_timing
     def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
         """Saves the current project state to a file."""
         if filename:
@@ -96,13 +93,11 @@ class Project:
         self.metadata["saved"] = True
         return True
     
-    @std.async_timing
     async def search_mods(self, **kwargs) -> dict:
         """Searches for mods using the ProjectAPI."""
         result = await self.api.search_project(**kwargs)
         return result
     
-    @std.async_timing
     async def add_mod(self, name: str, version: dict, project_info: dict, index: int = 0) -> bool:
         """Adds a mod to the modpack with the given name and version information."""
         if any([project_info, version]) is None:
@@ -126,7 +121,6 @@ class Project:
         self.metadata["saved"] = False
         return True
 
-    @std.async_timing
     async def rm_mod(self, index: int) -> bool:
         """Removes a mod from the modpack by index."""
         try:
@@ -137,14 +131,12 @@ class Project:
             return False
 
     
-    @std.async_timing
     async def update_mod(self, latest_version: list[dict], project_info: dict, index: int) -> bool:
         """Updates selected mods if newer versions are available."""
         name = self.modpack.mod_data[index].project_id
         await self.rm_mod(index)
         await self.add_mod(name, latest_version[0], project_info, index)
     
-    @std.sync_timing
     def list_projects(self) -> list[str]:
         """Lists all valid projects with their filenames and descriptions."""
         valid_projects = []
@@ -158,7 +150,6 @@ class Project:
                 continue
         return valid_projects
     
-    @std.sync_timing
     def list_mods(self) -> list[str]:
         """Lists all mods in the loaded project with their names and descriptions."""
         if self.metadata["loaded"]:
@@ -173,7 +164,6 @@ class Project:
         future = asyncio.run_coroutine_threadsafe(self.api.get_project(id), loop)
         return future.result()  # Wait for the coroutine to finish
     
-    @std.async_timingq
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         """Fetches mods by their IDs concurrently and returns detailed information."""
         mods_ver_info: dict[list] = {"project_info": [], "versions": []}
@@ -214,7 +204,6 @@ class Project:
             return False
         return True
 
-    @std.async_timing
     async def export_modpack(self, filename: str):
         try:
             os.makedirs(PROJECT_DIR)
