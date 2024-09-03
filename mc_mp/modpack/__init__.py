@@ -22,3 +22,5 @@ DEF_FILENAME = "project_1.json"
 ACCEPT = 'y'
 
 PROJECT_DIR = "./mods"
+
+MAX_WORKERS = 100

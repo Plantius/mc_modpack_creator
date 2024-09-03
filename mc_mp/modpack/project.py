@@ -9,15 +9,17 @@ https://github.com/Plantius/mc_modpack_creator
 from .modpack import Modpack
 from .mod import Mod
 import standard as std
-import json, os
+import json 
+import os
 import concurrent.futures as cf
 from typing import Optional, Dict, Any
-from . import DEF_FILENAME, ACCEPT, PROJECT_DIR
+from . import DEF_FILENAME, ACCEPT, PROJECT_DIR, MAX_WORKERS
 from .project_api import ProjectAPI
 from dateutil import parser
 import asyncio
 import functools
 import glob
+import shutil
 
 class Project:
     """
@@ -163,7 +165,7 @@ class Project:
         loop = asyncio.get_running_loop()
         
         # Create tasks to fetch versions and project info concurrently
-        with cf.ThreadPoolExecutor(max_workers=100) as executor:
+        with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = [
                 loop.run_in_executor(executor, self.get_versions_id, id, loop)
                 for id in ids
@@ -186,6 +188,7 @@ class Project:
 
         return mods_ver_info
     
+    @std.sync_timing
     def download_file(self, file_info, loop) -> bool:
         """Downloads a file and checks its hash."""
         # Use the provided loop to run the coroutine
@@ -194,18 +197,20 @@ class Project:
 
         if not std.check_hash(f'{PROJECT_DIR}/{file_info["filename"]}', file_info["hashes"]):
             std.eprint(f"[ERROR] Wrong hash for file: {file_info['filename']}")
+            os.remove(f'{PROJECT_DIR}/{file_info["filename"]}')
             return False
         return True
 
     @std.async_timing
-    async def export_modpack(self, filename: str):
+    async def export_modpack(self, filename: str, format: str, rm_mods: bool=True):
         try:
             os.makedirs(PROJECT_DIR)
         except FileExistsError:
             # Directory already exists
-            files = glob.glob(f'{PROJECT_DIR}/*')
-            for file in files:
-                os.remove(file)
+            if rm_mods:
+                files = glob.glob(f'{PROJECT_DIR}/*')
+                for file in files:
+                    os.remove(file)
         
         # Prepare list of file information
         files = [file[0] for file in [[file for file in m.files if file["primary"]] for m in self.modpack.mod_data]]
@@ -214,7 +219,7 @@ class Project:
         loop = asyncio.get_running_loop()
 
         # Use ThreadPoolExecutor to download and check files concurrently
-        with cf.ThreadPoolExecutor() as executor:
+        with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks = [
                 loop.run_in_executor(executor, self.download_file, file, loop)
                 for file in files
@@ -225,6 +230,19 @@ class Project:
         if not all(results):
             std.eprint("[ERROR] One or more files failed to download or check correctly.")
             return False
+
+        # Creates archive
+        try:
+            shutil.make_archive(filename, format, "./", PROJECT_DIR)
+        except:
+            std.eprint("[ERROR] Could not create archive.")
+            return
+        
+        # Clean up temporary dir and downloaded mods
+        files = glob.glob(f'{PROJECT_DIR}/*')
+        for file in files:
+            os.remove(file)
+        os.rmdir(PROJECT_DIR)    
         
         print("[INFO] Modpack exported successfully.")
         return True

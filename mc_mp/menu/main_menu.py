@@ -472,6 +472,9 @@ class Menu:
     async def export_modpack_action(self) -> bool:
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
-        await self.project.export_modpack("p1.json")
+        filename = std.get_input("Please enter a filename where the zip archive must be created: ")
+        format = std.get_input("What format do you want to save the archive as? (e.g. gztar, zip, tar, bztar or xztar) ")
+        rm_mods = std.get_input("Do you want to remove the mods currently downloaded? y/n ")
+        await self.project.export_modpack(filename, format, rm_mods == ACCEPT)
         
         return OPEN

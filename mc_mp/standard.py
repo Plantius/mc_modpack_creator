@@ -7,13 +7,16 @@ This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
 import sys
+import os
 import inspect
 import json
 import glob
 from cryptography.fernet import Fernet
 import modpack.mod as mod
 import hashlib
-import time, functools
+import time 
+import functools
+import zipfile
 
 BUF_SIZE = 2 << 15
 SECRET_KEY = b'7rfdYCctHr9xCK2H4i92HLvxN4YzsTty4OrNaAC-bfc='
