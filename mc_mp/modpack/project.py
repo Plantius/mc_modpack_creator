@@ -145,7 +145,8 @@ class Project:
         """Updates selected mods if newer versions are available."""
         name = self.modpack.mod_data[index].project_id
         await self.rm_mod(index)
-        await self.add_mod(name, latest_version[0], project_info, index)
+        if not self.is_mod_installed(project_info["id"]):
+            await self.add_mod(name, latest_version[0], project_info, index)
     
     
     def list_mods(self) -> list[str]:

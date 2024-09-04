@@ -346,7 +346,6 @@ class Menu:
         def get_menu_entries():
             # Add the "Select All Mods" option dynamically
             return ["[Select All Mods]"] + self.project.modpack.get_mods_name_ver()
-        
         submenu = Menu(
                 project=self.project, 
                 title="Update mods in the current project:",
@@ -373,8 +372,10 @@ class Menu:
             for index, latest_version, project_info in zip(selected_index, info["versions"], info["project_info"]):
                 if self.project.is_date_newer(latest_version[0]["date_published"], self.project.modpack.mod_data[index].date_published):
                     inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version[0]['version_number']} ")
-                    if inp == ACCEPT:
+                    if inp == ACCEPT and project_info["id"] not in self.project.modpack._processing_mods:
+                        self.project.modpack._processing_mods.add(project_info["id"])
                         await self.project.update_mod(latest_version, project_info, index)
+                self.project.modpack._processing_mods.add(project_info["id"])
                 print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
 
         
