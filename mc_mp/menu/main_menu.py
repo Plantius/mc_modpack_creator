@@ -245,26 +245,28 @@ class Menu:
         """
         ids = [id for id in ids if self.project.is_mod_installed(id) is None]
         self.project.modpack._processing_mods.update(ids)
-        info = await self.project.fetch_mods_by_ids(ids)
+        info_list = await self.project.fetch_mods_by_ids(ids)
 
-        if not any(info["project_info"]) or not any(info["versions"]):
+        if not any(info_list):
             std.eprint(f"[ERROR] Could not retrieve mods.")
             return OPEN
         
-        for versions, project_info in zip(info["versions"], info["project_info"]):
+        for info_dict in info_list:
+            project_info = info_dict 
+            del project_info["versions"]
             submenu = Menu(
                 project=self.project, 
-                title=f"Which version of {project_info['title']} do you want to add?",
-                menu_entries=[f'''{project_info["title"]} - {version["version_number"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}''' for version in versions],
+                title=f"Which version of {info_dict['title']} do you want to add?",
+                menu_entries=[f'''{info_dict["title"]} - {version["version_number"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}''' for version in info_dict["versions"]],
                 parent_menu=self)
             
             async def handle_selection(selected_index):
-                version = versions[selected_index]
+                version = info_dict["versions"][selected_index]
                 if self.project.is_mod_installed(version["project_id"]):
                     return
                 
                 if std.get_input(f'''{version["name"]}: \n{version["changelog"]}\n\tDo you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                    self.project.add_mod(project_info["slug"], version, 
+                    self.project.add_mod(info_dict["slug"], version, 
                                          project_info=project_info)
                     if len(version["dependencies"]) > 0:
                         required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) is None and dep["project_id"] not in self.project.modpack._processing_mods]
@@ -357,27 +359,31 @@ class Menu:
         async def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return
-            
+            skip = False
             if 0 in selected_index:
-                selected_index = list(range(0, len(self.project.modpack.get_mods_name_ver())))
+                selected_index = list(range(0, len(self.project.modpack.mod_data)))
+                skip = True
             else:
                 selected_index = [i-1 for i in selected_index]
-            
-            selected_index = sorted(selected_index, reverse=True)
-            
             ids = [[id.project_id for id in self.project.modpack.mod_data][i] for i in selected_index]
-            info = await self.project.fetch_mods_by_ids(ids)
-            if not any(info["project_info"]) or not any(info["versions"]):
+            info_list = await self.project.fetch_mods_by_ids(ids)
+            
+            if not any(info_list):
                 std.eprint(f"[ERROR] Could not retrieve mods.")
                 return
             
-            for index, latest_version, project_info in zip(selected_index, info["versions"], info["project_info"]):
-                if self.project.is_date_newer(latest_version[0]["date_published"], self.project.modpack.mod_data[index].date_published):
+            for index, info_dict in zip(selected_index, info_list):
+                latest_version = info_dict["versions"][0]
+                project_info = info_dict 
+                del project_info["versions"]
+                print(index, info_dict["title"], info_dict["id"])
+                if self.project.is_date_newer(latest_version["date_published"], self.project.modpack.mod_data[index].date_published):
                     inp: str = ""
-                    if not 0 in selected_index:
-                        inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version[0]['version_number']} ")
-                    if 0 in selected_index or inp == ACCEPT:
-                        print(f"Updated {self.project.modpack.mod_data[index].name}: {self.project.modpack.mod_data[index].version_number} -> {latest_version[0]['version_number']} ")
+                    if not skip:
+                        inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].title}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ")
+                    if skip or inp == ACCEPT:
+                        print(f"{index} --- Updated {self.project.modpack.mod_data[index].project_id} - {self.project.modpack.mod_data[index].title}: {self.project.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ")
+                        print(f'COMPARE {info_dict["title"]}')
                         self.project.update_mod(latest_version, project_info, index)
                 # print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
 
@@ -434,19 +440,19 @@ class Menu:
         async def handle_selection(selected_index):
             if selected_index == 0:
                 new_title = std.get_input("Enter new project title: ")
-                self.project.modpack.title = new_title
+                self.project.update_settings(new_title, std.Setting.TITLE)
             elif selected_index == 1:
                 new_description = std.get_input("Enter new project description: ")
-                self.project.modpack.description = new_description
+                self.project.update_settings(new_description, std.Setting.DESCRIPTION)
             elif selected_index == 2:
                 new_mc_version = std.get_input("Enter new Minecraft version: ")
-                self.project.modpack.mc_version = new_mc_version
+                self.project.update_settings(new_mc_version, std.Setting.MC_VERSION)
             elif selected_index == 3:
                 new_mod_loader = std.get_input("Enter new mod loader: ")
-                self.project.modpack.mod_loader = new_mod_loader
+                self.project.update_settings(new_mod_loader, std.Setting.MOD_LOADER)
             elif selected_index == 4:
                 new_build_version = std.get_input("Enter new build version: ")
-                self.project.modpack.build_version = new_build_version
+                self.project.update_settings(new_build_version, std.Setting.BUILD_VERSION)
 
         
         submenu.handle_selection = handle_selection
@@ -459,14 +465,10 @@ class Menu:
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
         
-        
-        def get_menu_entries():
-            return sorted(self.project.modpack.get_mods_name_ver())
-            
         submenu = Menu(
                 project=self.project, 
                 title=f"The mods currently in this project.",
-                menu_entries=get_menu_entries,  # Updatable
+                menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
                 status_bar=self.get_entry_description
             )
           

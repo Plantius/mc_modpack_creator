@@ -51,3 +51,7 @@ class Modpack:
     def get_mods_descriptions(self) -> List[str]:
         """Returns a list of all mod descriptions."""
         return [item.description for item in self.mod_data]
+    
+    def sort_mods(self) -> None:
+        """Sorts the mod_data list by mod title."""
+        self.mod_data.sort(key=lambda mod: mod.project_id)

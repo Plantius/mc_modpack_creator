@@ -37,3 +37,19 @@ class Mod:
         """Loads JSON data into the mod's attributes."""
         for key, value in data.items():
             setattr(self, key, value)
+            
+    def update_self(self, latest_version: dict, project_info: dict):
+        """Updates the mod's attributes with the latest version and project information."""
+        self.name = latest_version["name"]
+        self.changelog = latest_version["changelog"]
+        self.version_number = latest_version["version_number"]
+        self.dependencies = latest_version["dependencies"]
+        self.mc_versions = latest_version["game_versions"]
+        self.version_type = latest_version.get("version_type", self.version_type)
+        self.mod_loaders = latest_version["loaders"]
+        self.id = latest_version["id"]
+        self.project_id = latest_version["project_id"]
+        self.date_published = latest_version["date_published"]
+        self.files = latest_version["files"]
+        self.title = project_info.get("title", self.title)
+        self.description = project_info.get("description", self.description)

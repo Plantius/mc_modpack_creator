@@ -6,6 +6,7 @@ Last Edited: 2024-08-31
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
+import numpy as np
 from .modpack import Modpack
 from .mod import Mod
 import standard as std
@@ -80,11 +81,12 @@ class Project:
         seen = set()
         dupes = [x.project_id for x in self.modpack.mod_data if x.project_id in seen or seen.add(x.project_id)]  
         print(dupes)
-        if not self.modpack.check_compatibility():
-            print("Invalid project loaded.")
-            exit(1)
+        # if not self.modpack.check_compatibility():
+        #     print("Invalid project loaded.")
+        #     exit(1)
         self.metadata["loaded"] = True
         self.metadata["saved"] = True
+        self.modpack.sort_mods()
         return True
 
     async def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
@@ -130,23 +132,24 @@ class Project:
             files=version["files"]
         ))
         self.metadata["saved"] = False
+        self.modpack.sort_mods()
         return True
-
+    
     def rm_mod(self, index: int) -> bool:
-        """Removes a mod from the modpack by index."""
+        """Removes a mod from the modpack    by index."""
         try:
             del self.modpack.mod_data[index]
             self.metadata["saved"] = False
+            self.modpack.sort_mods()
             return True
         except IndexError:
             return False
 
-    def update_mod(self, latest_version: list[dict], project_info: dict, index: int) -> bool:
+    def update_mod(self, latest_version: dict, project_info: dict, index: int) -> bool:
         """Updates selected mods if newer versions are available."""
-        name = self.modpack.mod_data[index].project_id
-        self.rm_mod(index)
-        self.add_mod(name, latest_version[0], project_info, index)
-    
+        self.modpack.mod_data[index].update_self(latest_version, project_info)
+        self.metadata["saved"] = False
+        return True
     
     def list_mods(self) -> list[str]:
         """Lists all mods in the loaded project with their names and descriptions."""
@@ -164,31 +167,34 @@ class Project:
     
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         """Fetches mods by their IDs concurrently and returns detailed information."""
-        mods_ver_info: dict[list] = {"project_info": [], "versions": []}
+        mods_ver_info: list = []
         loop = asyncio.get_running_loop()
         
         # Create tasks to fetch versions and project info concurrently
         with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            tasks = [
+            tasks_vers = [
                 loop.run_in_executor(executor, self.get_versions_id, id, loop)
                 for id in ids
             ]
-            tasks += [
+            tasks_info = [
                 loop.run_in_executor(executor, self.get_project_info_ids, id, loop)
                 for id in ids
             ]
-            results = await asyncio.gather(*tasks)
+            res_ver = await asyncio.gather(*tasks_vers)
+            res_info = await asyncio.gather(*tasks_info)
 
-        # Separate the results into versions and project info
-        versions_all = results[:len(ids)]
-        project_info_all = results[len(ids):]
+        
+        versions_dict = {ver[0]["project_id"]: ver for ver in res_ver if ver}
+        project_info_dict = {info["id"]: info for info in res_info if info}
+        
+        # Ensure matching and alignment
+        for id in ids:
+            if id in versions_dict and id in project_info_dict:
+                project_info = project_info_dict[id]
+                project_info["versions"] = versions_dict[id]
+                mods_ver_info.append(project_info)
 
-        # Combine results into the mods_ver_info list
-        for versions, project_info in zip(versions_all, project_info_all):
-            if versions and project_info:
-                mods_ver_info["project_info"].append(project_info)
-                mods_ver_info["versions"].append(versions)
-
+        print([m["id"] for m in mods_ver_info])
         return mods_ver_info
     
     @std.sync_timing
@@ -249,3 +255,21 @@ class Project:
         
         print("[INFO] Modpack exported successfully.")
         return True
+    
+    def update_settings(self, new_var: str, index: std.Setting) -> bool:
+        self.metadata["saved"] = False
+        match index:
+            case std.Setting.TITLE:
+                self.modpack.title = new_var
+            case std.Setting.DESCRIPTION:
+                self.modpack.description = new_var
+            case std.Setting.MC_VERSION:
+                self.modpack.mc_version = new_var
+            case std.Setting.MOD_LOADER:
+                self.modpack.mod_loader = new_var
+            case std.Setting.BUILD_VERSION:
+                self.modpack.build_version = new_var
+            case _:
+                return False
+        return True
+        

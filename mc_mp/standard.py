@@ -6,8 +6,8 @@ Last Edited: 2024-08-31
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
+from enum import Enum, auto
 import sys
-import os
 import inspect
 import json
 import glob
@@ -24,6 +24,13 @@ UNIQUE_ID = "MC_MODPACK_CREATOR_ID"
 cipher = Fernet(SECRET_KEY)
 
 ALLOWED_CATEGORIES = ["forge", "fabric", "neoforge", "quilt", "liteloader"]
+
+class Setting(Enum):
+    TITLE = auto()
+    DESCRIPTION = auto()    
+    MC_VERSION= auto()    
+    MOD_LOADER = auto()    
+    BUILD_VERSION = auto()    
 
 def async_timing(func):
     """Decorator to measure the execution time of an async function."""
