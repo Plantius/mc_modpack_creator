@@ -76,7 +76,10 @@ class Project:
         self.metadata = data["metadata"]
         del data["metadata"]
         self.modpack = Modpack(**data)
-
+        
+        seen = set()
+        dupes = [x.project_id for x in self.modpack.mod_data if x.project_id in seen or seen.add(x.project_id)]  
+        print(dupes)
         if not self.modpack.check_compatibility():
             print("Invalid project loaded.")
             exit(1)
