@@ -264,7 +264,7 @@ class Menu:
                     return
                 
                 if std.get_input(f'''{version["name"]}: \n{version["changelog"]}\n\tDo you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
-                    await self.project.add_mod(project_info["slug"], version, 
+                    self.project.add_mod(project_info["slug"], version, 
                                          project_info=project_info)
                     if len(version["dependencies"]) > 0:
                         required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) is None and dep["project_id"] not in self.project.modpack._processing_mods]
@@ -359,10 +359,12 @@ class Menu:
                 return
             
             if 0 in selected_index:
-                selected_index = list(range(1, len(self.project.modpack.get_mods_name_ver())))
+                selected_index = list(range(0, len(self.project.modpack.get_mods_name_ver())))
             else:
                 selected_index = [i-1 for i in selected_index]
-
+            
+            selected_index = sorted(selected_index, reverse=True)
+            
             ids = [[id.project_id for id in self.project.modpack.mod_data][i] for i in selected_index]
             info = await self.project.fetch_mods_by_ids(ids)
             if not any(info["project_info"]) or not any(info["versions"]):
@@ -371,12 +373,13 @@ class Menu:
             
             for index, latest_version, project_info in zip(selected_index, info["versions"], info["project_info"]):
                 if self.project.is_date_newer(latest_version[0]["date_published"], self.project.modpack.mod_data[index].date_published):
-                    inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version[0]['version_number']} ")
-                    if inp == ACCEPT and project_info["id"] not in self.project.modpack._processing_mods:
-                        self.project.modpack._processing_mods.add(project_info["id"])
-                        await self.project.update_mod(latest_version, project_info, index)
-                self.project.modpack._processing_mods.add(project_info["id"])
-                print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
+                    inp: str = ""
+                    if not 0 in selected_index:
+                        inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].name}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version[0]['version_number']} ")
+                    if 0 in selected_index or inp == ACCEPT:
+                        print(f"Updated {self.project.modpack.mod_data[index].name}: {self.project.modpack.mod_data[index].version_number} -> {latest_version[0]['version_number']} ")
+                        self.project.update_mod(latest_version, project_info, index)
+                # print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
 
         
         submenu.handle_selection = handle_selection
@@ -410,7 +413,7 @@ class Menu:
                 selected_index = [i-1 for i in selected_index]
                 
             for i in sorted(selected_index, reverse=True):
-                await self.project.rm_mod(i) 
+                self.project.rm_mod(i) 
 
         submenu.handle_selection = handle_selection
         await submenu.display()
@@ -456,10 +459,14 @@ class Menu:
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
         
+        
+        def get_menu_entries():
+            return sorted(self.project.modpack.get_mods_name_ver())
+            
         submenu = Menu(
                 project=self.project, 
                 title=f"The mods currently in this project.",
-                menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
+                menu_entries=get_menu_entries,  # Updatable
                 status_bar=self.get_entry_description
             )
           

@@ -109,7 +109,7 @@ class Project:
         result = await self.api.search_project(**kwargs)
         return result
     
-    async def add_mod(self, name: str, version: dict, project_info: dict, index: int = 0) -> bool:
+    def add_mod(self, name: str, version: dict, project_info: dict, index: int = 0) -> bool:
         """Adds a mod to the modpack with the given name and version information."""
         if any([project_info, version]) is None:
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
@@ -132,7 +132,7 @@ class Project:
         self.metadata["saved"] = False
         return True
 
-    async def rm_mod(self, index: int) -> bool:
+    def rm_mod(self, index: int) -> bool:
         """Removes a mod from the modpack by index."""
         try:
             del self.modpack.mod_data[index]
@@ -141,12 +141,11 @@ class Project:
         except IndexError:
             return False
 
-    async def update_mod(self, latest_version: list[dict], project_info: dict, index: int) -> bool:
+    def update_mod(self, latest_version: list[dict], project_info: dict, index: int) -> bool:
         """Updates selected mods if newer versions are available."""
         name = self.modpack.mod_data[index].project_id
-        await self.rm_mod(index)
-        if not self.is_mod_installed(project_info["id"]):
-            await self.add_mod(name, latest_version[0], project_info, index)
+        self.rm_mod(index)
+        self.add_mod(name, latest_version[0], project_info, index)
     
     
     def list_mods(self) -> list[str]:
