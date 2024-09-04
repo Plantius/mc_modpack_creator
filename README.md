@@ -75,7 +75,7 @@ Change project settings.
 List current mods.
 ```
 ## Credit
-- Simple term menu <pypi.org/project/simple-term-menu/>
+- Simple term menu <https://pypi.org/project/simple-term-menu/>
 
 ## Documentation
 See <https://plantius.github.io/mc_modpack_creator/>.
