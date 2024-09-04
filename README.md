@@ -74,6 +74,8 @@ Add, remove, and update mods.
 Change project settings.
 List current mods.
 ```
+## Credit
+- Simple term menu <pypi.org/project/simple-term-menu/>
 
 ## Documentation
 See <https://plantius.github.io/mc_modpack_creator/>.
