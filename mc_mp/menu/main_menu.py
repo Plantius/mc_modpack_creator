@@ -350,67 +350,73 @@ class Menu:
         """
         Display submenu for updating mods in the current project.
         """
-        if len(self.project.modpack.mod_data) == 0:
+        if not self.project.modpack.mod_data:
             return OPEN  # Keep main menu open
         
-        def get_menu_entries():
-            # Add the "Select All Mods" option dynamically
+        def _get_menu_entries():
+            """Generate menu entries dynamically."""
             return ["[Select All Mods]"] + self.project.modpack.get_mods_name_ver()
         
         submenu = Menu(
-                project=self.project, 
-                title="Update mods in the current project:",
-                menu_entries=get_menu_entries,  # Updatable
-                status_bar=self.get_entry_description,
-                multi_select=True
-            )
+            project=self.project, 
+            title="Update mods in the current project:",
+            menu_entries=_get_menu_entries,
+            status_bar=self.get_entry_description,
+            multi_select=True
+        )
         
         async def handle_selection(selected_index):
-            if len(self.project.modpack.mod_data) == 0:
+            if not self.project.modpack.mod_data:
                 return
+            
             selected_index = np.array(selected_index)
             if 0 in selected_index:
                 selected_index = np.arange(1, len(self.project.modpack.mod_data))
             else:
-                selected_index = selected_index -1
-            ids = [id.project_id for id in self.project.modpack.mod_data]
-            ids = [ids[i] for i in selected_index]
-
-            info_list = await self.project.fetch_mods_by_ids(ids)
-            print(len([m["id"] for m in info_list]))
-            temp = json.dumps(info_list, indent=4)
-            with open("test", "w") as f:
-                f.write(temp)
+                selected_index = selected_index - 1
             
-            if not any(info_list):
-                std.eprint(f"[ERROR] Could not retrieve mods.")
+            ids = [mod.project_id for mod in self.project.modpack.mod_data]
+            selected_ids = [ids[i] for i in selected_index]
+
+            # Fetch mod information concurrently
+            info_list = await self.project.fetch_mods_by_ids(selected_ids)
+            if not info_list:
+                std.eprint("[ERROR] Could not retrieve mods.")
                 return
             
             mods_to_update = {"indices": [], "latest_versions": [], "project_infos": []}
-            
-            for index, info_dict in zip(selected_index, info_list):
-                latest_version = info_dict["versions"][0]
-                project_info = copy.copy(info_dict) 
-                del project_info["versions"]
+            info_dict_by_id = {info["id"]: info for info in info_list}
+
+            for index, mod_id in zip(selected_index, selected_ids):
+                mod_data = self.project.modpack.mod_data[index]
+                if mod_id not in info_dict_by_id:
+                    std.eprint(f"[ERROR] No information found for mod ID {mod_id}")
+                    continue
+
+                info_dict = info_dict_by_id[mod_id]
+                print(info_dict["title"])
+                latest_version = info_dict.get("versions", [])[0]
                 
-                print(index, info_dict["title"], info_dict["id"])
-                if self.project.is_date_newer(latest_version["date_published"], self.project.modpack.mod_data[index].date_published):
-                    inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].title}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ") or 'y'
-                    if inp == ACCEPT:
-                        print(f"{index} --- Updated {self.project.modpack.mod_data[index].project_id} - {self.project.modpack.mod_data[index].title}: {self.project.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ")
-                        print(f'COMPARE {info_dict["title"]}')
-                        mods_to_update["indices"].append(index)
-                        mods_to_update["latest_versions"].append(latest_version)
-                        mods_to_update["project_infos"].append(project_info)
-                        # self.project.update_mod(latest_version, project_info, index)
+                if latest_version:
+                    if self.project.is_date_newer(latest_version["date_published"], mod_data.date_published):
+                        inp = std.get_input(f"New version available for {mod_data.title}. Upgrade? y/n {mod_data.version_number} -> {latest_version['version_number']} ") or 'y'
+                        if inp == ACCEPT:
+                            print(f"{index} --- Updated {mod_data.project_id} - {mod_data.title}: {mod_data.version_number} -> {latest_version['version_number']}")
+                            mods_to_update["indices"].append(index)
+                            mods_to_update["latest_versions"].append(latest_version)
+                            mods_to_update["project_infos"].append(copy.copy(info_dict))
+                    else:
+                        print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
                 else:
-                    print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
+                    std.eprint(f"[ERROR] No versions found for {info_dict['title']} ({info_dict['id']})")
+
             if mods_to_update["indices"]:
                 self.project.update_mods(**mods_to_update)
         
         submenu.handle_selection = handle_selection
         await submenu.display()
         return OPEN
+
     
     async def remove_mods_action(self) -> bool:
         """

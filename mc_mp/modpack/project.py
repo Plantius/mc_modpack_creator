@@ -190,18 +190,32 @@ class Project:
             ]
             res_ver = await asyncio.gather(*tasks_vers)
             res_info = await asyncio.gather(*tasks_info)
-
-        print(len(tasks_vers), len(tasks_info))
-        versions_dict = {ver[0]["project_id"]: ver for ver in res_ver if ver}
-        project_info_dict = {info["id"]: info for info in res_info if info}
         
-        # Ensure matching and alignment
-        for id in ids:
-            if id in versions_dict and id in project_info_dict:
-                project_info = project_info_dict[id]
-                project_info["versions"] = versions_dict[id]
+        # Create mappings for quick lookup
+        version_map = {}
+        for version_list in res_ver:
+            if not version_list:
+                return None
+            if len(version_list) > 0:
+                version = version_list[0]
+                project_id = version.get("project_id")
+                if project_id:
+                    if project_id not in version_map:
+                        version_map[project_id] = []
+                    version_map[project_id].append(version)
+        
+        mods_ver_info = []
+        for project_info in res_info:
+            if not project_info:
+                return None
+            project_id = project_info.get("id")
+            if project_id and project_id in version_map:
+                version = version_map[project_id]
+                # filtered_versions = [version for version in versions if version]  # Filter out empty versions
+                # if filtered_versions:
+                project_info["versions"] = version
                 mods_ver_info.append(project_info)
-
+        
         return mods_ver_info
     
     @std.sync_timing

@@ -80,6 +80,7 @@ class ProjectAPI:
         try:
             return await ProjectAPI.request(f"/version/{version_id}")
         except:
+            print(f"[ERROR] Could not retreive versions of {version_id}")
             return None
     
     @staticmethod
