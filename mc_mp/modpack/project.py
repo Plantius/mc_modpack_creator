@@ -194,8 +194,6 @@ class Project:
         # Create mappings for quick lookup
         version_map = {}
         for version_list in res_ver:
-            if not version_list:
-                return None
             if len(version_list) > 0:
                 version = version_list[0]
                 project_id = version.get("project_id")
@@ -206,13 +204,9 @@ class Project:
         
         mods_ver_info = []
         for project_info in res_info:
-            if not project_info:
-                return None
             project_id = project_info.get("id")
             if project_id and project_id in version_map:
                 version = version_map[project_id]
-                # filtered_versions = [version for version in versions if version]  # Filter out empty versions
-                # if filtered_versions:
                 project_info["versions"] = version
                 mods_ver_info.append(project_info)
         

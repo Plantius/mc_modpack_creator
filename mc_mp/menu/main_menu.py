@@ -371,7 +371,7 @@ class Menu:
             
             selected_index = np.array(selected_index)
             if 0 in selected_index:
-                selected_index = np.arange(1, len(self.project.modpack.mod_data))
+                selected_index = np.arange(len(self.project.modpack.mod_data))
             else:
                 selected_index = selected_index - 1
             
@@ -384,7 +384,7 @@ class Menu:
                 std.eprint("[ERROR] Could not retrieve mods.")
                 return
             
-            mods_to_update = {"indices": [], "latest_versions": [], "project_infos": []}
+            # mods_to_update = {"indices": [], "latest_versions": [], "project_infos": []}
             info_dict_by_id = {info["id"]: info for info in info_list}
 
             for index, mod_id in zip(selected_index, selected_ids):
@@ -402,16 +402,17 @@ class Menu:
                         inp = std.get_input(f"New version available for {mod_data.title}. Upgrade? y/n {mod_data.version_number} -> {latest_version['version_number']} ") or 'y'
                         if inp == ACCEPT:
                             print(f"{index} --- Updated {mod_data.project_id} - {mod_data.title}: {mod_data.version_number} -> {latest_version['version_number']}")
-                            mods_to_update["indices"].append(index)
-                            mods_to_update["latest_versions"].append(latest_version)
-                            mods_to_update["project_infos"].append(copy.copy(info_dict))
+                            self.project.update_mod(latest_version, info_dict, index)
+                            # mods_to_update["indices"].append(index)
+                            # mods_to_update["latest_versions"].append(latest_version)
+                            # mods_to_update["project_infos"].append(copy.copy(info_dict))
                     else:
                         print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
                 else:
                     std.eprint(f"[ERROR] No versions found for {info_dict['title']} ({info_dict['id']})")
 
-            if mods_to_update["indices"]:
-                self.project.update_mods(**mods_to_update)
+            # if mods_to_update["indices"]:
+            #     self.project.update_mods(**mods_to_update)
         
         submenu.handle_selection = handle_selection
         await submenu.display()
@@ -440,7 +441,7 @@ class Menu:
             if len(self.project.modpack.mod_data) == 0:
                 return
             if 0 in selected_index:
-                selected_index = np.arange(1, len(self.project.modpack.get_mods_name_ver()))
+                selected_index = np.arange(len(self.project.modpack.get_mods_name_ver()))
             else:
                 selected_index = [i-1 for i in selected_index]
                 

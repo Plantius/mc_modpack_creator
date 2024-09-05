@@ -57,6 +57,7 @@ class ProjectAPI:
         try: 
             return await ProjectAPI.request(f"/project/{project_name}")
         except:
+            print(f"[ERROR] Could not get project {project_name}")
             return None
         
     @staticmethod

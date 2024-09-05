@@ -23,4 +23,4 @@ ACCEPT = 'y'
 
 PROJECT_DIR = "./mods"
 
-MAX_WORKERS = 100
+MAX_WORKERS = 8
