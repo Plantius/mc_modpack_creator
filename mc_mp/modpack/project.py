@@ -6,7 +6,6 @@ Last Edited: 2024-08-31
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-import numpy as np
 from .modpack import Modpack
 from .mod import Mod
 import standard as std
@@ -14,7 +13,7 @@ import json
 import os
 import concurrent.futures as cf
 from typing import Optional, Dict, Any
-from . import DEF_FILENAME, ACCEPT, PROJECT_DIR, MAX_WORKERS
+from . import DEF_FILENAME, PROJECT_DIR, MAX_WORKERS
 from .project_api import ProjectAPI
 from dateutil import parser
 import asyncio

@@ -12,7 +12,6 @@ from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
 import asyncio
-import json
 from . import CLEAR_SCREEN, ACCEPT, OPEN
 
 class Menu:
@@ -403,16 +402,10 @@ class Menu:
                         if inp == ACCEPT:
                             print(f"{index} --- Updated {mod_data.project_id} - {mod_data.title}: {mod_data.version_number} -> {latest_version['version_number']}")
                             self.project.update_mod(latest_version, info_dict, index)
-                            # mods_to_update["indices"].append(index)
-                            # mods_to_update["latest_versions"].append(latest_version)
-                            # mods_to_update["project_infos"].append(copy.copy(info_dict))
                     else:
                         print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
                 else:
                     std.eprint(f"[ERROR] No versions found for {info_dict['title']} ({info_dict['id']})")
-
-            # if mods_to_update["indices"]:
-            #     self.project.update_mods(**mods_to_update)
         
         submenu.handle_selection = handle_selection
         await submenu.display()
