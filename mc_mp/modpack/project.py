@@ -148,6 +148,14 @@ class Project:
     def update_mod(self, latest_version: dict, project_info: dict, index: int) -> bool:
         """Updates selected mods if newer versions are available."""
         self.modpack.mod_data[index].update_self(latest_version, project_info)
+        self.modpack.sort_mods()
+        self.metadata["saved"] = False
+        return True
+    
+    def update_mods(self, latest_versions, project_infos, indices) -> bool:
+        for index, latest_version, project_info in zip(indices, latest_versions, project_infos):
+            self.modpack.mod_data[index].update_self(latest_version, project_info)
+        self.modpack.sort_mods()
         self.metadata["saved"] = False
         return True
     
@@ -183,7 +191,7 @@ class Project:
             res_ver = await asyncio.gather(*tasks_vers)
             res_info = await asyncio.gather(*tasks_info)
 
-        
+        print(len(tasks_vers), len(tasks_info))
         versions_dict = {ver[0]["project_id"]: ver for ver in res_ver if ver}
         project_info_dict = {info["id"]: info for info in res_info if info}
         
@@ -194,7 +202,6 @@ class Project:
                 project_info["versions"] = versions_dict[id]
                 mods_ver_info.append(project_info)
 
-        print([m["id"] for m in mods_ver_info])
         return mods_ver_info
     
     @std.sync_timing

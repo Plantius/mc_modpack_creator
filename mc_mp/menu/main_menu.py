@@ -6,10 +6,13 @@ Last Edited: 2024-08-31
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
+import copy
+import numpy as np
 from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
 import asyncio
+import json
 from . import CLEAR_SCREEN, ACCEPT, OPEN
 
 class Menu:
@@ -252,8 +255,9 @@ class Menu:
             return OPEN
         
         for info_dict in info_list:
-            project_info = info_dict 
-            del project_info["versions"]
+            project_info = copy.copy(info_dict) 
+            project_info.pop("versions")
+            
             submenu = Menu(
                 project=self.project, 
                 title=f"Which version of {info_dict['title']} do you want to add?",
@@ -265,7 +269,7 @@ class Menu:
                 if self.project.is_mod_installed(version["project_id"]):
                     return
                 
-                if std.get_input(f'''{version["name"]}: \n{version["changelog"]}\n\tDo you want to add {version["name"]} to the current project? y/n ''') == ACCEPT:
+                if (std.get_input(f'''{version["name"]}: \n{version["changelog"]}\n\tDo you want to add {version["name"]} to the current project? y/n ''') or 'y') == ACCEPT:
                     self.project.add_mod(info_dict["slug"], version, 
                                          project_info=project_info)
                     if len(version["dependencies"]) > 0:
@@ -306,7 +310,7 @@ class Menu:
             "limit": 200
         }
 
-        if std.get_input("Do you want to enter additional facets? y/n: ") == ACCEPT:
+        if (std.get_input("Do you want to enter additional facets? y/n: ") or 'n') == ACCEPT:
             facets = std.get_input("Enter the facets you want to search with (e.g., modloader(s), minecraft version(s)): ")
             if facets is None:
                 std.eprint("[ERROR] No facets given.")
@@ -321,11 +325,15 @@ class Menu:
         submenu = Menu(
                 project=self.project, 
                 title="Which entries do you want to add? Select one option to see its details.",
-                menu_entries=[f'{mod["title"]}: ' for mod in results["hits"]],
+                menu_entries=["Select all"]+[f'{mod["title"]}: ' for mod in results["hits"]],
                 multi_select=True
             )
           
         async def handle_selection(selected_index):
+            if 0 in selected_index:
+                selected_index = np.arange(len(submenu.menu_entries)-1)
+            else:
+                selected_index = [i-1 for i in selected_index]
             selected_mod_ids = [results["hits"][i]["project_id"] for i in selected_index if self.project.is_mod_installed(results["hits"][i]["project_id"]) is None]
             if len(selected_index) == 1:
                 selected_mod = results["hits"][selected_index[0]]
@@ -348,6 +356,7 @@ class Menu:
         def get_menu_entries():
             # Add the "Select All Mods" option dynamically
             return ["[Select All Mods]"] + self.project.modpack.get_mods_name_ver()
+        
         submenu = Menu(
                 project=self.project, 
                 title="Update mods in the current project:",
@@ -359,34 +368,45 @@ class Menu:
         async def handle_selection(selected_index):
             if len(self.project.modpack.mod_data) == 0:
                 return
-            skip = False
+            selected_index = np.array(selected_index)
             if 0 in selected_index:
-                selected_index = list(range(0, len(self.project.modpack.mod_data)))
-                skip = True
+                selected_index = np.arange(1, len(self.project.modpack.mod_data))
             else:
-                selected_index = [i-1 for i in selected_index]
-            ids = [[id.project_id for id in self.project.modpack.mod_data][i] for i in selected_index]
+                selected_index = selected_index -1
+            ids = [id.project_id for id in self.project.modpack.mod_data]
+            ids = [ids[i] for i in selected_index]
+
             info_list = await self.project.fetch_mods_by_ids(ids)
+            print(len([m["id"] for m in info_list]))
+            temp = json.dumps(info_list, indent=4)
+            with open("test", "w") as f:
+                f.write(temp)
             
             if not any(info_list):
                 std.eprint(f"[ERROR] Could not retrieve mods.")
                 return
             
+            mods_to_update = {"indices": [], "latest_versions": [], "project_infos": []}
+            
             for index, info_dict in zip(selected_index, info_list):
                 latest_version = info_dict["versions"][0]
-                project_info = info_dict 
+                project_info = copy.copy(info_dict) 
                 del project_info["versions"]
+                
                 print(index, info_dict["title"], info_dict["id"])
                 if self.project.is_date_newer(latest_version["date_published"], self.project.modpack.mod_data[index].date_published):
-                    inp: str = ""
-                    if not skip:
-                        inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].title}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ")
-                    if skip or inp == ACCEPT:
+                    inp = std.get_input(f"There is a newer version available for {self.project.modpack.mod_data[index].title}, do you want to upgrade? y/n {self.project.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ") or 'y'
+                    if inp == ACCEPT:
                         print(f"{index} --- Updated {self.project.modpack.mod_data[index].project_id} - {self.project.modpack.mod_data[index].title}: {self.project.modpack.mod_data[index].version_number} -> {latest_version['version_number']} ")
                         print(f'COMPARE {info_dict["title"]}')
-                        self.project.update_mod(latest_version, project_info, index)
-                # print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
-
+                        mods_to_update["indices"].append(index)
+                        mods_to_update["latest_versions"].append(latest_version)
+                        mods_to_update["project_infos"].append(project_info)
+                        # self.project.update_mod(latest_version, project_info, index)
+                else:
+                    print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
+            if mods_to_update["indices"]:
+                self.project.update_mods(**mods_to_update)
         
         submenu.handle_selection = handle_selection
         await submenu.display()
@@ -414,7 +434,7 @@ class Menu:
             if len(self.project.modpack.mod_data) == 0:
                 return
             if 0 in selected_index:
-                selected_index = list(range(len(self.project.modpack.get_mods_name_ver())))
+                selected_index = np.arange(1, len(self.project.modpack.get_mods_name_ver()))
             else:
                 selected_index = [i-1 for i in selected_index]
                 
