@@ -92,7 +92,7 @@ class Project:
         project_data["metadata"] = self.metadata
         
         loop = asyncio.get_running_loop()
-        with open(self.metadata["filename"], 'w') as file:
+        with open(f'{self.metadata["filename"]}.{std.DEF_EXT}', 'w') as file:
             await loop.run_in_executor(None, functools.partial(json.dump, project_data, file, indent=4))
         
         self.metadata["saved"] = True
@@ -219,7 +219,7 @@ class Project:
         }
     
     @std.async_timing
-    async def export_modpack(self, filename: str, format: str, rm_mods: bool=True):
+    async def export_modpack(self, filename: str):
         try:
             os.makedirs(PROJECT_DIR)
         except FileExistsError:
@@ -259,6 +259,7 @@ class Project:
             return
         print("[INFO] Modpack exported successfully.")
         return True
+
 
     def update_settings(self, new_var: str, index: std.Setting) -> bool:
         self.metadata["saved"] = False

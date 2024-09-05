@@ -24,6 +24,7 @@ UNIQUE_ID = "MC_MODPACK_CREATOR_ID"
 cipher = Fernet(SECRET_KEY)
 
 ALLOWED_CATEGORIES = ["forge", "fabric", "neoforge", "quilt", "liteloader"]
+DEF_EXT = "modpack"
 
 class Setting(Enum):
     TITLE = auto()
@@ -112,7 +113,7 @@ def get_index(lst: list, item) -> int:
 
 def get_project_files() -> list:
     """Returns a sorted list of JSON files in the current directory."""
-    return sorted(glob.glob("./*.json"))
+    return sorted(glob.glob("./*.{DEF_EXT}"))
 
 def has_duplicates(lst: list) -> bool:
     """Check if there are duplicates in the list."""

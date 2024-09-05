@@ -223,7 +223,7 @@ class Menu:
         """
         Handle saving the current project to a specified filename.
         """
-        if self is Menu.main_menu_instance and not self.project.metadata["saved"]:
+        if self is Menu.main_menu_instance:
             if std.get_input("Do you want to save the project? y/n: ") == ACCEPT:
                 filename = std.get_input("Please enter the filename to save to: ") \
                     if std.get_input("Do you want to save the project to a new file? y/n: ") == ACCEPT \
@@ -522,9 +522,6 @@ class Menu:
     async def export_modpack_action(self) -> bool:
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
-        filename = std.get_input("Please enter a filename where the zip archive must be created: ")
-        format = std.get_input("What format do you want to save the archive as? (e.g. gztar, zip, tar, bztar or xztar) ")
-        rm_mods = std.get_input("Do you want to remove the mods currently downloaded? y/n ")
-        await self.project.export_modpack(filename, format, rm_mods == ACCEPT)
-        
+        filename = std.get_input("Please enter a filename where the mrpack archive must be created: ")
+        await self.project.export_modpack(filename)
         return OPEN
