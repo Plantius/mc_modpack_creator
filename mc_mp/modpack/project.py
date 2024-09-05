@@ -8,18 +8,18 @@ https://github.com/Plantius/mc_modpack_creator
 """
 from .modpack import Modpack
 from .mod import Mod
-import standard as std
-import json 
+import json
 import os
 import concurrent.futures as cf
 from typing import Optional, Dict, Any
-from . import DEF_FILENAME, PROJECT_DIR, MAX_WORKERS
+from . import DEF_FILENAME, FABRIC_V, FORMAT_VERSION, GAME, MOD_PATH, MR_INDEX, MRPACK, PROJECT_DIR, MAX_WORKERS
 from .project_api import ProjectAPI
 from dateutil import parser
 import asyncio
 import functools
 import glob
 import shutil
+import standard as std
 
 class Project:
     """
@@ -42,12 +42,12 @@ class Project:
     def is_mod_installed(self, id: str) -> int:
         """Checks if a mod is installed by ID and returns its index."""
         return std.get_index([m.project_id for m in self.modpack.mod_data], id)
-    
+
     def is_date_newer(self, new_date: str, current_date: str) -> bool:
         new_mod_date = parser.parse(new_date)
         current_mod_date = parser.parse(current_date)
         return new_mod_date > current_mod_date
-    
+
     def create_project(self, **kwargs) -> None:
         """Creates a new project and updates metadata; checks modpack compatibility."""
         self.modpack = Modpack(**kwargs)
@@ -66,7 +66,6 @@ class Project:
             return False
         loop = asyncio.get_running_loop()
         with open(filename, 'r') as file:
-            
             data = await loop.run_in_executor(None, json.load, file)
         
         if not std.is_valid_project_id(data["metadata"]["project_id"]):
@@ -77,12 +76,6 @@ class Project:
         del data["metadata"]
         self.modpack = Modpack(**data)
         
-        seen = set()
-        dupes = [x.project_id for x in self.modpack.mod_data if x.project_id in seen or seen.add(x.project_id)]  
-        print(dupes)
-        # if not self.modpack.check_compatibility():
-        #     print("Invalid project loaded.")
-        #     exit(1)
         self.metadata["loaded"] = True
         self.metadata["saved"] = True
         self.modpack.sort_mods()
@@ -104,15 +97,15 @@ class Project:
         
         self.metadata["saved"] = True
         return True
-    
+
     async def search_mods(self, **kwargs) -> dict:
         """Searches for mods using the ProjectAPI."""
         result = await self.api.search_project(**kwargs)
         return result
-    
+
     def add_mod(self, name: str, version: dict, project_info: dict, index: int = 0) -> bool:
         """Adds a mod to the modpack with the given name and version information."""
-        if any([project_info, version]) is None:
+        if not all([project_info, version]):
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
             return False
 
@@ -133,9 +126,9 @@ class Project:
         self.metadata["saved"] = False
         self.modpack.sort_mods()
         return True
-    
+
     def rm_mod(self, index: int) -> bool:
-        """Removes a mod from the modpack    by index."""
+        """Removes a mod from the modpack by index."""
         try:
             del self.modpack.mod_data[index]
             self.metadata["saved"] = False
@@ -150,50 +143,42 @@ class Project:
         self.modpack.sort_mods()
         self.metadata["saved"] = False
         return True
-    
+
     def update_mods(self, latest_versions, project_infos, indices) -> bool:
         for index, latest_version, project_info in zip(indices, latest_versions, project_infos):
             self.modpack.mod_data[index].update_self(latest_version, project_info)
         self.modpack.sort_mods()
         self.metadata["saved"] = False
         return True
-    
+
     def list_mods(self) -> list[str]:
         """Lists all mods in the loaded project with their names and descriptions."""
         if self.metadata["loaded"]:
             return [f'{m}:\n\t{d}' for m, d in zip(self.modpack.get_mods_name_ver(), self.modpack.get_mods_descriptions())]
         return None
-    
+
     def get_versions_id(self, id: str, loop) -> list[dict]:
         future = asyncio.run_coroutine_threadsafe(self.api.list_versions(id=id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]), loop)
-        return future.result()  # Wait for the coroutine to finish
+        return future.result()
 
     def get_project_info_ids(self, id: str, loop) -> list[dict]:
         future = asyncio.run_coroutine_threadsafe(self.api.get_project(id), loop)
-        return future.result()  # Wait for the coroutine to finish
-    
+        return future.result()
+
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         """Fetches mods by their IDs concurrently and returns detailed information."""
         mods_ver_info: list = []
         loop = asyncio.get_running_loop()
         
-        # Create tasks to fetch versions and project info concurrently
         with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            tasks_vers = [
-                loop.run_in_executor(executor, self.get_versions_id, id, loop)
-                for id in ids
-            ]
-            tasks_info = [
-                loop.run_in_executor(executor, self.get_project_info_ids, id, loop)
-                for id in ids
-            ]
+            tasks_vers = [loop.run_in_executor(executor, self.get_versions_id, id, loop) for id in ids]
+            tasks_info = [loop.run_in_executor(executor, self.get_project_info_ids, id, loop) for id in ids]
             res_ver = await asyncio.gather(*tasks_vers)
             res_info = await asyncio.gather(*tasks_info)
         
-        # Create mappings for quick lookup
         version_map = {}
         for version_list in res_ver:
-            if len(version_list) > 0:
+            if version_list:
                 version = version_list[0]
                 project_id = version.get("project_id")
                 if project_id:
@@ -210,13 +195,12 @@ class Project:
                 mods_ver_info.append(project_info)
         
         return mods_ver_info
-    
+
     @std.sync_timing
     def download_file(self, file_info, loop) -> bool:
         """Downloads a file and checks its hash."""
-        # Use the provided loop to run the coroutine
         future = asyncio.run_coroutine_threadsafe(self.api.get_file_from_url(**file_info), loop)
-        future.result()  # Wait for the coroutine to finish
+        future.result()
 
         if not std.check_hash(f'{PROJECT_DIR}/{file_info["filename"]}', file_info["hashes"]):
             std.eprint(f"[ERROR] Wrong hash for file: {file_info['filename']}")
@@ -224,52 +208,58 @@ class Project:
             return False
         return True
 
+    
+    def convert_file_to_mp_format(self, mod: dict) -> dict:
+        return {
+            "path": f"{MOD_PATH}{mod['filename']}",
+            "hashes": mod['hashes'],
+            "env": mod["env"],
+            "downloads": [mod["url"]],
+            "fileSize": mod["size"]
+        }
+    
     @std.async_timing
     async def export_modpack(self, filename: str, format: str, rm_mods: bool=True):
         try:
             os.makedirs(PROJECT_DIR)
         except FileExistsError:
-            # Directory already exists
-            if rm_mods:
-                files = glob.glob(f'{PROJECT_DIR}/*')
-                for file in files:
-                    os.remove(file)
+            pass
         
-        # Prepare list of file information
-        files = [file[0] for file in [[file for file in m.files if file["primary"]] for m in self.modpack.mod_data]]
+        modpack_json = {"formatVersion": FORMAT_VERSION, 
+                        "game": GAME,
+                        "versionId": self.modpack.mc_version,
+                        "name": self.modpack.title,
+                        "summary": self.modpack.description,
+                        "files": [],
+                        "dependencies": {
+                            "minecraft": self.modpack.mc_version, 
+                            self.modpack.mod_loader: FABRIC_V}
+                        }
 
-        # Get the current event loop
-        loop = asyncio.get_running_loop()
+        for mod in self.modpack.mod_data:
+            for mod_file in mod.files:
+                if not mod_file["primary"]:
+                    continue
+                mod_file["env"] = {"client": self.modpack.client_side,
+                                   "server": self.modpack.server_side} 
+                modpack_json["files"].append(self.convert_file_to_mp_format(mod_file))
 
-        # Use ThreadPoolExecutor to download and check files concurrently
-        with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            tasks = [
-                loop.run_in_executor(executor, self.download_file, file, loop)
-                for file in files
-            ]
-            results = await asyncio.gather(*tasks)
+        with open(f"{PROJECT_DIR}/{MR_INDEX}", 'w') as index_file:
+            json.dump(modpack_json, index_file, indent=4)
         
-        # Handle any errors
-        if not all(results):
-            std.eprint("[ERROR] One or more files failed to download or check correctly.")
-            return False
-
-        # Creates archive
         try:
-            shutil.make_archive(filename, format, "./", PROJECT_DIR)
+            shutil.make_archive(filename, "zip", "./", PROJECT_DIR)
+            os.rename(f"{filename}.zip", f"{filename}.{MRPACK}")
+            files = glob.glob(f'{PROJECT_DIR}/*')
+            for file in files:
+                os.remove(file)
+            os.rmdir(PROJECT_DIR)    
         except:
             std.eprint("[ERROR] Could not create archive.")
             return
-        
-        # Clean up temporary dir and downloaded mods
-        files = glob.glob(f'{PROJECT_DIR}/*')
-        for file in files:
-            os.remove(file)
-        os.rmdir(PROJECT_DIR)    
-        
         print("[INFO] Modpack exported successfully.")
         return True
-    
+
     def update_settings(self, new_var: str, index: std.Setting) -> bool:
         self.metadata["saved"] = False
         match index:
@@ -283,7 +273,10 @@ class Project:
                 self.modpack.mod_loader = new_var
             case std.Setting.BUILD_VERSION:
                 self.modpack.build_version = new_var
+            case std.Setting.CLIENT_SIDE:
+                self.modpack.client_side = new_var
+            case std.Setting.SERVER_SIDE:
+                self.modpack.server_side = new_var
             case _:
                 return False
         return True
-        

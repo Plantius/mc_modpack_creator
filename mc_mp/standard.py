@@ -30,7 +30,9 @@ class Setting(Enum):
     DESCRIPTION = auto()    
     MC_VERSION= auto()    
     MOD_LOADER = auto()    
-    BUILD_VERSION = auto()    
+    BUILD_VERSION = auto()   
+    CLIENT_SIDE = auto() 
+    SERVER_SIDE = auto() 
 
 def async_timing(func):
     """Decorator to measure the execution time of an async function."""

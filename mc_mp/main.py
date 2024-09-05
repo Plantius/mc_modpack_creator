@@ -11,7 +11,6 @@ from args_parser import args_parser as args
 from menu import main_menu
 import asyncio
 
-tests = 5
 async def main():
     # Initialize project and flags
     p = project.Project()

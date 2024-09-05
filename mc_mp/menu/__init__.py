@@ -9,6 +9,7 @@ https://github.com/Plantius/mc_modpack_creator
 
 # Accept prompt
 ACCEPT = 'y'
+QUIT = 'q'
 
 # Clear screen
 CLEAR_SCREEN = False

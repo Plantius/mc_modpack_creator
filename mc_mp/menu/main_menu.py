@@ -12,7 +12,7 @@ from simple_term_menu import TerminalMenu
 from modpack import project as p
 import standard as std
 import asyncio
-from . import CLEAR_SCREEN, ACCEPT, OPEN
+from . import CLEAR_SCREEN, ACCEPT, OPEN, QUIT
 
 class Menu:
     # Static variable to hold the main menu instance
@@ -203,6 +203,8 @@ class Menu:
         description = std.get_input("2. Project Description: ")
         mc_version = std.get_input("3. Minecraft Version (e.g., 1.16.5): ")
         mod_loader = std.get_input("4. Mod Loader (e.g., forge, fabric): ")
+        client_side = std.get_input("5. Client side? (e.g. required/optional/unsupported/unknown): ")
+        server_side = std.get_input("5. Server side? (e.g. required/optional/unsupported/unknown): ")
 
         if any(not value for value in [title, description, mc_version, mod_loader]):
             return OPEN  # Keep main menu open if creation fails
@@ -212,6 +214,8 @@ class Menu:
             description=description,
             mc_version=mc_version,
             mod_loader=mod_loader,
+            client_side=client_side,
+            server_side=server_side
         )
         return OPEN  # Keep main menu open
     
@@ -288,7 +292,7 @@ class Menu:
         Prompt for mod IDs or slugs and initiate adding mods.
         """
         names = std.get_input("Please enter mod slugs or IDs (e.g., name1 name2 ...): ")
-        if not names:
+        if not names or names == QUIT:
             return OPEN
         return await self.add_mods_action(names.split())
         
@@ -308,14 +312,18 @@ class Menu:
             ],
             "limit": 200
         }
-
-        if (std.get_input("Do you want to enter additional facets? y/n: ") or 'n') == ACCEPT:
+        inp = std.get_input("Do you want to enter additional facets? y/n: ") or 'n'
+        if inp == ACCEPT:
             facets = std.get_input("Enter the facets you want to search with (e.g., modloader(s), minecraft version(s)): ")
+            if facets == QUIT:
+                return OPEN
             if facets is None:
                 std.eprint("[ERROR] No facets given.")
                 return False
             temp = [[f"{key}:{item}" for item in value.split()] for key, value in zip(["categories", "versions"], facets.split(','))]
             kwargs["facets"] = [[item] for facet in temp for item in facet] + [["project_type:mod"]]
+        elif inp == QUIT:
+            return OPEN
         results = await self.project.search_mods(**kwargs)
 
         if not results:
@@ -375,7 +383,7 @@ class Menu:
                 selected_index = selected_index - 1
             
             ids = [mod.project_id for mod in self.project.modpack.mod_data]
-            selected_ids = [ids[i] for i in selected_index]
+            selected_ids = sorted([ids[i] for i in selected_index])
 
             # Fetch mod information concurrently
             info_list = await self.project.fetch_mods_by_ids(selected_ids)
@@ -402,6 +410,8 @@ class Menu:
                         if inp == ACCEPT:
                             print(f"{index} --- Updated {mod_data.project_id} - {mod_data.title}: {mod_data.version_number} -> {latest_version['version_number']}")
                             self.project.update_mod(latest_version, info_dict, index)
+                        elif inp == QUIT:
+                            return OPEN
                     else:
                         print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
                 else:
@@ -453,7 +463,10 @@ class Menu:
         submenu = Menu(
             project=self.project,
             title="Change project settings",
-            menu_entries=["Change title", "Change description", "Change Minecraft version", "Change mod loader", "Change build version"],
+            menu_entries=["Change title", "Change description", 
+                          "Change Minecraft version", "Change mod loader", 
+                          "Change build version", "Change client side",
+                          "Change server side"],
             parent_menu=self
         )
         
@@ -473,6 +486,13 @@ class Menu:
             elif selected_index == 4:
                 new_build_version = std.get_input("Enter new build version: ")
                 self.project.update_settings(new_build_version, std.Setting.BUILD_VERSION)
+            elif selected_index == 5:
+                new_client_side = std.get_input("Does the modpack require client side? (required/optional/unsupported/unknown) ")
+                self.project.update_settings(new_client_side, std.Setting.CLIENT_SIDE)
+            elif selected_index == 6:
+                new_server_side = std.get_input("Does the modpack require server side? (required/optional/unsupported/unknown) ")
+                self.project.update_settings(new_server_side, std.Setting.SERVER_SIDE)
+           
 
         
         submenu.handle_selection = handle_selection

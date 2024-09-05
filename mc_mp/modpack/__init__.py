@@ -21,6 +21,17 @@ DEF_FILENAME = "project_1.json"
 # Indicates acceptance of a prompt
 ACCEPT = 'y'
 
-PROJECT_DIR = "./mods"
+PROJECT_DIR = "./mp"
 
 MAX_WORKERS = 8
+
+# Modrinth Modpack Formats
+FORMAT_VERSION = 1
+GAME = "minecraft"
+MOD_PATH = 'mods/'
+MR_INDEX = "modrinth.index.json"
+MRPACK = "mrpack"
+
+# Loader versions
+FABRIC_V = "0.16.4"
+
