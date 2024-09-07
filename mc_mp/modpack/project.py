@@ -423,6 +423,7 @@ class Project:
         print("[INFO] Modpack exported successfully.")
         return True
 
+    @std.async_timing
     async def download_mods(self, dir_name: str) -> bool:
         try:
             os.makedirs(dir_name)
