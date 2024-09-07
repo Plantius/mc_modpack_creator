@@ -249,8 +249,6 @@ class Project:
         
         try:
             std.zip_dir(filename, PROJECT_DIR)
-            # shutil.make_archive(filename, "zip", "./", PROJECT_DIR)
-            # os.rename(f"{filename}.zip", f"{filename}.{MRPACK}")
             files = glob.glob(f'{PROJECT_DIR}/*')
             for file in files:
                 os.remove(file)
