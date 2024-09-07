@@ -1,7 +1,7 @@
 """
 Author: Plantius (https://github.com/Plantius)
 Filename: ./mc_mp/menu/main_menu.py
-Last Edited: 2024-08-31
+Last Edited: 2024-09-07
 
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
@@ -223,7 +223,7 @@ class Menu:
         """
         Handle saving the current project to a specified filename.
         """
-        if self is Menu.main_menu_instance:
+        if self is Menu.main_menu_instance and not self.project.metadata["saved"]:
             if std.get_input("Do you want to save the project? y/n: ") == ACCEPT:
                 filename = std.get_input("Please enter the filename to save to: ") \
                     if std.get_input("Do you want to save the project to a new file? y/n: ") == ACCEPT \
@@ -328,7 +328,7 @@ class Menu:
 
         if not results:
             return OPEN
-        
+        # TODO
         submenu = Menu(
                 project=self.project, 
                 title="Which entries do you want to add? Select one option to see its details.",

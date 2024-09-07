@@ -33,5 +33,5 @@ MR_INDEX = "modrinth.index.json"
 MRPACK = "mrpack"
 
 # Loader versions
-FABRIC_V = "0.16.4"
+FABRIC_V = "0.16.0"
 

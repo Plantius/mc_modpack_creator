@@ -1,16 +1,18 @@
 """
 Author: Plantius (https://github.com/Plantius)
 Filename: ./mc_mp/standard.py
-Last Edited: 2024-08-31
+Last Edited: 2024-09-07
 
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
 from enum import Enum, auto
+import os
 import sys
 import inspect
 import json
 import glob
+import zipfile
 from cryptography.fernet import Fernet
 import modpack.mod as mod
 import hashlib
@@ -113,7 +115,7 @@ def get_index(lst: list, item) -> int:
 
 def get_project_files() -> list:
     """Returns a sorted list of JSON files in the current directory."""
-    return sorted(glob.glob("./*.{DEF_EXT}"))
+    return sorted(glob.glob(f"./*.{DEF_EXT}"))
 
 def has_duplicates(lst: list) -> bool:
     """Check if there are duplicates in the list."""
@@ -134,3 +136,10 @@ def check_hash(filename: str, hashes: dict) -> bool:
             sha1.update(data)
             sha512.update(data)
     return sha1.hexdigest() == hashes["sha1"] and sha512.hexdigest() == hashes["sha512"]
+
+def zip_dir(filename: str, mp_dir: str):
+    with zipfile.ZipFile(f"{filename}.mrpack", "w") as file:
+        for root, subdirs, files in os.walk(mp_dir):
+            cur_dir = root[len(mp_dir):]
+            for filename in files:
+                file.write(os.path.join(root, filename), os.path.join(cur_dir, filename))

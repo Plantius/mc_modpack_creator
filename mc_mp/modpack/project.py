@@ -1,7 +1,7 @@
 """
 Author: Plantius (https://github.com/Plantius)
 Filename: ./mc_mp/modpack/project.py
-Last Edited: 2024-08-31
+Last Edited: 2024-09-07
 
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
@@ -233,7 +233,7 @@ class Project:
                         "files": [],
                         "dependencies": {
                             "minecraft": self.modpack.mc_version, 
-                            self.modpack.mod_loader: FABRIC_V}
+                            self.modpack.mod_loader if ("fabric" or "quilt") not in self.modpack.mod_loader else f"{self.modpack.mod_loader}-loader" : FABRIC_V}
                         }
 
         for mod in self.modpack.mod_data:
@@ -244,12 +244,13 @@ class Project:
                                    "server": self.modpack.server_side} 
                 modpack_json["files"].append(self.convert_file_to_mp_format(mod_file))
 
-        with open(f"{PROJECT_DIR}/{MR_INDEX}", 'w') as index_file:
-            json.dump(modpack_json, index_file, indent=4)
+        with open(f"{PROJECT_DIR}/{MR_INDEX}", 'w', encoding='utf8') as index_file:
+            json.dump(modpack_json, index_file, indent=3, ensure_ascii=False)
         
         try:
-            shutil.make_archive(filename, "zip", "./", PROJECT_DIR)
-            os.rename(f"{filename}.zip", f"{filename}.{MRPACK}")
+            std.zip_dir(filename, PROJECT_DIR)
+            # shutil.make_archive(filename, "zip", "./", PROJECT_DIR)
+            # os.rename(f"{filename}.zip", f"{filename}.{MRPACK}")
             files = glob.glob(f'{PROJECT_DIR}/*')
             for file in files:
                 os.remove(file)
