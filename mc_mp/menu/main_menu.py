@@ -531,3 +531,5 @@ class Menu:
         if len(self.project.modpack.mod_data) == 0:
             return OPEN  # Keep main menu open
         
+        dir_name = std.get_input("Please enter a directory where the mods must be downloaded to: ")
+        return self.project.download_mods(dir_name)

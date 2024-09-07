@@ -423,6 +423,31 @@ class Project:
         print("[INFO] Modpack exported successfully.")
         return True
 
+    async def download_mods(self, dir_name: str) -> bool:
+        try:
+            os.makedirs(dir_name)
+        except FileExistsError:
+            # Directory already exists
+            std.eprint("[ERROR] Directory already exists")
+        
+        # Prepare list of file information
+        files = [file[0] for file in [[file for file in m.files if file["primary"]] for m in self.modpack.mod_data]]
+
+        # Use ThreadPoolExecutor to download and check files concurrently
+        loop = asyncio.get_running_loop()
+        with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            tasks = [
+                loop.run_in_executor(executor, self.download_file, file, loop)
+                for file in files
+            ]
+            results = await asyncio.gather(*tasks)
+        
+        # Handle any errors
+        if not any(results):
+            std.eprint("[ERROR] One or more files failed to download or check correctly.")
+            return False
+        return True
+    
     @std.sync_timing
     def update_settings(self, new_var: str, index: std.Setting) -> bool:
         """
