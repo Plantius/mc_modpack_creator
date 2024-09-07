@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List of Mods</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles_list_mods.css') }}">
+</head>
+<body>
+    <header>
+        <h1>List of Mods</h1>
+    </header>
+    <main>
+        <ul>
+            {% for mod in mods %}
+                <li>
+                    <strong>{{ mod.title }}</strong><br>
+                    Version: {{ mod.version_number }}<br>
+                    Description: {{ mod.description }}
+                </li>
+            {% endfor %}
+        </ul>
+    </main>
+</body>
+</html>

@@ -6,7 +6,6 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-import copy
 import numpy as np
 from simple_term_menu import TerminalMenu
 from mc_mp.constants import CLEAR_SCREEN, OPEN, QUIT, ACCEPT
