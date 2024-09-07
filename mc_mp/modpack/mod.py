@@ -40,6 +40,7 @@ class Mod:
     date_published: str = ""
     files: list[dict] = field(default_factory=list)
 
+    @std.sync_timing
     def export_json(self) -> dict:
         """
         Exports the mod's attributes as a JSON-compatible dictionary.
@@ -49,6 +50,7 @@ class Mod:
         """
         return std.get_variables(self)
 
+    @std.sync_timing
     def load_json(self, data: dict) -> None:
         """
         Loads JSON data into the mod's attributes.
@@ -59,6 +61,7 @@ class Mod:
         for key, value in data.items():
             setattr(self, key, value)
 
+    @std.sync_timing
     def update_self(self, latest_version: dict, project_info: dict):
         """
         Updates the mod's attributes with the latest version and project information.

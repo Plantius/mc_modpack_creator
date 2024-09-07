@@ -14,7 +14,8 @@ def create_parser() -> ArgumentParser:
     
     # Open an existing project
     parser.add_argument(
-        "-o", "--open_project",
+        "-o",
+        dest="load_project",
         type=str,
         required=False,
         help="Specify the project file to load"
@@ -22,7 +23,8 @@ def create_parser() -> ArgumentParser:
     
     # Create a new project
     parser.add_argument(
-        "-c", "--create_project",
+        "-c",
+        dest="create_project",
         type=str,
         required=False,
         help="Specify the name of the new project to create"
@@ -30,14 +32,16 @@ def create_parser() -> ArgumentParser:
 
     # List all available projects
     parser.add_argument(
-        "-l", "--list_projects",
+        "-l",
+        dest="list_project",
         action="store_true",
         help="List all available projects"
     )
     
     # Delete a project
     parser.add_argument(
-        "-d", "--delete_project",
+        "-d",
+        dest="delete_project",
         type=str,
         required=False,
         help="Specify the project file to delete"
@@ -45,16 +49,26 @@ def create_parser() -> ArgumentParser:
 
     # List all mods in the current project
     parser.add_argument(
-        "-m", "--list_mods",
+        "-m",
+        dest="list_mods",
         action="store_true",
         help="List all mods in the current project"
     )
     
-    # Dont launch the menu when set
+    # Choose which UI to use
     parser.add_argument(
-        "--menu_disable",
-        action="store_false",
-        help="Disable the project menu"
+        "--ui",
+        dest="ui",
+        type=str,
+        help="User interface for Minecraft Modpack Creator. Options: none, cli, web (Default cli)"
+    )
+    
+    # Enable debug mode
+    parser.add_argument(
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Enables debug mode to display additional information."
     )
 
     return parser

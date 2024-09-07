@@ -27,11 +27,28 @@ class Setting(Enum):
     CLIENT_SIDE = auto() 
     SERVER_SIDE = auto() 
 
+debug_flag = False
+
+def set_debug_flag(enable: bool) -> None:
+    """
+    Enables or disables debug flag, which controls timing wrappers and other debug functionality.
+    """
+    global debug_flag
+    debug_flag = enable
+
+def is_debug_flag() -> bool:
+    """
+    Returns whether the debug flag is enabled or not.
+    """
+    return debug_flag
+
 def async_timing(func):
     """Decorator to measure the execution time of an async function."""
     
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
+        if not is_debug_flag():
+            return await func(*args, **kwargs)
         start_time = time.monotonic()  # Start time measurement
         result = await func(*args, **kwargs)
         end_time = time.monotonic()  # End time measurement
@@ -46,6 +63,8 @@ def sync_timing(func):
     
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        if not is_debug_flag():
+            return func(*args, **kwargs)
         start_time = time.monotonic()  # Start time measurement
         result = func(*args, **kwargs)
         end_time = time.monotonic()  # End time measurement
