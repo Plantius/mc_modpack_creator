@@ -308,24 +308,16 @@ class Project:
             res_ver = await asyncio.gather(*tasks_vers)
             res_info = await asyncio.gather(tasks_info)
         
-        version_map: dict = {}
-        for version_list in res_ver:
-            if version_list:
-                version = version_list[0]
-                project_id = version.get("project_id")
-                if project_id:
-                    if project_id not in version_map:
-                        version_map[project_id] = []
-                    version_map[project_id].append(version)
-        
-        mods_ver_info = []
-        for project_info in res_info[0]:
-            project_id = project_info.get("id")
-            if project_id and project_id in version_map:
-                version = version_map[project_id]
-                project_info["versions"] = version
-                mods_ver_info.append(project_info)
-        
+        version_map: dict = {
+            version_list[0].get("project_id", ""): 
+                (version_list if version_list else []) 
+                for version_list in res_ver
+        }
+        mods_ver_info = [
+            {**project_info, "versions": version_map.get(project_info.get("id"), [])}
+            for project_info in res_info[0]
+            if project_info.get("id") in version_map
+        ]
         return mods_ver_info
 
     @std.sync_timing

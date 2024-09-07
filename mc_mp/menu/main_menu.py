@@ -251,18 +251,13 @@ class Menu:
         """
         Add mods to the project based on provided IDs and handle dependencies.
         """
-        ids = [id for id in ids if self.project.is_mod_installed(id) is None]
+        ids = [id for id in ids if self.project.is_mod_installed(id) == -1]
         self.project.modpack._processing_mods.update(ids)
         info_list = await self.project.fetch_mods_by_ids(ids)
-
         if not any(info_list):
             std.eprint("[ERROR] Could not retrieve mods.")
             return OPEN
-        
         for info_dict in info_list:
-            project_info = copy.copy(info_dict) 
-            project_info.pop("versions")
-            
             submenu = Menu(
                 project=self.project, 
                 title=f"Which version of {info_dict['title']} do you want to add?",
@@ -273,14 +268,13 @@ class Menu:
             async def handle_selection(selected_index):
                 submenu.cursor_index = selected_index
                 version = info_dict["versions"][selected_index]
-                if self.project.is_mod_installed(version["project_id"]):
+                if self.project.is_mod_installed(version["project_id"]) != -1:
                     return
-                
                 if (std.get_input(f'''{version["name"]}: \n{version["changelog"]}\n\tDo you want to add {version["name"]} to the current project? y/n ''') or 'y') == ACCEPT:
                     self.project.add_mod(info_dict["slug"], version, 
-                                         project_info=project_info)
+                                         project_info=info_dict)
                     if len(version["dependencies"]) > 0:
-                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) is None and dep["project_id"] not in self.project.modpack._processing_mods]
+                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) == -1 and dep["project_id"] not in self.project.modpack._processing_mods]
                         if required_ids:
                             await self.add_mods_action(required_ids)
                     
@@ -345,7 +339,7 @@ class Menu:
                 selected_index = np.arange(len(submenu.menu_entries)-1)
             else:
                 selected_index = [i-1 for i in selected_index]
-            selected_mod_ids = [results["hits"][i]["project_id"] for i in selected_index if self.project.is_mod_installed(results["hits"][i]["project_id"]) is None]
+            selected_mod_ids = [results["hits"][i]["project_id"] for i in selected_index if self.project.is_mod_installed(results["hits"][i]["project_id"]) == -1]
             if len(selected_index) == 1:
                 selected_mod = results["hits"][selected_index[0]]
                 if input(f'''{selected_mod["title"]} \nClient side: {selected_mod["client_side"]}\nServer side: {selected_mod["server_side"]}\n\n{selected_mod["description"]}\nLink to mod https://modrinth.com/mod/{selected_mod["slug"]}\n\tDo you want to add this mod to the current project? y/n ''') != ACCEPT:
