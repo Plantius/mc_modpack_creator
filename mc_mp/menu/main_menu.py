@@ -401,14 +401,13 @@ class Menu:
                     continue
 
                 info_dict = info_dict_by_id[mod_id]
-                print(info_dict["title"])
                 latest_version = info_dict.get("versions", [])[0]
                 
                 if latest_version:
                     if self.project.is_date_newer(latest_version["date_published"], mod_data.date_published):
                         inp = std.get_input(f"New version available for {mod_data.title}. Upgrade? y/n {mod_data.version_number} -> {latest_version['version_number']} ") or 'y'
                         if inp == ACCEPT:
-                            print(f"{index} --- Updated {mod_data.project_id} - {mod_data.title}: {mod_data.version_number} -> {latest_version['version_number']}")
+                            print(f"Updated {mod_data.project_id} - {mod_data.title}: {mod_data.version_number} -> {latest_version['version_number']}")
                             self.project.update_mod(latest_version, info_dict, index)
                         elif inp == QUIT:
                             return OPEN

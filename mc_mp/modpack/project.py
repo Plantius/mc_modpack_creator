@@ -6,6 +6,7 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
+import numpy as np
 from constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, MRPACK, PROJECT_DIR, FABRIC_V, DEF_EXT
 from .modpack import Modpack
 from .mod import Mod
@@ -160,10 +161,11 @@ class Project:
         future = asyncio.run_coroutine_threadsafe(self.api.list_versions(id=id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]), loop)
         return future.result()
 
-    def get_project_info_ids(self, id: str, loop) -> list[dict]:
-        future = asyncio.run_coroutine_threadsafe(self.api.get_project(id), loop)
+    def get_project_info_ids(self, ids: list[str], loop) -> list[dict]:
+        future = asyncio.run_coroutine_threadsafe(self.api.get_projects(ids=ids), loop)
         return future.result()
 
+    @std.async_timing
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
         """Fetches mods by their IDs concurrently and returns detailed information."""
         mods_ver_info: list = []
@@ -171,9 +173,9 @@ class Project:
         
         with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             tasks_vers = [loop.run_in_executor(executor, self.get_versions_id, id, loop) for id in ids]
-            tasks_info = [loop.run_in_executor(executor, self.get_project_info_ids, id, loop) for id in ids]
+            tasks_info = loop.run_in_executor(executor, self.get_project_info_ids, ids, loop)
             res_ver = await asyncio.gather(*tasks_vers)
-            res_info = await asyncio.gather(*tasks_info)
+            res_info = await asyncio.gather(tasks_info)
         
         version_map = {}
         for version_list in res_ver:
@@ -186,7 +188,7 @@ class Project:
                     version_map[project_id].append(version)
         
         mods_ver_info = []
-        for project_info in res_info:
+        for project_info in res_info[0]:
             project_id = project_info.get("id")
             if project_id and project_id in version_map:
                 version = version_map[project_id]

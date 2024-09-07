@@ -8,7 +8,7 @@ https://github.com/Plantius/mc_modpack_creator
 """
 from aiohttp import ClientSession
 from typing import Optional, Dict, Any
-
+from aiocache import cached
 from constants import API_BASE, HEADERS
 from constants import PROJECT_DIR
 
@@ -16,37 +16,41 @@ class ProjectAPI:
     """Handles interactions with the Modrinth API for project-related data."""
 
     @staticmethod
+    @cached(ttl=3600)
     async def request(endpoint: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
-        """Makes a GET request to the specified API endpoint and returns the JSON response."""
+        """Makes a GET request to the specified API endpoint and returns the JSON response, with caching."""
         async with ClientSession() as session:
             async with session.get(f"{API_BASE}{endpoint}", params=params, headers=HEADERS) as response:
                 response.raise_for_status()
                 return await response.json()
-            
+
     @staticmethod
     def parse_url(params: Dict[str, Any]) -> str:
         """Converts a dictionary of parameters into a URL query string."""
         return '&'.join(f'{key}={value}' for key, value in params.items()).replace('\'', '\"').replace(" ", "")
 
     @staticmethod
+    @cached(ttl=3600)
     async def is_slug_valid(slug_or_id: str) -> Optional[Dict[str, Any]]:
-        """Checks if the given project name or ID exists on Modrinth."""
+        """Checks if the given project name or ID exists on Modrinth, with caching."""
         try:
             return await ProjectAPI.request(f"/project/{slug_or_id}/check")
         except:
             return None
-        
+
     @staticmethod
+    @cached(ttl=3600)
     async def get_dependencies(project_name: str) -> Optional[Dict[str, Any]]:
-        """Retrieves all dependencies for the specified project."""
+        """Retrieves all dependencies for the specified project, with caching."""
         try:
             return await ProjectAPI.request(f"/project/{project_name}/dependencies")
         except:
             return None
-        
+
     @staticmethod
+    @cached(ttl=3600)
     async def search_project(**kwargs) -> Optional[Dict[str, Any]]:
-        """Searches for projects with various filters and sorting options."""
+        """Searches for projects with various filters and sorting options, with caching."""
         params = {k: v for k, v in kwargs.items() if v is not None}
         try:
             return await ProjectAPI.request(f"/search", params=ProjectAPI.parse_url(params))
