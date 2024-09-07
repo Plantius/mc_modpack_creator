@@ -9,11 +9,10 @@ https://github.com/Plantius/mc_modpack_creator
 import copy
 import numpy as np
 from simple_term_menu import TerminalMenu
-from ...constants import CLEAR_SCREEN, OPEN, QUIT
+from constants import CLEAR_SCREEN, OPEN, QUIT, ACCEPT
 from modpack import project as p
 import standard as std
 import asyncio
-from . import ACCEPT
 
 class Menu:
     # Static variable to hold the main menu instance

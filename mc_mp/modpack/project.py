@@ -6,21 +6,18 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-import constants
-from ...constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, MRPACK, PROJECT_DIR
+from constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, MRPACK, PROJECT_DIR, FABRIC_V, DEF_EXT
 from .modpack import Modpack
 from .mod import Mod
 import json
 import os
 import concurrent.futures as cf
 from typing import Optional, Dict, Any
-from ...constants import FABRIC_V
 from .project_api import ProjectAPI
 from dateutil import parser
 import asyncio
 import functools
 import glob
-import shutil
 import standard as std
 
 class Project:
@@ -94,7 +91,7 @@ class Project:
         project_data["metadata"] = self.metadata
         
         loop = asyncio.get_running_loop()
-        with open(f'{self.metadata["filename"]}.{constants.DEF_EXT}', 'w') as file:
+        with open(f'{self.metadata["filename"]}.{DEF_EXT}', 'w') as file:
             await loop.run_in_executor(None, functools.partial(json.dump, project_data, file, indent=4))
         
         self.metadata["saved"] = True
