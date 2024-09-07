@@ -38,6 +38,7 @@ class Project:
         """Initializes a Project instance and ProjectAPI."""
         self.api = ProjectAPI()
 
+    @std.sync_timing
     def is_mod_installed(self, id: str) -> int:
         """
         Checks if a mod is installed by ID and returns its index.
@@ -50,6 +51,7 @@ class Project:
         """
         return std.get_index([m.project_id for m in self.modpack.mod_data], id)
 
+    @std.sync_timing
     def is_date_newer(self, new_date: str, current_date: str) -> bool:
         """
         Compares two date strings to check if new_date is more recent than current_date.
@@ -65,6 +67,7 @@ class Project:
         current_mod_date = parser.parse(current_date)
         return new_mod_date > current_mod_date
 
+    @std.sync_timing
     def create_project(self, **kwargs) -> None:
         """
         Creates a new project with modpack and updates metadata.
@@ -111,6 +114,7 @@ class Project:
         self.modpack.sort_mods()
         return True
 
+    @std.async_timing
     async def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
         """
         Saves the current project state to a file.
@@ -150,6 +154,7 @@ class Project:
         result = await self.api.search_project(**kwargs)
         return result
 
+    @std.sync_timing
     def add_mod(self, name: str, version: dict, project_info: dict, index: int = 0) -> bool:
         """
         Adds a mod to the modpack.
@@ -185,6 +190,7 @@ class Project:
         self.modpack.sort_mods()
         return True
 
+    @std.sync_timing
     def rm_mod(self, index: int) -> bool:
         """
         Removes a mod from the modpack by index.
@@ -203,6 +209,7 @@ class Project:
         except IndexError:
             return False
 
+    @std.sync_timing
     def update_mod(self, latest_version: dict, project_info: dict, index: int) -> bool:
         """
         Updates selected mods if newer versions are available.
@@ -220,6 +227,7 @@ class Project:
         self.metadata["saved"] = False
         return True
 
+    @std.sync_timing
     def update_mods(self, latest_versions, project_infos, indices) -> bool:
         """
         Updates multiple mods based on new version and project information.
@@ -238,6 +246,7 @@ class Project:
         self.metadata["saved"] = False
         return True
 
+    @std.sync_timing
     def list_mods(self) -> list[str]:
         """
         Lists all mods in the loaded project with their names and descriptions.
@@ -249,6 +258,7 @@ class Project:
             return [f'{m}:\n\t{d}' for m, d in zip(self.modpack.get_mods_name_ver(), self.modpack.get_mods_descriptions())]
         return None
 
+    @std.sync_timing
     def get_versions_id(self, id: str, loop) -> list[dict]:
         """
         Fetches version information for a specific mod ID.
@@ -263,6 +273,7 @@ class Project:
         future = asyncio.run_coroutine_threadsafe(self.api.list_versions(id=id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]), loop)
         return future.result()
 
+    @std.sync_timing
     def get_project_info_ids(self, ids: list[str], loop) -> list[dict]:
         """
         Fetches project information for a list of project IDs.
@@ -338,7 +349,7 @@ class Project:
             return False
         return True
 
-    
+    @std.sync_timing
     def convert_file_to_mp_format(self, mod: dict) -> dict:
         """
         Converts a mod file to the modpack format.
@@ -412,6 +423,7 @@ class Project:
         print("[INFO] Modpack exported successfully.")
         return True
 
+    @std.sync_timing
     def update_settings(self, new_var: str, index: std.Setting) -> bool:
         """
         Updates project settings based on the provided index.

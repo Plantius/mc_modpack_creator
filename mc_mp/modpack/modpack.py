@@ -41,6 +41,7 @@ class Modpack:
                 setattr(self, key, value)
         self._processing_mods = set()
 
+    @std.sync_timing
     def export_json(self) -> Dict[str, Any]:
         """
         Exports the Modpack attributes as a JSON-compatible dictionary.
@@ -50,6 +51,7 @@ class Modpack:
         """
         return json.loads(json.dumps(std.get_variables(self), cls=ProjectEncoder))
 
+    @std.sync_timing
     def check_compatibility(self) -> bool:
         """
         Checks if the mods in the modpack are compatible.
@@ -59,6 +61,7 @@ class Modpack:
         """
         return not std.has_duplicates([m.project_id for m in self.mod_data])
 
+    @std.sync_timing
     def get_mods_name_ver(self) -> List[str]:
         """
         Returns a list of all mod names and their version numbers.
@@ -68,6 +71,7 @@ class Modpack:
         """
         return [f"{item.title} - {item.version_number}" for item in self.mod_data]
 
+    @std.sync_timing
     def get_mods_descriptions(self) -> List[str]:
         """
         Returns a list of all mod descriptions.
@@ -77,6 +81,7 @@ class Modpack:
         """
         return [item.description for item in self.mod_data]
     
+    @std.sync_timing
     def sort_mods(self) -> None:
         """
         Sorts the mod_data list by mod title.

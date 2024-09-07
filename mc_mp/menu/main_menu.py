@@ -79,7 +79,8 @@ class Menu:
             self.add_option("List current mods", self.list_mods_action, "List all mods in the current project")
             self.add_option("Remove mod(s)", self.remove_mods_action, "Remove mods from the current project")
             self.add_option("Update mod(s)", self.update_mods_action, "Update mods in the current project")
-            self.add_option("Export modpack", self.export_modpack_action, "Export the modpack into a zip or tar.gz file")
+            self.add_option("Export modpack", self.export_modpack_action, "Export the modpack into a mrpack file")
+            self.add_option("Download mods", self.download_modpack_action, "Download all mods currently in the project")
             self.add_option("Change project settings", self.change_settings_menu, "Change the project's title, description, etc.")
         
         self.add_option("Exit", self.close_self, "Exit the current menu")
@@ -509,10 +510,9 @@ class Menu:
         submenu = Menu(
                 project=self.project, 
                 title=f"The mods currently in this project.",
-                menu_entries=self.project.modpack.get_mods_name_ver,  # Updatable
+                menu_entries=self.project.modpack.get_mods_name_ver(),  # Updatable
                 status_bar=self.get_entry_description
             )
-          
         async def handle_selection(selected_index):
             std.get_input(f"Changelog of {self.project.modpack.mod_data[selected_index].name}: {self.project.modpack.mod_data[selected_index].changelog}")
 
@@ -526,3 +526,8 @@ class Menu:
         filename = std.get_input("Please enter a filename where the mrpack archive must be created: ")
         await self.project.export_modpack(filename)
         return OPEN
+    
+    async def download_modpack_action(self) -> bool:
+        if len(self.project.modpack.mod_data) == 0:
+            return OPEN  # Keep main menu open
+        
