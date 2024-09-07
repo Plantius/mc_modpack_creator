@@ -17,7 +17,6 @@ import hashlib
 import time 
 import functools
 import uuid
-import re
 
 class Setting(Enum):
     TITLE = auto()

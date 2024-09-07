@@ -6,7 +6,6 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-import numpy as np
 from mc_mp.constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, MRPACK, PROJECT_DIR, FABRIC_V, DEF_EXT
 from mc_mp.modpack.modpack import Modpack
 from mc_mp.modpack.mod import Mod
