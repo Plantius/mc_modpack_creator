@@ -6,6 +6,7 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
+import os
 from aiohttp import ClientSession
 from typing import Optional, Dict, Any
 from aiocache import cached
@@ -28,10 +29,13 @@ class ProjectAPI:
             Optional[Dict[str, Any]]: The JSON response from the API, or None if the request fails.
         """
         async with ClientSession() as session:
-            async with session.get(f"{API_BASE}{endpoint}", params=params, headers=HEADERS) as response:
-                response.raise_for_status()
-                return await response.json()
-
+            try:
+                async with session.get(f"{API_BASE}{endpoint}", params=params, headers=HEADERS) as response:
+                    response.raise_for_status()
+                    return await response.json()
+            except:
+                return None
+            
     @staticmethod
     def parse_url(params: Dict[str, Any]) -> str:
         """
@@ -127,9 +131,13 @@ class ProjectAPI:
         Returns:
             Optional[Dict[str, Any]]: The project data, or None if an error occurs.
         """
-        params = {k: v for k, v in kwargs.items() if v is not None}
-        return await ProjectAPI.request(f"/projects", params=ProjectAPI.parse_url(params))
-
+        try: 
+            params = {k: v for k, v in kwargs.items() if v is not None}
+            return await ProjectAPI.request(f"/projects", params=ProjectAPI.parse_url(params))
+        except:
+            print(f"[ERROR] Could not get projects {params['ids']}")
+            return None
+        
     @staticmethod
     @cached(ttl=3600)
     async def list_versions(**kwargs) -> Optional[Dict[str, Any]]:
@@ -142,8 +150,8 @@ class ProjectAPI:
         Returns:
             Optional[Dict[str, Any]]: The list of versions, or None if an error occurs.
         """
-        params = {k: v for k, v in kwargs.items() if v is not None and k != "id"}
         try:
+            params = {k: v for k, v in kwargs.items() if v is not None and k != "id"}
             return await ProjectAPI.request(f"/project/{kwargs['id']}/version", params=ProjectAPI.parse_url(params))
         except:
             return None
@@ -193,9 +201,13 @@ class ProjectAPI:
             **kwargs: File metadata including the URL and filename.
         """
         params = {k: v for k, v in kwargs.items() if v is not None}
-        async with ClientSession() as session:
-            async with session.get(params["url"]) as response:
-                if response.status == 200:
-                    data = await response.read()
-                    with open(f'{PROJECT_DIR}/{params["filename"]}', "wb") as file:
-                        file.write(data)
+        try:
+            async with ClientSession() as session:
+                async with session.get(params["url"]) as response:
+                    if response.status == 200:
+                        data = await response.read()
+                        os.makedirs(os.path.dirname(f'{PROJECT_DIR}/{params["filename"]}'), exist_ok=True)
+                        with open(f'{PROJECT_DIR}/{params["filename"]}', "wb") as file:
+                            file.write(data)
+        except Exception as e:
+            print(f"[ERROR] Could not download file: {e}")

@@ -127,6 +127,7 @@ class Project:
         if not self.metadata["filename"]:
             return False
 
+        self.metadata["saved"] = True
         project_data = self.modpack.export_json()
         project_data["metadata"] = self.metadata
         
@@ -134,7 +135,6 @@ class Project:
         with open(f'{self.metadata["filename"]}.{DEF_EXT}', 'w') as file:
             await loop.run_in_executor(None, functools.partial(json.dump, project_data, file, indent=4))
         
-        self.metadata["saved"] = True
         return True
 
     @std.async_timing
@@ -359,29 +359,42 @@ class Project:
         }
     
     @std.async_timing
-    async def export_modpack(self, filename: str):
+    async def export_modpack(self, filename: str) -> bool:
+        """
+        Exports the current modpack to a JSON file and compresses it into an archive.
+
+        Args:
+            filename (str): The name of the output archive file.
+
+        Returns:
+            bool: True if the modpack is exported and archived successfully, otherwise False.
+        """
         try:
             os.makedirs(PROJECT_DIR)
         except FileExistsError:
             pass
         
-        modpack_json = {"formatVersion": FORMAT_VERSION, 
-                        "game": GAME,
-                        "versionId": self.modpack.mc_version,
-                        "name": self.modpack.title,
-                        "summary": self.modpack.description,
-                        "files": [],
-                        "dependencies": {
-                            "minecraft": self.modpack.mc_version, 
-                            self.modpack.mod_loader if ("fabric" or "quilt") not in self.modpack.mod_loader else f"{self.modpack.mod_loader}-loader" : FABRIC_V}
-                        }
+        modpack_json = {
+            "formatVersion": FORMAT_VERSION, 
+            "game": GAME,
+            "versionId": self.modpack.mc_version,
+            "name": self.modpack.title,
+            "summary": self.modpack.description,
+            "files": [],
+            "dependencies": {
+                "minecraft": self.modpack.mc_version, 
+                self.modpack.mod_loader if ("fabric" or "quilt") not in self.modpack.mod_loader else f"{self.modpack.mod_loader}-loader": FABRIC_V
+            }
+        }
 
         for mod in self.modpack.mod_data:
             for mod_file in mod.files:
                 if not mod_file["primary"]:
                     continue
-                mod_file["env"] = {"client": self.modpack.client_side,
-                                   "server": self.modpack.server_side} 
+                mod_file["env"] = {
+                    "client": self.modpack.client_side,
+                    "server": self.modpack.server_side
+                }
                 modpack_json["files"].append(self.convert_file_to_mp_format(mod_file))
 
         with open(f"{PROJECT_DIR}/{MR_INDEX}", 'w', encoding='utf8') as index_file:
@@ -393,15 +406,26 @@ class Project:
             for file in files:
                 os.remove(file)
             os.rmdir(PROJECT_DIR)    
-        except:
-            std.eprint("[ERROR] Could not create archive.")
-            return
+        except Exception as e:
+            std.eprint(f"[ERROR] Could not create archive: {e}")
+            return False
+        
         print("[INFO] Modpack exported successfully.")
         return True
 
-
     def update_settings(self, new_var: str, index: std.Setting) -> bool:
+        """
+        Updates project settings based on the provided index.
+
+        Args:
+            new_var (str): The new value to set for the specified setting.
+            index (std.Setting): The setting to update.
+
+        Returns:
+            bool: True if the setting is updated successfully, otherwise False.
+        """
         self.metadata["saved"] = False
+        
         match index:
             case std.Setting.TITLE:
                 self.modpack.title = new_var
@@ -419,4 +443,5 @@ class Project:
                 self.modpack.server_side = new_var
             case _:
                 return False
+        
         return True

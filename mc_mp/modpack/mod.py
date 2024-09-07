@@ -67,16 +67,16 @@ class Mod:
             latest_version (dict): Latest version details of the mod.
             project_info (dict): Project information such as title and description.
         """
-        self.name = latest_version["name"]
-        self.changelog = latest_version["changelog"]
-        self.version_number = latest_version["version_number"]
-        self.dependencies = latest_version["dependencies"]
-        self.mc_versions = latest_version["game_versions"]
+        self.name = latest_version.get("name", self.name)
+        self.changelog = latest_version.get("changelog", self.changelog)
+        self.version_number = latest_version.get("version_number", self.version_number)
+        self.dependencies = latest_version.get("dependencies", self.dependencies)
+        self.mc_versions = latest_version.get("game_versions", self.mc_versions)
         self.version_type = latest_version.get("version_type", self.version_type)
-        self.mod_loaders = latest_version["loaders"]
-        self.id = latest_version["id"]
-        self.project_id = latest_version["project_id"]
-        self.date_published = latest_version["date_published"]
-        self.files = latest_version["files"]
+        self.mod_loaders = latest_version.get("loaders", self.mod_loaders)
+        self.id = latest_version.get("id", self.id)
+        self.project_id = latest_version.get("project_id", self.project_id)
+        self.date_published = latest_version.get("date_published", self.date_published)
+        self.files = latest_version.get("files", self.files)
         self.title = project_info.get("title", self.title)
         self.description = project_info.get("description", self.description)

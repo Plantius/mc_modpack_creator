@@ -1,54 +1,135 @@
-import unittest
-import asyncio
-from mc_mp.modpack.project import Project, Modpack
-from unittest.mock import patch, MagicMock
-from unittest import TestCase, mock
+import pytest
+from unittest.mock import patch, AsyncMock
+from mc_mp.modpack.project_api import ProjectAPI
 
-class TestProject(TestCase):
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ClientSession')
+async def test_request_fail(mock_client_session):
+    mock_client = mock_client_session.return_value
+    mock_session = AsyncMock()
+    mock_response = AsyncMock()
+    mock_response.raise_for_status.side_effect = Exception("Request failed")
+    
+    mock_client.__aenter__.return_value = mock_session
+    mock_client.__aexit__.return_value = False
+    mock_session.get.return_value = mock_response
+    
+    result = await ProjectAPI.request('/test-endpoint')
+    assert result is None
 
-    def setUp(self):
-        """Setup a basic Project instance for testing."""
-        self.project = Project()
-        self.project.modpack = MagicMock(spec=Modpack)
+def test_parse_url():
+    params = {'key1': 'value1', 'key2': 'value2'}
+    result = ProjectAPI.parse_url(params)
+    assert result == 'key1=value1&key2=value2'
 
-    def test_is_mod_installed(self):
-        """Test mod installation check by ID."""
-        self.project.modpack.mod_data = [MagicMock(project_id='mod1'), MagicMock(project_id='mod2')]
-        result = self.project.is_mod_installed('mod1')
-        self.assertEqual(result, 0)  # Should find at index 0
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_is_slug_valid(mock_request):
+    mock_request.return_value = {'exists': True}
+    result = await ProjectAPI.is_slug_valid('valid-slug')
+    assert result == {'exists': True}
 
-    def test_is_date_newer(self):
-        """Test date comparison for newer mod."""
-        new_date = "2024-09-06"
-        current_date = "2023-09-06"
-        self.assertTrue(self.project.is_date_newer(new_date, current_date))
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_is_slug_valid_fail(mock_request):
+    mock_request.side_effect = Exception("Request failed")
+    result = await ProjectAPI.is_slug_valid('invalid-slug')
+    assert result is None
 
-    @patch('os.path.exists', return_value=True)
-    @patch('builtins.open', unittest.mock.mock_open(read_data='{"metadata": {"project_id": "123"}}'))
-    @patch('json.load', return_value={'metadata': {'project_id': '123'}})
-    def test_load_project_success(self, mock_json, mock_open, mock_exists):
-        """Test loading a project from a valid file."""
-        self.project.modpack = MagicMock()
-        result = asyncio.run(self.project.load_project('valid.modpack'))
-        self.assertTrue(result)
-        self.assertTrue(self.project.metadata["loaded"])
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_dependencies(mock_request):
+    mock_request.return_value = {'dependencies': ['dep1', 'dep2']}
+    result = await ProjectAPI.get_dependencies('project-name')
+    assert result == {'dependencies': ['dep1', 'dep2']}
 
-    def test_add_mod_success(self):
-        """Test adding a mod successfully to the modpack."""
-        self.project.modpack.mod_data = []
-        mod_info = {"title": "Mod1", "description": "Test Mod"}
-        version_info = {"name": "Mod1.0", "changelog": "Changes", "version_number": "1.0.0", "dependencies": [], "game_versions": ["1.19"], "loaders": ["fabric"], "id": "id1", "project_id": "proj1", "date_published": "2024-09-06", "files": []}
-        result = self.project.add_mod("Mod1", version_info, mod_info)
-        self.assertTrue(result)
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_dependencies_fail(mock_request):
+    mock_request.side_effect = Exception("Request failed")
+    result = await ProjectAPI.get_dependencies('project-name')
+    assert result is None
 
-    @mock.patch("builtins.open", new_callable=mock.mock_open)
-    def test_save_project_success(self, mock_open):
-        """Test saving a project successfully to a file."""
-        self.project.metadata = {"filename": "test_project"}
-        self.project.modpack = MagicMock()
-        self.project.modpack.export_json.return_value = {}
-        result = asyncio.run(self.project.save_project())
-        self.assertTrue(result)
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_search_project(mock_request):
+    mock_request.return_value = {'results': ['proj1', 'proj2']}
+    result = await ProjectAPI.search_project(param1='value1')
+    assert result == {'results': ['proj1', 'proj2']}
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_search_project_fail(mock_request):
+    mock_request.side_effect = Exception("Request failed")
+    result = await ProjectAPI.search_project(param1='value1')
+    assert result is None
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_project(mock_request):
+    mock_request.return_value = {'project': 'details'}
+    result = await ProjectAPI.get_project('project-name')
+    assert result == {'project': 'details'}
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_project_fail(mock_request):
+    mock_request.side_effect = Exception("Request failed")
+    result = await ProjectAPI.get_project('project-name')
+    assert result is None
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_projects(mock_request):
+    mock_request.return_value = {'projects': ['proj1', 'proj2']}
+    result = await ProjectAPI.get_projects(param1='value1')
+    assert result == {'projects': ['proj1', 'proj2']}
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_projects_fail(mock_request):
+    mock_request.side_effect = Exception("Request failed")
+    result = await ProjectAPI.get_projects(ids='value1')
+    assert result is None
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_list_versions(mock_request):
+    mock_request.return_value = {'versions': ['v1', 'v2']}
+    result = await ProjectAPI.list_versions(id='project-id')
+    assert result == {'versions': ['v1', 'v2']}
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_list_versions_fail(mock_request):
+    mock_request.side_effect = Exception("Request failed")
+    result = await ProjectAPI.list_versions(id='project-id')
+    assert result is None
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_version(mock_request):
+    mock_request.return_value = {'version': 'details'}
+    result = await ProjectAPI.get_version('version-id')
+    assert result == {'version': 'details'}
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_version_fail(mock_request):
+    mock_request.side_effect = Exception("Request failed")
+    result = await ProjectAPI.get_version('version-id')
+    assert result is None
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_versions(mock_request):
+    mock_request.return_value = {'versions': ['v1', 'v2']}
+    result = await ProjectAPI.get_versions(id='project-id')
+    assert result == {'versions': ['v1', 'v2']}
+
+@pytest.mark.asyncio
+@patch('mc_mp.modpack.project_api.ProjectAPI.request')
+async def test_get_versions_fail(mock_request):
+    mock_request.side_effect = Exception("Request failed")
+    result = await ProjectAPI.get_versions(id='project-id')
+    assert result is None
