@@ -7,19 +7,19 @@ This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
 import numpy as np
-from constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, MRPACK, PROJECT_DIR, FABRIC_V, DEF_EXT
-from .modpack import Modpack
-from .mod import Mod
-import json
-import os
+from mc_mp.constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, MRPACK, PROJECT_DIR, FABRIC_V, DEF_EXT
+from mc_mp.modpack.modpack import Modpack
+from mc_mp.modpack.mod import Mod
+from mc_mp.modpack.project_api import ProjectAPI
+import mc_mp.standard as std
 import concurrent.futures as cf
 from typing import Optional, Dict, Any
-from .project_api import ProjectAPI
 from dateutil import parser
 import asyncio
 import functools
+import json
 import glob
-import standard as std
+import os
 
 class Project:
     """
@@ -40,16 +40,38 @@ class Project:
         self.api = ProjectAPI()
 
     def is_mod_installed(self, id: str) -> int:
-        """Checks if a mod is installed by ID and returns its index."""
+        """
+        Checks if a mod is installed by ID and returns its index.
+
+        Args:
+            id (str): The mod ID to check.
+
+        Returns:
+            int: The index of the mod in the mod_data, or -1 if not found.
+        """
         return std.get_index([m.project_id for m in self.modpack.mod_data], id)
 
     def is_date_newer(self, new_date: str, current_date: str) -> bool:
+        """
+        Compares two date strings to check if new_date is more recent than current_date.
+
+        Args:
+            new_date (str): The newer mod date.
+            current_date (str): The current mod date.
+
+        Returns:
+            bool: True if new_date is later than current_date, otherwise False.
+        """
         new_mod_date = parser.parse(new_date)
         current_mod_date = parser.parse(current_date)
         return new_mod_date > current_mod_date
 
     def create_project(self, **kwargs) -> None:
-        """Creates a new project and updates metadata; checks modpack compatibility."""
+        """
+        Creates a new project with modpack and updates metadata.
+
+        Raises an error if the modpack is not compatible.
+        """
         self.modpack = Modpack(**kwargs)
         self.metadata.update({
             "loaded": True,
@@ -60,8 +82,17 @@ class Project:
             std.eprint("[ERROR]: Invalid project created.")
             exit(1)
 
+    @std.async_timing
     async def load_project(self, filename: str) -> bool:
-        """Loads project data from a file and initializes the modpack."""
+        """
+        Loads project data from a file and initializes the modpack.
+
+        Args:
+            filename (str): The file name to load the project from.
+
+        Returns:
+            bool: True if the file is loaded successfully, otherwise False.
+        """
         if not os.path.exists(filename):
             return False
         loop = asyncio.get_running_loop()
@@ -82,7 +113,15 @@ class Project:
         return True
 
     async def save_project(self, filename: Optional[str] = DEF_FILENAME) -> bool:
-        """Saves the current project state to a file."""
+        """
+        Saves the current project state to a file.
+
+        Args:
+            filename (Optional[str]): The file name to save the project to.
+
+        Returns:
+            bool: True if the project is saved successfully, otherwise False.
+        """
         if filename:
             self.metadata["filename"] = filename
         if not self.metadata["filename"]:
@@ -98,14 +137,34 @@ class Project:
         self.metadata["saved"] = True
         return True
 
+    @std.async_timing
     async def search_mods(self, **kwargs) -> dict:
-        """Searches for mods using the ProjectAPI."""
+        """
+        Searches for mods using the ProjectAPI.
+
+        Args:
+            **kwargs: Filter and search parameters for the mod search.
+
+        Returns:
+            dict: The search results from the API.
+        """
         result = await self.api.search_project(**kwargs)
         return result
 
     def add_mod(self, name: str, version: dict, project_info: dict, index: int = 0) -> bool:
-        """Adds a mod to the modpack with the given name and version information."""
-        if not all([project_info, version]):
+        """
+        Adds a mod to the modpack.
+
+        Args:
+            name (str): The mod name.
+            version (dict): Version information.
+            project_info (dict): The project information.
+            index (int): The index to insert the mod at.
+
+        Returns:
+            bool: True if the mod is added successfully, otherwise False.
+        """
+        if not any([project_info, version]):
             std.eprint(f"[ERROR] Could not find mod with name: {name}")
             return False
 
@@ -128,7 +187,15 @@ class Project:
         return True
 
     def rm_mod(self, index: int) -> bool:
-        """Removes a mod from the modpack by index."""
+        """
+        Removes a mod from the modpack by index.
+
+        Args:
+            index (int): The index of the mod to remove.
+
+        Returns:
+            bool: True if the mod is removed successfully, otherwise False.
+        """
         try:
             del self.modpack.mod_data[index]
             self.metadata["saved"] = False
@@ -138,13 +205,34 @@ class Project:
             return False
 
     def update_mod(self, latest_version: dict, project_info: dict, index: int) -> bool:
-        """Updates selected mods if newer versions are available."""
+        """
+        Updates selected mods if newer versions are available.
+
+        Args:
+            latest_version (dict): The latest version information.
+            project_info (dict): The project information.
+            index (int): The index of the mod to update.
+
+        Returns:
+            bool: True if the mod is updated successfully, otherwise False.
+        """
         self.modpack.mod_data[index].update_self(latest_version, project_info)
         self.modpack.sort_mods()
         self.metadata["saved"] = False
         return True
 
     def update_mods(self, latest_versions, project_infos, indices) -> bool:
+        """
+        Updates multiple mods based on new version and project information.
+
+        Args:
+            latest_versions (list[dict]): List of latest version information.
+            project_infos (list[dict]): List of project information.
+            indices (list[int]): List of indices of mods to update.
+
+        Returns:
+            bool: True if mods are updated successfully, otherwise False.
+        """
         for index, latest_version, project_info in zip(indices, latest_versions, project_infos):
             self.modpack.mod_data[index].update_self(latest_version, project_info)
         self.modpack.sort_mods()
@@ -152,22 +240,55 @@ class Project:
         return True
 
     def list_mods(self) -> list[str]:
-        """Lists all mods in the loaded project with their names and descriptions."""
+        """
+        Lists all mods in the loaded project with their names and descriptions.
+
+        Returns:
+            list[str]: A list of strings, each containing a mod's name and description.
+        """
         if self.metadata["loaded"]:
             return [f'{m}:\n\t{d}' for m, d in zip(self.modpack.get_mods_name_ver(), self.modpack.get_mods_descriptions())]
         return None
 
     def get_versions_id(self, id: str, loop) -> list[dict]:
+        """
+        Fetches version information for a specific mod ID.
+
+        Args:
+            id (str): The mod ID.
+            loop (asyncio.AbstractEventLoop): The event loop to run the async task.
+
+        Returns:
+            list[dict]: A list of version information for the mod.
+        """
         future = asyncio.run_coroutine_threadsafe(self.api.list_versions(id=id, loaders=[self.modpack.mod_loader], game_versions=[self.modpack.mc_version]), loop)
         return future.result()
 
     def get_project_info_ids(self, ids: list[str], loop) -> list[dict]:
+        """
+        Fetches project information for a list of project IDs.
+
+        Args:
+            ids (list[str]): List of project IDs.
+            loop (asyncio.AbstractEventLoop): The event loop to run the async task.
+
+        Returns:
+            list[dict]: A list of project information.
+        """
         future = asyncio.run_coroutine_threadsafe(self.api.get_projects(ids=ids), loop)
         return future.result()
 
     @std.async_timing
     async def fetch_mods_by_ids(self, ids: list[str]) -> list[dict]:
-        """Fetches mods by their IDs concurrently and returns detailed information."""
+        """
+        Fetches mods by their IDs concurrently and returns detailed information.
+
+        Args:
+            ids (list[str]): A list of mod IDs.
+
+        Returns:
+            list[dict]: A list of mod details, including version information.
+        """
         mods_ver_info: list = []
         loop = asyncio.get_running_loop()
         
@@ -199,7 +320,16 @@ class Project:
 
     @std.sync_timing
     def download_file(self, file_info, loop) -> bool:
-        """Downloads a file and checks its hash."""
+        """
+        Downloads a file and checks its hash.
+
+        Args:
+            file_info (dict): The file metadata, including URL and filename.
+            loop (asyncio.AbstractEventLoop): The event loop to run the async task.
+
+        Returns:
+            bool: True if the file is downloaded and verified successfully, otherwise False.
+        """
         future = asyncio.run_coroutine_threadsafe(self.api.get_file_from_url(**file_info), loop)
         future.result()
 
@@ -211,6 +341,15 @@ class Project:
 
     
     def convert_file_to_mp_format(self, mod: dict) -> dict:
+        """
+        Converts a mod file to the modpack format.
+
+        Args:
+            mod (dict): The mod information.
+
+        Returns:
+            dict: A dictionary representing the mod file in modpack format.
+        """
         return {
             "path": f"{MOD_PATH}{mod['filename']}",
             "hashes": mod['hashes'],

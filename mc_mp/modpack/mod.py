@@ -6,8 +6,19 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-import standard as std
 from dataclasses import dataclass, field
+import mc_mp.standard as std
+import json
+
+class ProjectEncoder(json.JSONEncoder):
+    """Custom JSON encoder for handling `mod.Mod` objects."""
+
+    def default(self, obj):
+        """Encode `mod.Mod` objects to JSON; use default encoder otherwise."""
+        if isinstance(obj, Mod):
+            return obj.export_json()
+        return super().default(obj)
+
 
 @dataclass
 class Mod:
@@ -30,16 +41,32 @@ class Mod:
     files: list[dict] = field(default_factory=list)
 
     def export_json(self) -> dict:
-        """Exports the mod's attributes as a JSON-compatible dictionary."""
+        """
+        Exports the mod's attributes as a JSON-compatible dictionary.
+
+        Returns:
+            dict: The mod's attributes serialized as a dictionary.
+        """
         return std.get_variables(self)
 
     def load_json(self, data: dict) -> None:
-        """Loads JSON data into the mod's attributes."""
+        """
+        Loads JSON data into the mod's attributes.
+
+        Args:
+            data (dict): The JSON data to load into the mod object.
+        """
         for key, value in data.items():
             setattr(self, key, value)
-            
+
     def update_self(self, latest_version: dict, project_info: dict):
-        """Updates the mod's attributes with the latest version and project information."""
+        """
+        Updates the mod's attributes with the latest version and project information.
+
+        Args:
+            latest_version (dict): Latest version details of the mod.
+            project_info (dict): Project information such as title and description.
+        """
         self.name = latest_version["name"]
         self.changelog = latest_version["changelog"]
         self.version_number = latest_version["version_number"]

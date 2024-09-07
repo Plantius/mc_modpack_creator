@@ -9,23 +9,23 @@ https://github.com/Plantius/mc_modpack_creator
 import copy
 import numpy as np
 from simple_term_menu import TerminalMenu
-from constants import CLEAR_SCREEN, OPEN, QUIT, ACCEPT
-from modpack import project as p
-import standard as std
+from mc_mp.constants import CLEAR_SCREEN, OPEN, QUIT, ACCEPT
+from mc_mp.modpack.project import Project
+import mc_mp.standard as std
 import asyncio
 
 class Menu:
     # Static variable to hold the main menu instance
     main_menu_instance = None
     
-    def __init__(self, project: p.Project, title: str="", menu_entries=None,
+    def __init__(self, project: Project, title: str="", menu_entries=None,
                  multi_select: bool = False, clear_screen: bool = CLEAR_SCREEN,
                  cursor_index: int = 0, status_bar: callable = None, actions=None,
                  parent_menu=None, help: list[str]=None) -> None:
         """
         Initialize the menu with project details and menu options.
         """
-        self.project: p.Project = project
+        self.project: Project = project
         self.title: str = title
         self.menu_entries = menu_entries or []
         self.multi_select: bool = multi_select
@@ -50,7 +50,7 @@ class Menu:
             return (f"{self.project.modpack.title}: {self.project.modpack.description} | "
                     f"{self.project.modpack.mc_version} | {self.project.modpack.mod_loader} | "
                     f"{len(self.project.modpack.mod_data)} mods | "
-                    f"Version {self.project.modpack.build_version}")
+                    f"Version {self.project.modpack.build_version} --- Client Side: {self.project.modpack.client_side}, Server Side: {self.project.modpack.server_side}")
         return "No project loaded"
     
     def get_entry_help(self, entry) -> str:
@@ -265,9 +265,11 @@ class Menu:
                 project=self.project, 
                 title=f"Which version of {info_dict['title']} do you want to add?",
                 menu_entries=[f'''{info_dict["title"]} - {version["version_number"]}: Minecraft version(s): {version["game_versions"]}, {version["version_type"]}''' for version in info_dict["versions"]],
-                parent_menu=self)
+                parent_menu=self
+            )
             
             async def handle_selection(selected_index):
+                submenu.cursor_index = selected_index
                 version = info_dict["versions"][selected_index]
                 if self.project.is_mod_installed(version["project_id"]):
                     return
@@ -310,7 +312,7 @@ class Menu:
                 [f"categories:{self.project.modpack.mod_loader}"],
                 [f"versions:{self.project.modpack.mc_version}"]
             ],
-            "limit": 200
+            "limit": 100
         }
         inp = std.get_input("Do you want to enter additional facets? y/n: ") or 'n'
         if inp == ACCEPT:
@@ -328,7 +330,6 @@ class Menu:
 
         if not results:
             return OPEN
-        # TODO
         submenu = Menu(
                 project=self.project, 
                 title="Which entries do you want to add? Select one option to see its details.",
@@ -337,6 +338,7 @@ class Menu:
             )
           
         async def handle_selection(selected_index):
+            submenu.cursor_index = selected_index[0]
             if 0 in selected_index:
                 selected_index = np.arange(len(submenu.menu_entries)-1)
             else:
@@ -375,7 +377,7 @@ class Menu:
         async def handle_selection(selected_index):
             if not self.project.modpack.mod_data:
                 return
-            
+            submenu.cursor_index = selected_index[0]
             selected_index = np.array(selected_index)
             if 0 in selected_index:
                 selected_index = np.arange(len(self.project.modpack.mod_data))

@@ -6,24 +6,18 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
+from mc_mp.constants import DEF_EXT, BUF_SIZE
 from enum import Enum, auto
 import os
 import sys
 import inspect
-import json
 import glob
 import zipfile
-from cryptography.fernet import Fernet
-from constants import DEF_EXT
-from constants import BUF_SIZE
-from constants import SECRET_KEY
-from constants import UNIQUE_ID
-import modpack.mod as mod
 import hashlib
 import time 
 import functools
-
-cipher = Fernet(SECRET_KEY)
+import uuid
+import re
 
 class Setting(Enum):
     TITLE = auto()
@@ -62,14 +56,6 @@ def sync_timing(func):
     
     return wrapper
 
-class ProjectEncoder(json.JSONEncoder):
-    """Custom JSON encoder for handling `mod.Mod` objects."""
-
-    def default(self, obj):
-        """Encode `mod.Mod` objects to JSON; use default encoder otherwise."""
-        if isinstance(obj, mod.Mod):
-            return obj.export_json()
-        return super().default(obj)
 
 def get_variables(obj) -> dict:
     """Get non-callable attributes of an object as a dictionary."""
@@ -83,16 +69,16 @@ def get_functions(obj) -> list:
             if callable(getattr(obj, name)) and not name.startswith("__")]
 
 def generate_project_id() -> str:
-    """Generates and encrypts a new project ID."""
-    project_id = UNIQUE_ID
-    return cipher.encrypt(project_id.encode()).decode()
+    """Generates a unique project ID using UUID4."""
+    project_id = str(uuid.uuid4())
+    return project_id
 
-def is_valid_project_id(encrypted_id: str) -> bool:
-    """Checks if the provided encrypted project ID is valid."""
+def is_valid_project_id(project_id: str) -> bool:
+    """Checks if the provided project ID is a valid UUID4."""
     try:
-        decrypted_id = cipher.decrypt(encrypted_id.encode()).decode()
-        return decrypted_id == UNIQUE_ID
-    except:
+        uuid_obj = uuid.UUID(project_id, version=4)
+        return str(uuid_obj) == project_id
+    except ValueError:
         return False
 
 def get_input(msg: str) -> str:

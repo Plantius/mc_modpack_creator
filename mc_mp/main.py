@@ -6,9 +6,9 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-from modpack import project
-from args_parser import args_parser as args
-from menu import main_menu
+from mc_mp.modpack import project
+from mc_mp.args_parser import args_parser as args
+from mc_mp.menu import main_menu
 import asyncio
 
 async def main():

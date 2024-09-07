@@ -9,9 +9,6 @@ https://github.com/Plantius/mc_modpack_creator
 BUF_SIZE = 2 << 15
 MAX_WORKERS = 16
 
-SECRET_KEY = b'7rfdYCctHr9xCK2H4i92HLvxN4YzsTty4OrNaAC-bfc='
-UNIQUE_ID = "MC_MODPACK_CREATOR_ID"
-
 ALLOWED_CATEGORIES = ["forge", "fabric", "neoforge", "quilt", "liteloader"]
 
 # Base URL for Modrinth API
