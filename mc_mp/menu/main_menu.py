@@ -13,6 +13,7 @@ from mc_mp.constants import CLEAR_SCREEN, OPEN, QUIT, ACCEPT
 from mc_mp.modpack.project import Project
 import mc_mp.standard as std
 import asyncio
+from typing import Callable, Optional
 
 class Menu:
     # Static variable to hold the main menu instance
@@ -20,8 +21,8 @@ class Menu:
     
     def __init__(self, project: Project, title: str="", menu_entries=None,
                  multi_select: bool = False, clear_screen: bool = CLEAR_SCREEN,
-                 cursor_index: int = 0, status_bar: callable = None, actions=None,
-                 parent_menu=None, help: list[str]=None) -> None:
+                 cursor_index: int = 0, status_bar: Optional[Callable] = None, actions: list=[],
+                 parent_menu=None, help: list[str]=[]) -> None:
         """
         Initialize the menu with project details and menu options.
         """
@@ -31,7 +32,7 @@ class Menu:
         self.multi_select: bool = multi_select
         self.clear_screen: bool = clear_screen
         self.cursor_index: int = cursor_index
-        self.status_bar: callable = status_bar
+        self.status_bar: Optional[Callable] = status_bar
 
         self.actions: list = actions or []
         self.help: list = help or []
@@ -58,7 +59,7 @@ class Menu:
         Get help text for a specific menu entry.
         """
         index = std.get_index(self.menu_entries, entry)
-        if index is None:
+        if index == -1:
             std.eprint("Could not find entry.")
             return entry
         return self.help[index]
@@ -90,7 +91,7 @@ class Menu:
         Get description of a specific mod entry.
         """
         index = std.get_index(self.project.modpack.get_mods_name_ver(), entry)
-        if index is None:
+        if index == -1:
             std.eprint("Could not find entry.")
             return entry
         return self.project.modpack.get_mods_descriptions()[index]
@@ -255,7 +256,7 @@ class Menu:
         info_list = await self.project.fetch_mods_by_ids(ids)
 
         if not any(info_list):
-            std.eprint(f"[ERROR] Could not retrieve mods.")
+            std.eprint("[ERROR] Could not retrieve mods.")
             return OPEN
         
         for info_dict in info_list:
@@ -509,7 +510,7 @@ class Menu:
         
         submenu = Menu(
                 project=self.project, 
-                title=f"The mods currently in this project.",
+                title="The mods currently in this project.",
                 menu_entries=self.project.modpack.get_mods_name_ver(),  # Updatable
                 status_bar=self.get_entry_description
             )

@@ -104,7 +104,7 @@ def get_input(msg: str) -> str:
     inp = input(msg)
     if not inp.isascii() or inp is None:
         eprint("[ERROR] Input must be a non-empty ASCII string.")
-        return None
+        return ""
     return inp
 
 def get_index(lst: list, item) -> int:
@@ -112,7 +112,7 @@ def get_index(lst: list, item) -> int:
     try:
         return lst.index(item)
     except ValueError:
-        return None
+        return -1
 
 def get_project_files() -> list:
     """Returns a sorted list of JSON files in the current directory."""

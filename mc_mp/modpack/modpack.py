@@ -39,7 +39,7 @@ class Modpack:
                 setattr(self, key, [Mod(**item) for item in value])
             else:
                 setattr(self, key, value)
-        self._processing_mods = set()
+        self._processing_mods: set = set()
 
     @std.sync_timing
     def export_json(self) -> Dict[str, Any]:

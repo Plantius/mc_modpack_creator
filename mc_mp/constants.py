@@ -32,7 +32,6 @@ FORMAT_VERSION = 1
 GAME = "minecraft"
 MOD_PATH = 'mods/'
 MR_INDEX = "modrinth.index.json"
-MRPACK = "mrpack"
 
 # Loader versions
 FABRIC_V = "0.16.0"

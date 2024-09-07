@@ -6,7 +6,7 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-from mc_mp.constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, MRPACK, PROJECT_DIR, FABRIC_V, DEF_EXT
+from mc_mp.constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, PROJECT_DIR, FABRIC_V, DEF_EXT
 from mc_mp.modpack.modpack import Modpack
 from mc_mp.modpack.mod import Mod
 from mc_mp.modpack.project_api import ProjectAPI
@@ -256,7 +256,7 @@ class Project:
         """
         if self.metadata["loaded"]:
             return [f'{m}:\n\t{d}' for m, d in zip(self.modpack.get_mods_name_ver(), self.modpack.get_mods_descriptions())]
-        return None
+        return []
 
     @std.sync_timing
     def get_versions_id(self, id: str, loop) -> list[dict]:
@@ -308,7 +308,7 @@ class Project:
             res_ver = await asyncio.gather(*tasks_vers)
             res_info = await asyncio.gather(tasks_info)
         
-        version_map = {}
+        version_map: dict = {}
         for version_list in res_ver:
             if version_list:
                 version = version_list[0]
@@ -384,7 +384,7 @@ class Project:
         except FileExistsError:
             pass
         
-        modpack_json = {
+        modpack_json: dict = {
             "formatVersion": FORMAT_VERSION, 
             "game": GAME,
             "versionId": self.modpack.mc_version,

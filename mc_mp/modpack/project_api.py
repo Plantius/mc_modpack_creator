@@ -7,17 +7,22 @@ This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
 import os
-from aiohttp import ClientSession
+import logging
+from aiohttp import ClientSession, ClientError
 from typing import Optional, Dict, Any
 from aiocache import cached
 from mc_mp.constants import API_BASE, HEADERS, PROJECT_DIR
+
+# Configure logging
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 class ProjectAPI:
     """Handles interactions with the Modrinth API for project-related data."""
 
     @staticmethod
     @cached(ttl=3600)
-    async def request(endpoint: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+    async def request(endpoint: str, params: Dict[str, Any] = {}) -> Optional[Dict[str, Any]]:
         """
         Makes a GET request to the specified API endpoint and returns the JSON response.
 
@@ -33,9 +38,13 @@ class ProjectAPI:
                 async with session.get(f"{API_BASE}{endpoint}", params=params, headers=HEADERS) as response:
                     response.raise_for_status()
                     return await response.json()
-            except:
+            except ClientError as e:
+                logger.error(f"[ERROR] Request to {API_BASE}{endpoint} failed: {e}")
                 return None
-            
+            except Exception as e:
+                logger.error(f"[ERROR] Unexpected error during request to {API_BASE}{endpoint}: {e}")
+                return None
+
     @staticmethod
     def parse_url(params: Dict[str, Any]) -> str:
         """
@@ -63,7 +72,8 @@ class ProjectAPI:
         """
         try:
             return await ProjectAPI.request(f"/project/{slug_or_id}/check")
-        except:
+        except Exception as e:
+            logger.error(f"[ERROR] Failed to validate slug or ID {slug_or_id}: {e}")
             return None
 
     @staticmethod
@@ -80,7 +90,8 @@ class ProjectAPI:
         """
         try:
             return await ProjectAPI.request(f"/project/{project_name}/dependencies")
-        except:
+        except Exception as e:
+            logger.error(f"[ERROR] Failed to get dependencies for project {project_name}: {e}")
             return None
 
     @staticmethod
@@ -97,10 +108,11 @@ class ProjectAPI:
         """
         params = {k: v for k, v in kwargs.items() if v is not None}
         try:
-            return await ProjectAPI.request(f"/search", params=ProjectAPI.parse_url(params))
-        except:
+            return await ProjectAPI.request("/search", params=ProjectAPI.parse_url(params))
+        except Exception as e:
+            logger.error(f"[ERROR] Project search failed with parameters {params}: {e}")
             return None
-        
+
     @staticmethod
     @cached(ttl=3600)
     async def get_project(project_name: str) -> Optional[Dict[str, Any]]:
@@ -113,12 +125,12 @@ class ProjectAPI:
         Returns:
             Optional[Dict[str, Any]]: The project details, or None if an error occurs.
         """
-        try: 
+        try:
             return await ProjectAPI.request(f"/project/{project_name}")
-        except:
-            print(f"[ERROR] Could not get project {project_name}")
+        except Exception as e:
+            logger.error(f"[ERROR] Could not retrieve project {project_name}: {e}")
             return None
-        
+
     @staticmethod
     @cached(ttl=3600)
     async def get_projects(**kwargs) -> Optional[Dict[str, Any]]:
@@ -131,13 +143,16 @@ class ProjectAPI:
         Returns:
             Optional[Dict[str, Any]]: The project data, or None if an error occurs.
         """
-        try: 
-            params = {k: v for k, v in kwargs.items() if v is not None}
-            return await ProjectAPI.request(f"/projects", params=ProjectAPI.parse_url(params))
-        except:
-            print(f"[ERROR] Could not get projects {params['ids']}")
+        params = {k: v for k, v in kwargs.items() if v is not None}
+        try:
+            return await ProjectAPI.request("/projects", params=ProjectAPI.parse_url(params))
+        except KeyError as e:
+            logger.error(f"[ERROR] Missing required key 'ids' in parameters: {e}")
             return None
-        
+        except Exception as e:
+            logger.error(f"[ERROR] Failed to retrieve projects with parameters {params}: {e}")
+            return None
+
     @staticmethod
     @cached(ttl=3600)
     async def list_versions(**kwargs) -> Optional[Dict[str, Any]]:
@@ -153,9 +168,13 @@ class ProjectAPI:
         try:
             params = {k: v for k, v in kwargs.items() if v is not None and k != "id"}
             return await ProjectAPI.request(f"/project/{kwargs['id']}/version", params=ProjectAPI.parse_url(params))
-        except:
+        except KeyError as e:
+            logger.error(f"[ERROR] Missing required key 'id' in parameters: {e}")
             return None
-    
+        except Exception as e:
+            logger.error(f"[ERROR] Failed to list versions for project {kwargs.get('id', 'unknown')}: {e}")
+            return None
+
     @staticmethod
     @cached(ttl=3600)
     async def get_version(version_id: str) -> Optional[Dict[str, Any]]:
@@ -170,10 +189,10 @@ class ProjectAPI:
         """
         try:
             return await ProjectAPI.request(f"/version/{version_id}")
-        except:
-            print(f"[ERROR] Could not retrieve versions of {version_id}")
+        except Exception as e:
+            logger.error(f"[ERROR] Could not retrieve version {version_id}: {e}")
             return None
-    
+
     @staticmethod
     @cached(ttl=3600)
     async def get_versions(**kwargs) -> Optional[Dict[str, Any]]:
@@ -188,10 +207,11 @@ class ProjectAPI:
         """
         params = {k: v for k, v in kwargs.items() if v is not None}
         try:
-            return await ProjectAPI.request(f"/versions", params=params)
-        except:
+            return await ProjectAPI.request("/versions", params=params)
+        except Exception as e:
+            logger.error(f"[ERROR] Failed to retrieve versions with parameters {params}: {e}")
             return None
-    
+
     @staticmethod
     async def get_file_from_url(**kwargs) -> None:
         """
@@ -209,5 +229,9 @@ class ProjectAPI:
                         os.makedirs(os.path.dirname(f'{PROJECT_DIR}/{params["filename"]}'), exist_ok=True)
                         with open(f'{PROJECT_DIR}/{params["filename"]}', "wb") as file:
                             file.write(data)
+                    else:
+                        logger.error(f"[ERROR] Failed to download file: Status code {response.status}")
+        except KeyError as e:
+            logger.error(f"[ERROR] Missing required file download parameters: {e}")
         except Exception as e:
-            print(f"[ERROR] Could not download file: {e}")
+            logger.error(f"[ERROR] Could not download file: {e}")
