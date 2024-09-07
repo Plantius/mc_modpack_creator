@@ -8,7 +8,9 @@ https://github.com/Plantius/mc_modpack_creator
 """
 from aiohttp import ClientSession
 from typing import Optional, Dict, Any
-from . import API_BASE, HEADERS, PROJECT_DIR
+
+from ...constants import API_BASE, HEADERS
+from ...constants import PROJECT_DIR
 
 class ProjectAPI:
     """Handles interactions with the Modrinth API for project-related data."""

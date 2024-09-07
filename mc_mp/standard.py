@@ -14,19 +14,16 @@ import json
 import glob
 import zipfile
 from cryptography.fernet import Fernet
+from constants import DEF_EXT
+from constants import BUF_SIZE
+from constants import SECRET_KEY
+from constants import UNIQUE_ID
 import modpack.mod as mod
 import hashlib
 import time 
 import functools
 
-BUF_SIZE = 2 << 15
-SECRET_KEY = b'7rfdYCctHr9xCK2H4i92HLvxN4YzsTty4OrNaAC-bfc='
-UNIQUE_ID = "MC_MODPACK_CREATOR_ID"
-
 cipher = Fernet(SECRET_KEY)
-
-ALLOWED_CATEGORIES = ["forge", "fabric", "neoforge", "quilt", "liteloader"]
-DEF_EXT = "modpack"
 
 class Setting(Enum):
     TITLE = auto()
