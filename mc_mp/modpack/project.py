@@ -80,6 +80,7 @@ class Project:
             "saved": False,
             "project_id": std.generate_project_id()
         })
+        print(kwargs)
         if not self.modpack.check_compatibility():
             std.eprint("[ERROR]: Invalid project created.")
             exit(1)

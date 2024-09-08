@@ -1,0 +1,151 @@
+/* Reset some default styles */
+body, h1, h2, p, form, label, input, textarea, button, select {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Basic styling for body */
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+    padding: 0 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header styling */
+header {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+/* Main content styling */
+main {
+    padding: 2rem;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+/* Section styling */
+section {
+    margin-bottom: 1.5rem;
+}
+
+/* Headings */
+h1, h2 {
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Paragraphs */
+p {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+/* Form styling */
+form {
+    display: grid;
+    gap: 1rem;
+}
+
+/* Form group styling */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+/* Input fields and textareas */
+input[type="text"], input[type="date"], textarea, select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 1rem;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus, input[type="date"]:focus, textarea:focus, select:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+/* Select styling */
+select {
+    appearance: none;
+    background-color: #fff;
+    background-image: linear-gradient(45deg, transparent 50%, #3498db 50%),
+                      linear-gradient(135deg, #3498db 50%, transparent 50%);
+    background-position: right 0.7rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5rem auto, 1.5rem auto;
+    padding: 0.75rem 2rem 0.75rem 0.75rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* Button styling */
+button {
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+/* Links */
+a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+    main {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    input[type="text"], input[type="date"], textarea, select {
+        font-size: 0.9rem;
+    }
+    
+    button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}

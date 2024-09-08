@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Project</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Create a New Modpack Project</h1>
+    </header>
+    
+    <main>
+        <form action="{{ url_for('main.create_project') }}" method="post">
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" rows="4" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="build_date">Build Date:</label>
+                <input type="date" id="build_date" name="build_date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="build_version">Build Version:</label>
+                <input type="text" id="build_version" name="build_version" required>
+            </div>
+
+            <div class="form-group">
+                <label for="mc_version">Minecraft Version:</label>
+                <input type="text" id="mc_version" name="mc_version" required>
+            </div>
+
+            <div class="form-group">
+                <label for="mod_loader">Mod Loader:</label>
+                <input type="text" id="mod_loader" name="mod_loader" required>
+            </div>
+
+            <div class="form-group">
+                <label for="client_side">Client Side:</label>
+                <input type="text" id="client_side" name="client_side" required>
+            </div>
+
+            <div class="form-group">
+                <label for="server_side">Server Side:</label>
+                <input type="text" id="server_side" name="server_side" required>
+            </div>
+
+            <button type="submit">Create Project</button>
+        </form>
+        
+        <a class="back-link" href="{{ url_for('main.index') }}">Back to Home</a>
+    </main>
+</body>
+</html>

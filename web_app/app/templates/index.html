@@ -4,43 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles_home.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <header>
         <h1>MC Modpack Creator</h1>
     </header>
     <main>
-        {% if project.metadata["loaded"] is false %}
             <h2>Project Loaded: {{ project.title }}</h2>
             <form action="{{ url_for('main.load_project') }}" method="post">
                 <button type="submit">Load Project</button>
             </form>
-        {% else %}
-            </header>
-                <h1>{{ project.modpack.title }}</h1>
-            </header>
-            <h2>Description</h2>
-            <p>{{ project.modpack.description }}</p>
-            <h2>Mods</h2>
-            <ul>
-                {% for mod in project.modpack.mod_data %}
-                    <li>{{ mod.title }} - {{ mod.version_number }}</li>
-                {% endfor %}
-            </ul>
-            <!-- <h2>No Project Loaded</h2>
             <form action="{{ url_for('main.create_project') }}" method="post">
-                <input type="text" name="title" placeholder="Project Title" required>
-                <input type="text" name="description" placeholder="Description" required>
-                <input type="text" name="build_date" placeholder="Build Date" required>
-                <input type="text" name="build_version" placeholder="Build Version" required>
-                <input type="text" name="mc_version" placeholder="MC Version" required>
-                <input type="text" name="mod_loader" placeholder="Mod Loader" required>
-                <input type="text" name="client_side" placeholder="Client Side" required>
-                <input type="text" name="server_side" placeholder="Server Side" required>
                 <button type="submit">Create Project</button>
-            </form> -->
-        {% endif %}
+            </form>
+            {% if project.metadata["loaded"] %}
+                <h1>{{ project.modpack.title }}</h1>
+                <h2>Description</h2>
+                <p>{{ project.modpack.description }}</p>
+                <h2>Mods</h2>
+                <ul>
+                    {% for mod in project.modpack.mod_data %}
+                        <li>{{ mod.title }} - {{ mod.version_number }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
     </main>
 </body>
 </html>
