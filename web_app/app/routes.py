@@ -28,7 +28,7 @@ async def load_project():
         return redirect(url_for('main.load_project'))
 
     # List all project files
-    return render_template('load_project.html', project_files=std.get_project_files())
+    return render_template('load_project.html', project_files=project.get_project_files())
 
 @bp.route('/save_project', methods=['POST'])
 async def save_project():
