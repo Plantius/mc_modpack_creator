@@ -120,6 +120,8 @@ class Menu:
                 status_bar=self.status_bar
             )
             selected_index = terminal_menu.show()
+            if self is Menu.main_menu_instance:
+                self.cursor_index = selected_index
             if selected_index is not None:
                 await self.handle_selection(selected_index)
             else:

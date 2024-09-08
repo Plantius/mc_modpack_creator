@@ -27,22 +27,29 @@ class Mod:
     name: str = "Mod 1.0.0"
     changelog: str = "Changes"
     version_number: str = "1.0"
-    dependencies: list[dict] = field(default_factory=list)
     mc_versions: list = field(default_factory=lambda: ["1.19"])
     version_type: str = "release"
     mod_loaders: list = field(default_factory=list)
     id: str = "IIJJKKLL"
     project_id: str = "AABBCCDD"
     date_published: str = ""
+    dependencies: list[dict] = field(default_factory=list)
     files: list[dict] = field(default_factory=list)
 
     @std.sync_timing
     def export_json(self) -> dict:
-        return std.get_variables(self)
+        data = std.get_variables(self)
+        for key in {'files', 'dependencies', 'mod_loaders', 'mc_versions'}:
+            if key in data and isinstance(data[key], list):
+                # Serialize lists of dictionaries to JSON strings
+                data[key] = json.dumps(data[key])
+        return data
 
     @std.sync_timing
     def load_json(self, data: dict) -> None:
         for key, value in data.items():
+            if key in {'files', 'dependencies', 'mod_loaders', 'mc_versions'}:
+                value = json.loads(value) if isinstance(value, str) else value
             setattr(self, key, value)
 
     @std.sync_timing

@@ -1,6 +1,6 @@
-from mc_mp.constants import (DEF_FILENAME, FORMAT_VERSION, 
+from mc_mp.constants import (FORMAT_VERSION, 
                              GAME, MAX_WORKERS, MOD_PATH, 
-                             MR_INDEX, PROJECT_DIR, FABRIC_V, DEF_EXT)
+                             MR_INDEX, PROJECT_DIR, FABRIC_V)
 from mc_mp.modpack.mod import Mod
 from mc_mp.modpack.project_api import ProjectAPI
 import mc_mp.standard as std
@@ -11,7 +11,7 @@ import json
 import glob
 import os
 import sqlite3
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List
 
 class Project:
     conn: sqlite3.Connection
@@ -66,9 +66,11 @@ class Project:
             title TEXT,
             description TEXT,
             name TEXT,
+            changelog TEXT,
             version_number TEXT,
             mc_versions TEXT,
             mod_loaders TEXT,
+            id TEXT,
             date_published TEXT,
             dependencies TEXT,
             files TEXT,
@@ -97,6 +99,7 @@ class Project:
             "saved": False,
             "project_id": std.generate_project_id()
         })
+        self.mod_data.clear()
 
     @std.async_timing
     async def load_project(self, filename: str) -> bool:
@@ -118,16 +121,16 @@ class Project:
                                 "mod_loader": project_data[5],
                                 "client_side": project_data[6],
                                 "server_side": project_data[7]}.items():
-                setattr(self, key, value)
+                setattr(self, key, value.replace('\\', ''))
                 
-
+            self.mod_data.clear()
             # Load mods associated with the project
             cursor.execute("SELECT * FROM Mod WHERE parent_id=?", (project_data[0],))
             mods_data = cursor.fetchall()
-            mods_data = [[item for item in mod] for mod in mods_data]
-            for i in []:
-                print(dict(i))
-            self.mod_data = [Mod(**dict(zip([c[0] for c in cursor.description][1:], mod[1:]))) for mod in mods_data]
+            for item in [dict(zip([str(c[0]) for c in cursor.description][1:], [m.replace('\\', '') for m in mod[1:]])) for mod in mods_data]:
+                mod = Mod()
+                mod.load_json(item)
+                self.mod_data.append(mod)
 
             return True
         return False
@@ -154,14 +157,14 @@ class Project:
             cursor.execute('''
             INSERT INTO Mod (
                 parent_id, project_id, title, description, 
-                name, version_number, mc_versions, mod_loaders, 
+                name, changelog, version_number, mc_versions, mod_loaders, id,
                 date_published, dependencies, files)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 parent_id, mod.project_id, mod.title, mod.description,
-                mod.name, mod.version_number, json.dumps(mod.mc_versions), 
-                json.dumps(mod.mod_loaders), mod.date_published,
-                json.dumps(mod.dependencies), json.dumps(mod.files)
+                mod.name, mod.changelog, mod.version_number, json.dumps(mod.mc_versions), 
+                json.dumps(mod.mod_loaders, ensure_ascii=False), mod.id, mod.date_published,
+                json.dumps(mod.dependencies, ensure_ascii=False), json.dumps(mod.files, ensure_ascii=False)
             ))
 
         self.conn.commit()
@@ -250,7 +253,7 @@ class Project:
             res_info = await asyncio.gather(tasks_info)
 
         version_map: dict = {
-            version_list[0].get("project_id", ""): (version_list if version_list else [])
+            (version_list[0].get("project_id", "") if version_list else ""): (version_list if version_list else [])
             for version_list in res_ver
         }
         mods_ver_info = [
@@ -344,7 +347,6 @@ class Project:
                 self.mod_loader: FABRIC_V
             }
         }
-
         for mod in self.mod_data:
             for mod_file in mod.files:
                 if not mod_file["primary"]:
@@ -387,19 +389,19 @@ class Project:
         
         match index:
             case std.Setting.TITLE:
-                self.modpack.title = new_var
+                self.title = new_var
             case std.Setting.DESCRIPTION:
-                self.modpack.description = new_var
+                self.description = new_var
             case std.Setting.MC_VERSION:
-                self.modpack.mc_version = new_var
+                self.mc_version = new_var
             case std.Setting.MOD_LOADER:
-                self.modpack.mod_loader = new_var
+                self.mod_loader = new_var
             case std.Setting.BUILD_VERSION:
-                self.modpack.build_version = new_var
+                self.build_version = new_var
             case std.Setting.CLIENT_SIDE:
-                self.modpack.client_side = new_var
+                self.client_side = new_var
             case std.Setting.SERVER_SIDE:
-                self.modpack.server_side = new_var
+                self.server_side = new_var
             case _:
                 return False
         
