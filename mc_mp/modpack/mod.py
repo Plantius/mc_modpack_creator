@@ -22,10 +22,6 @@ class ProjectEncoder(json.JSONEncoder):
 
 @dataclass
 class Mod:
-    """
-    Represents a mod with attributes and methods for JSON serialization and deserialization.
-    """
-
     title: str = "Mod"
     description: str = "This is a mod"
     name: str = "Mod 1.0.0"
@@ -42,34 +38,15 @@ class Mod:
 
     @std.sync_timing
     def export_json(self) -> dict:
-        """
-        Exports the mod's attributes as a JSON-compatible dictionary.
-
-        Returns:
-            dict: The mod's attributes serialized as a dictionary.
-        """
         return std.get_variables(self)
 
     @std.sync_timing
     def load_json(self, data: dict) -> None:
-        """
-        Loads JSON data into the mod's attributes.
-
-        Args:
-            data (dict): The JSON data to load into the mod object.
-        """
         for key, value in data.items():
             setattr(self, key, value)
 
     @std.sync_timing
     def update_self(self, latest_version: dict, project_info: dict):
-        """
-        Updates the mod's attributes with the latest version and project information.
-
-        Args:
-            latest_version (dict): Latest version details of the mod.
-            project_info (dict): Project information such as title and description.
-        """
         self.name = latest_version.get("name", self.name)
         self.changelog = latest_version.get("changelog", self.changelog)
         self.version_number = latest_version.get("version_number", self.version_number)

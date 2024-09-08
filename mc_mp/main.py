@@ -11,7 +11,7 @@ from mc_mp.args_parser import args_parser
 from mc_mp.menu import main_menu
 import asyncio
 import mc_mp.standard as std
-from web_app.app import create_app, db
+from web_app.app import create_app
 
 async def main():
     # Initialize project and flags
@@ -42,8 +42,6 @@ async def main():
         await menu.display()
     elif args.ui and args.ui == "web":
         app = create_app(project=p)
-        with app.app_context():
-            db.create_all()
         app.run(debug=args.debug if args.debug else False)
     elif args.ui and args.ui == "none":
         pass 
