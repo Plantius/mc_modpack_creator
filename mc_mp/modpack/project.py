@@ -70,8 +70,8 @@ class Project:
             mc_versions TEXT,
             mod_loaders TEXT,
             date_published TEXT,
-            files TEXT,
             dependencies TEXT,
+            files TEXT,
             PRIMARY KEY (parent_id, project_id),
             FOREIGN KEY(parent_id) REFERENCES Project(id)
         )''')
@@ -125,15 +125,16 @@ class Project:
             cursor.execute("SELECT * FROM Mod WHERE parent_id=?", (project_data[0],))
             mods_data = cursor.fetchall()
             mods_data = [[item for item in mod] for mod in mods_data]
-            print(mods_data)
-            self.mod_data = [Mod(**dict(zip([c[0] for c in cursor.description], row))) for row in mods_data]
+            for i in []:
+                print(dict(i))
+            self.mod_data = [Mod(**dict(zip([c[0] for c in cursor.description][1:], mod[1:]))) for mod in mods_data]
 
             return True
         return False
 
     @std.async_timing
     async def save_project(self, filename: str="") -> bool:
-        print(filename)
+        filename = filename if filename != "" else self.metadata["filename"]
         cursor = self.conn.cursor()
 
         # Save project metadata
@@ -144,7 +145,7 @@ class Project:
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (self.metadata["uuid"], self.title, self.description, 
               self.mc_version, self.mod_loader, self.client_side, 
-              self.server_side, self.metadata["filename"] or filename))
+              self.server_side, filename))
 
         parent_id = cursor.lastrowid
 
@@ -154,8 +155,8 @@ class Project:
             INSERT INTO Mod (
                 parent_id, project_id, title, description, 
                 name, version_number, mc_versions, mod_loaders, 
-                date_published, files, dependencies)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                date_published, dependencies, files)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 parent_id, mod.project_id, mod.title, mod.description,
                 mod.name, mod.version_number, json.dumps(mod.mc_versions), 
@@ -368,4 +369,38 @@ class Project:
             return False
 
         print("[INFO] Modpack exported successfully.")
+        return True
+       
+    @std.sync_timing
+    def update_settings(self, new_var: str, index: std.Setting) -> bool:
+        """
+        Updates project settings based on the provided index.
+
+        Args:
+            new_var (str): The new value to set for the specified setting.
+            index (std.Setting): The setting to update.
+
+        Returns:
+            bool: True if the setting is updated successfully, otherwise False.
+        """
+        self.metadata["saved"] = False
+        
+        match index:
+            case std.Setting.TITLE:
+                self.modpack.title = new_var
+            case std.Setting.DESCRIPTION:
+                self.modpack.description = new_var
+            case std.Setting.MC_VERSION:
+                self.modpack.mc_version = new_var
+            case std.Setting.MOD_LOADER:
+                self.modpack.mod_loader = new_var
+            case std.Setting.BUILD_VERSION:
+                self.modpack.build_version = new_var
+            case std.Setting.CLIENT_SIDE:
+                self.modpack.client_side = new_var
+            case std.Setting.SERVER_SIDE:
+                self.modpack.server_side = new_var
+            case _:
+                return False
+        
         return True

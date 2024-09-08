@@ -228,7 +228,7 @@ class Menu:
             if std.get_input("Do you want to save the project? y/n: ") == ACCEPT:
                 filename = std.get_input("Please enter the filename to save to: ") \
                     if std.get_input("Do you want to save the project to a new file? y/n: ") == ACCEPT \
-                    else self.project.metadata["filename"]
+                    else ""
                 await self.project.save_project(filename)
         return OPEN  # Keep main menu open
     
