@@ -114,9 +114,7 @@ def get_index(lst: list, item) -> int:
     except ValueError:
         return -1
 
-def get_project_files() -> list:
-    """Returns a sorted list of JSON files in the current directory."""
-    return sorted(glob.glob(f"./*.{DEF_EXT}"))
+
 
 def has_duplicates(lst: list) -> bool:
     """Check if there are duplicates in the list."""

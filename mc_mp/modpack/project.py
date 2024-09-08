@@ -1,5 +1,6 @@
-from mc_mp.constants import DEF_FILENAME, FORMAT_VERSION, GAME, MAX_WORKERS, MOD_PATH, MR_INDEX, PROJECT_DIR, FABRIC_V, DEF_EXT
-from mc_mp.modpack.modpack import Modpack
+from mc_mp.constants import (DEF_FILENAME, FORMAT_VERSION, 
+                             GAME, MAX_WORKERS, MOD_PATH, 
+                             MR_INDEX, PROJECT_DIR, FABRIC_V, DEF_EXT)
 from mc_mp.modpack.mod import Mod
 from mc_mp.modpack.project_api import ProjectAPI
 import mc_mp.standard as std
@@ -18,8 +19,8 @@ class Project:
     metadata: Dict[str, Any] = {
         "loaded": False,
         "saved": True,
-        "filename": "project1.db",
-        "project_id": None
+        "filename": "project1",
+        "uuid": None
     }
     title: str = "Modpack"
     description: str = "A modpack"
@@ -29,14 +30,16 @@ class Project:
     mod_loader: str = "fabric"
     client_side: str = "required"
     server_side: str = "optional"
-    mod_data: list = []
+    mod_data: list[Mod] = []
 
     def __init__(self, db_file: str = "project1.db", **kwargs) -> None:
         # Initialize database and create tables
+        self.api = ProjectAPI()
         self.conn = sqlite3.connect(db_file)
         self.create_tables()
         for key, value in kwargs.items():
             setattr(self, key, value)
+        self._processing_mods: set = set()
 
     def create_tables(self):
         cursor = self.conn.cursor()
@@ -45,28 +48,32 @@ class Project:
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Project (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uuid TEXT UNIQUE,
             title TEXT,
             description TEXT,
             mc_version TEXT,
             mod_loader TEXT,
             client_side TEXT,
-            server_side TEXT
+            server_side TEXT,
+            filename TEXT UNIQUE
         )''')
 
         # Create Mod table
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Mod (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            project_id INTEGER,
+            parent_id INTEGER,
+            project_id TEXT,
             title TEXT,
             description TEXT,
             name TEXT,
             version_number TEXT,
-            dependencies TEXT,
             mc_versions TEXT,
             mod_loaders TEXT,
             date_published TEXT,
-            FOREIGN KEY(project_id) REFERENCES Project(id)
+            files TEXT,
+            dependencies TEXT,
+            PRIMARY KEY (parent_id, project_id),
+            FOREIGN KEY(parent_id) REFERENCES Project(id)
         )''')
         self.conn.commit()
 
@@ -92,55 +99,68 @@ class Project:
         })
 
     @std.async_timing
-    async def load_project(self, project_id: int) -> bool:
+    async def load_project(self, filename: str) -> bool:
         cursor = self.conn.cursor()
         # Load project metadata from database
-        cursor.execute("SELECT * FROM Project WHERE id=?", (project_id,))
+        cursor.execute("SELECT * FROM Project WHERE filename=?", (filename,))
         project_data = cursor.fetchone()
 
         if project_data:
             self.metadata.update({
                 "loaded": True,
                 "saved": True,
-                "project_id": project_id,
-                "title": project_data[1],
-                "description": project_data[2],
-                "mc_version": project_data[3],
-                "mod_loader": project_data[4],
-                "client_side": project_data[5],
-                "server_side": project_data[6]
+                "project_id": project_data[1],
+                "filename": project_data[8]
             })
+            for key, value in  {"title": project_data[2],
+                                "description": project_data[3],
+                                "mc_version": project_data[4],
+                                "mod_loader": project_data[5],
+                                "client_side": project_data[6],
+                                "server_side": project_data[7]}.items():
+                setattr(self, key, value)
+                
 
             # Load mods associated with the project
-            cursor.execute("SELECT * FROM Mod WHERE project_id=?", (project_id,))
+            cursor.execute("SELECT * FROM Mod WHERE parent_id=?", (project_data[0],))
             mods_data = cursor.fetchall()
+            mods_data = [[item for item in mod] for mod in mods_data]
+            print(mods_data)
             self.mod_data = [Mod(**dict(zip([c[0] for c in cursor.description], row))) for row in mods_data]
 
             return True
         return False
 
     @std.async_timing
-    async def save_project(self) -> bool:
+    async def save_project(self, filename: str="") -> bool:
+        print(filename)
         cursor = self.conn.cursor()
 
         # Save project metadata
         cursor.execute('''
-        INSERT INTO Project (title, description, mc_version, mod_loader, client_side, server_side)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ''', (self.title, self.description, self.mc_version, self.mod_loader, self.client_side, self.server_side))
+        INSERT OR REPLACE INTO Project (
+            uuid, title, description, mc_version, 
+            mod_loader, client_side, server_side, filename
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (self.metadata["uuid"], self.title, self.description, 
+              self.mc_version, self.mod_loader, self.client_side, 
+              self.server_side, self.metadata["filename"] or filename))
 
-        project_id = cursor.lastrowid
-        self.metadata["project_id"] = project_id
+        parent_id = cursor.lastrowid
 
         # Save associated mods
         for mod in self.mod_data:
             cursor.execute('''
-            INSERT INTO Mod (project_id, title, description, name, version_number, dependencies, mc_versions, mod_loaders, date_published)
+            INSERT INTO Mod (
+                parent_id, project_id, title, description, 
+                name, version_number, mc_versions, mod_loaders, 
+                date_published, files, dependencies)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                project_id, mod.title, mod.description, mod.name, mod.version_number,
-                json.dumps(mod.dependencies), json.dumps(mod.mc_versions),
-                json.dumps(mod.mod_loaders), mod.date_published
+                parent_id, mod.project_id, mod.title, mod.description,
+                mod.name, mod.version_number, json.dumps(mod.mc_versions), 
+                json.dumps(mod.mod_loaders), mod.date_published,
+                json.dumps(mod.dependencies), json.dumps(mod.files)
             ))
 
         self.conn.commit()
@@ -296,6 +316,13 @@ class Project:
     @std.sync_timing
     def get_mods_descriptions(self) -> List[str]:
         return [item.description for item in self.mod_data]
+
+    def get_project_files(self) -> list:
+        """Returns a sorted list of JSON files in the current directory."""
+        cursor = self.conn.cursor()
+        # Load project metadata from database
+        files = [file[0] for file in cursor.execute("SELECT filename FROM Project")]
+        return files if files else []
 
     @std.async_timing
     async def export_modpack(self, filename: str) -> bool:

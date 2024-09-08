@@ -47,10 +47,10 @@ class Menu:
         Get the title and details of the current project.
         """
         if self.project.metadata["loaded"]:
-            return (f"{self.project.modpack.title}: {self.project.modpack.description} | "
-                    f"{self.project.modpack.mc_version} | {self.project.modpack.mod_loader} | "
-                    f"{len(self.project.modpack.mod_data)} mods | "
-                    f"Version {self.project.modpack.build_version} --- Client Side: {self.project.modpack.client_side}, Server Side: {self.project.modpack.server_side}")
+            return (f"{self.project.title}: {self.project.description} | "
+                    f"{self.project.mc_version} | {self.project.mod_loader} | "
+                    f"{len(self.project.mod_data)} mods | "
+                    f"Version {self.project.build_version} --- Client Side: {self.project.client_side}, Server Side: {self.project.server_side}")
         return "No project loaded"
     
     def get_entry_help(self, entry) -> str:
@@ -89,11 +89,11 @@ class Menu:
         """
         Get description of a specific mod entry.
         """
-        index = std.get_index(self.project.modpack.get_mods_name_ver(), entry)
+        index = std.get_index(self.project.get_mods_name_ver(), entry)
         if index == -1:
             std.eprint("Could not find entry.")
             return entry
-        return self.project.modpack.get_mods_descriptions()[index]
+        return self.project.get_mods_descriptions()[index]
     
     def add_option(self, option: str, action=None, help: str="") -> None:
         """
@@ -173,7 +173,7 @@ class Menu:
         submenu = Menu(
             project=self.project, 
             title="Which project do you want to load?",
-            menu_entries=std.get_project_files() + ["Enter filename"],
+            menu_entries=self.project.get_project_files() + ["Enter filename"],
             parent_menu=self
         )
         
@@ -251,7 +251,7 @@ class Menu:
         Add mods to the project based on provided IDs and handle dependencies.
         """
         ids = [id for id in ids if self.project.is_mod_installed(id) == -1]
-        self.project.modpack._processing_mods.update(ids)
+        self.project._processing_mods.update(ids)
         info_list = await self.project.fetch_mods_by_ids(ids)
         if not any(info_list):
             std.eprint("[ERROR] Could not retrieve mods.")
@@ -273,11 +273,11 @@ class Menu:
                     self.project.add_mod(info_dict["slug"], version, 
                                          project_info=info_dict)
                     if len(version["dependencies"]) > 0:
-                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) == -1 and dep["project_id"] not in self.project.modpack._processing_mods]
+                        required_ids = [dep["project_id"] for dep in version["dependencies"] if dep["dependency_type"] == "required" and self.project.is_mod_installed(dep["project_id"]) == -1 and dep["project_id"] not in self.project._processing_mods]
                         if required_ids:
                             await self.add_mods_action(required_ids)
                     
-                    self.project.modpack._processing_mods.add(version["project_id"])
+                    self.project._processing_mods.add(version["project_id"])
                     submenu.menu_active = False  # Close sub menu (version list)
 
             submenu.handle_selection = handle_selection
@@ -304,8 +304,8 @@ class Menu:
         kwargs = {
             "query": query,
             "facets": [
-                [f"categories:{self.project.modpack.mod_loader}"],
-                [f"versions:{self.project.modpack.mc_version}"]
+                [f"categories:{self.project.mod_loader}"],
+                [f"versions:{self.project.mc_version}"]
             ],
             "limit": 100
         }
@@ -354,12 +354,12 @@ class Menu:
         """
         Display submenu for updating mods in the current project.
         """
-        if not self.project.modpack.mod_data:
+        if not self.project.mod_data:
             return OPEN  # Keep main menu open
         
         def _get_menu_entries():
             """Generate menu entries dynamically."""
-            return ["[Select All Mods]"] + self.project.modpack.get_mods_name_ver()
+            return ["[Select All Mods]"] + self.project.get_mods_name_ver()
         
         submenu = Menu(
             project=self.project, 
@@ -370,16 +370,16 @@ class Menu:
         )
         
         async def handle_selection(selected_index):
-            if not self.project.modpack.mod_data:
+            if not self.project.mod_data:
                 return
             submenu.cursor_index = selected_index[0]
             selected_index = np.array(selected_index)
             if 0 in selected_index:
-                selected_index = np.arange(len(self.project.modpack.mod_data))
+                selected_index = np.arange(len(self.project.mod_data))
             else:
                 selected_index = selected_index - 1
             
-            ids = [mod.project_id for mod in self.project.modpack.mod_data]
+            ids = [mod.project_id for mod in self.project.mod_data]
             selected_ids = sorted([ids[i] for i in selected_index])
 
             # Fetch mod information concurrently
@@ -392,7 +392,7 @@ class Menu:
             info_dict_by_id = {info["id"]: info for info in info_list}
 
             for index, mod_id in zip(selected_index, selected_ids):
-                mod_data = self.project.modpack.mod_data[index]
+                mod_data = self.project.mod_data[index]
                 if mod_id not in info_dict_by_id:
                     std.eprint(f"[ERROR] No information found for mod ID {mod_id}")
                     continue
@@ -409,7 +409,7 @@ class Menu:
                         elif inp == QUIT:
                             return OPEN
                     else:
-                        print(f"{self.project.modpack.get_mods_name_ver()[index]} is up to date")
+                        print(f"{self.project.get_mods_name_ver()[index]} is up to date")
                 else:
                     std.eprint(f"[ERROR] No versions found for {info_dict['title']} ({info_dict['id']})")
         
@@ -422,12 +422,12 @@ class Menu:
         """
         Display submenu for removing mods from the current project.
         """
-        if len(self.project.modpack.mod_data) == 0:
+        if len(self.project.mod_data) == 0:
             return OPEN  # Keep main menu open
         
         def get_menu_entries():
             # Add the "Select All Mods" option dynamically
-            return ["[Remove All Mods]"] + self.project.modpack.get_mods_name_ver()
+            return ["[Remove All Mods]"] + self.project.get_mods_name_ver()
         
         submenu = Menu(
                 project=self.project, 
@@ -437,10 +437,10 @@ class Menu:
                 multi_select=True
             )
         async def handle_selection(selected_index):
-            if len(self.project.modpack.mod_data) == 0:
+            if len(self.project.mod_data) == 0:
                 return
             if 0 in selected_index:
-                selected_index = np.arange(len(self.project.modpack.get_mods_name_ver()))
+                selected_index = np.arange(len(self.project.get_mods_name_ver()))
             else:
                 selected_index = [i-1 for i in selected_index]
                 
@@ -498,31 +498,31 @@ class Menu:
         """
         Display submenu for listing mods in the current project.
         """
-        if len(self.project.modpack.mod_data) == 0:
+        if len(self.project.mod_data) == 0:
             return OPEN  # Keep main menu open
         
         submenu = Menu(
                 project=self.project, 
                 title="The mods currently in this project.",
-                menu_entries=self.project.modpack.get_mods_name_ver(),  # Updatable
+                menu_entries=self.project.get_mods_name_ver(),  # Updatable
                 status_bar=self.get_entry_description
             )
         async def handle_selection(selected_index):
-            std.get_input(f"Changelog of {self.project.modpack.mod_data[selected_index].name}: {self.project.modpack.mod_data[selected_index].changelog}")
+            std.get_input(f"Changelog of {self.project.mod_data[selected_index].name}: {self.project.mod_data[selected_index].changelog}")
 
         submenu.handle_selection = handle_selection
         await submenu.display()
         return OPEN
 
     async def export_modpack_action(self) -> bool:
-        if len(self.project.modpack.mod_data) == 0:
+        if len(self.project.mod_data) == 0:
             return OPEN  # Keep main menu open
         filename = std.get_input("Please enter a filename where the mrpack archive must be created: ")
         await self.project.export_modpack(filename)
         return OPEN
     
     async def download_modpack_action(self) -> bool:
-        if len(self.project.modpack.mod_data) == 0:
+        if len(self.project.mod_data) == 0:
             return OPEN  # Keep main menu open
         
         dir_name = std.get_input("Please enter a directory where the mods must be downloaded to: ")
