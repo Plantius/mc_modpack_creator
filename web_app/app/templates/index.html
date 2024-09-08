@@ -17,7 +17,18 @@
                 <button type="submit">Load Project</button>
             </form>
         {% else %}
-            <h2>No Project Loaded</h2>
+            </header>
+                <h1>{{ project.modpack.title }}</h1>
+            </header>
+            <h2>Description</h2>
+            <p>{{ project.modpack.description }}</p>
+            <h2>Mods</h2>
+            <ul>
+                {% for mod in project.modpack.mod_data %}
+                    <li>{{ mod.title }} - {{ mod.version_number }}</li>
+                {% endfor %}
+            </ul>
+            <!-- <h2>No Project Loaded</h2>
             <form action="{{ url_for('main.create_project') }}" method="post">
                 <input type="text" name="title" placeholder="Project Title" required>
                 <input type="text" name="description" placeholder="Description" required>
@@ -28,7 +39,7 @@
                 <input type="text" name="client_side" placeholder="Client Side" required>
                 <input type="text" name="server_side" placeholder="Server Side" required>
                 <button type="submit">Create Project</button>
-            </form>
+            </form> -->
         {% endif %}
     </main>
 </body>

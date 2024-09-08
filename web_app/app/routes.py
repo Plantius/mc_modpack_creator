@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g
-from .models import Mod, Modpack, db
+import mc_mp.standard as std
+import asyncio
 
 bp = Blueprint('main', __name__)
 
@@ -10,58 +11,73 @@ def home():
         return render_template('index.html')
     return render_template('index.html', project=project)
 
-@bp.route('/load_project', methods=['POST'])
-def load_project():
-    title = request.form.get('title')
-    modpack = Modpack.query.filter_by(title=title).first()
-    if not modpack:
-        flash('Modpack not found!', 'error')
-        return redirect(url_for('main.home'))
-    mods = Mod.query.filter_by(modpack_id=modpack.id).all()
-    return render_template('project.html', modpack=modpack, mods=mods)
+@bp.route('/load_project', methods=['GET', 'POST'])
+async def load_project():
+    if request.method == 'POST':
+        filename = request.form.get('filename')
+        if filename:
+            # Run async function in event loop
+            success = await g.project.load_project(filename)
+            if success:
+                flash('Project loaded successfully!', 'success')
+                return redirect(url_for('main.home'))
+            else:
+                flash('Failed to load the project!', 'error')
+        else:
+            flash('No project file selected!', 'error')
+        return redirect(url_for('main.load_project'))
+
+    # List all project files
+    return render_template('load_project.html', project_files=std.get_project_files())
 
 @bp.route('/save_project', methods=['POST'])
-def save_project():
-    title = request.form.get('title')
-    description = request.form.get('description')
-    build_date = request.form.get('build_date')
-    build_version = request.form.get('build_version')
-    mc_version = request.form.get('mc_version')
-    mod_loader = request.form.get('mod_loader')
-    client_side = request.form.get('client_side')
-    server_side = request.form.get('server_side')
+async def save_project():
+    # title = request.form.get('title')
+    # description = request.form.get('description')
+    # build_date = request.form.get('build_date')
+    # build_version = request.form.get('build_version')
+    # mc_version = request.form.get('mc_version')
+    # mod_loader = request.form.get('mod_loader')
+    # client_side = request.form.get('client_side')
+    # server_side = request.form.get('server_side')
 
-    modpack = Modpack(title=title, description=description, build_date=build_date,
-                      build_version=build_version, mc_version=mc_version,
-                      mod_loader=mod_loader, client_side=client_side, server_side=server_side)
-    db.session.add(modpack)
-    db.session.commit()
-    flash('Modpack saved successfully!', 'success')
+    # # Run async functions if needed
+    # loop = asyncio.get_event_loop()
+    # modpack = Modpack(title=title, description=description, build_date=build_date,
+    #                   build_version=build_version, mc_version=mc_version,
+    #                   mod_loader=mod_loader, client_side=client_side, server_side=server_side)
+    # db.session.add(modpack)
+    # db.session.commit()
+    # flash('Modpack saved successfully!', 'success')
     return redirect(url_for('main.home'))
 
 @bp.route('/create_project', methods=['POST'])
-def create_project():
-    title = request.form.get('title')
-    description = request.form.get('description')
-    build_date = request.form.get('build_date')
-    build_version = request.form.get('build_version')
-    mc_version = request.form.get('mc_version')
-    mod_loader = request.form.get('mod_loader')
-    client_side = request.form.get('client_side')
-    server_side = request.form.get('server_side')
+async def create_project():
+    # title = request.form.get('title')
+    # description = request.form.get('description')
+    # build_date = request.form.get('build_date')
+    # build_version = request.form.get('build_version')
+    # mc_version = request.form.get('mc_version')
+    # mod_loader = request.form.get('mod_loader')
+    # client_side = request.form.get('client_side')
+    # server_side = request.form.get('server_side')
 
-    modpack = Modpack(title=title, description=description, build_date=build_date,
-                      build_version=build_version, mc_version=mc_version,
-                      mod_loader=mod_loader, client_side=client_side, server_side=server_side)
-    db.session.add(modpack)
-    db.session.commit()
-    flash('Modpack created successfully!', 'success')
+    # # Run async functions if needed
+    # loop = asyncio.get_event_loop()
+    # modpack = Modpack(title=title, description=description, build_date=build_date,
+    #                   build_version=build_version, mc_version=mc_version,
+    #                   mod_loader=mod_loader, client_side=client_side, server_side=server_side)
+    # db.session.add(modpack)
+    # db.session.commit()
+    # flash('Modpack created successfully!', 'success')
     return redirect(url_for('main.home'))
 
 @bp.route('/list_mods')
-def list_mods():
-    mods = Mod.query.all()
-    return render_template('list_mods.html', mods=mods)
+async def list_mods():
+    # Run async function if needed
+    # loop = asyncio.get_event_loop()
+    # mods = await loop.run_in_executor(None, lambda: Mod.query.all())
+    return render_template('list_mods.html')
 
 @bp.route('/error')
 def error_page():

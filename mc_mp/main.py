@@ -6,7 +6,7 @@ Last Edited: 2024-09-07
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-from mc_mp.modpack import project
+from mc_mp.modpack.project import Project
 from mc_mp.args_parser import args_parser
 from mc_mp.menu import main_menu
 import asyncio
@@ -15,7 +15,7 @@ from web_app.app import create_app, db
 
 async def main():
     # Initialize project and flags
-    p = project.Project()
+    p = Project()
 
     # Parse command-line arguments
     args = args_parser.parse_arguments()

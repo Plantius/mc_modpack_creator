@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Project</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles_project.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Load a Project</h1>
+        <nav>
+            <a href="{{ url_for('main.home') }}">Home</a>
+            <a href="{{ url_for('main.create_project') }}">Create Project</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section>
+            <h2>Select a Project to Load</h2>
+            
+            <!-- Form to load project -->
+            <form action="{{ url_for('main.load_project') }}" method="post">
+                <label for="filename">Choose a project file:</label>
+                <select name="filename" id="filename">
+                    {% for file in project_files %}
+                        <option value="{{ file }}">{{ file }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Load Project</button>
+            </form>
+            
+            <!-- Display flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2024 MC Modpack Creator</p>
+    </footer>
+</body>
+</html>
