@@ -78,7 +78,7 @@ class ProjectDAO:
     async def insert_mods(self, parent_id: int, mod_data: List[Mod]):
         async with self.conn.cursor() as cursor:
             await cursor.executemany('''
-                INSERT INTO Mod (
+                INSERT OR REPLACE INTO Mod (
                     parent_id, project_id, title, description, 
                     name, changelog, version_number, mc_versions, mod_loaders, 
                     mod_id, date_published, dependencies, files)
