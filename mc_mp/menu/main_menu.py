@@ -166,7 +166,7 @@ class Menu:
     
     async def load_project_action(self) -> bool:
         """
-        Handle loading a project and prompt for a filename or select from existing files.
+        Handle loading a project and prompt for a slug or select from existing files.
         """
         if self.project.metadata["loaded"] and not await self.save_project_action():
             std.eprint("[ERROR] Could not save current project.")
@@ -175,18 +175,19 @@ class Menu:
         submenu = Menu(
             project=self.project, 
             title="Which project do you want to load?",
-            menu_entries=self.project.get_project_files() + ["Enter filename"],
+            menu_entries=[],
             parent_menu=self
         )
+        submenu.menu_entries = await self.project.get_project_files() + ["Enter slug"]
         
         async def handle_selection(selected_index):
-            filename = None
-            if submenu.menu_entries[selected_index] == "Enter filename":
-                filename = std.get_input("Please enter a project file: ")
+            slug = None
+            if submenu.menu_entries[selected_index] == "Enter slug":
+                slug = std.get_input("Please enter a project slug: ")
             else:
-                filename = submenu.menu_entries[selected_index]
-            if filename:
-                await self.project.load_project(filename)
+                slug = submenu.menu_entries[selected_index]
+            if slug:
+                await self.project.load_project(slug)
                 submenu.menu_active = False
             
         submenu.handle_selection = handle_selection
@@ -224,14 +225,14 @@ class Menu:
     
     async def save_project_action(self) -> bool:
         """
-        Handle saving the current project to a specified filename.
+        Handle saving the current project to a specified slug.
         """
         if self is Menu.main_menu_instance and not self.project.metadata["saved"]:
             if std.get_input("Do you want to save the project? y/n: ") == ACCEPT:
-                filename = std.get_input("Please enter the filename to save to: ") \
-                    if std.get_input("Do you want to save the project to a new file? y/n: ") == ACCEPT \
+                slug = std.get_input("Please enter slug to save the project as: ") \
+                    if std.get_input("Do you want to save the project with a new slug? y/n: ") == ACCEPT \
                     else ""
-                await self.project.save_project(filename)
+                await self.project.save_project(slug)
         return OPEN  # Keep main menu open
     
     async def add_mods_menu(self) -> bool:

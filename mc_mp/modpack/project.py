@@ -10,16 +10,114 @@ import asyncio
 import json
 import glob
 import os
-import sqlite3
+import aiosqlite
 from typing import Dict, Any, List
 
+
+class ProjectDAO:
+    def __init__(self, db_file: str) -> None:
+        self.db_file = db_file
+
+    async def __aenter__(self):
+        self.conn = await aiosqlite.connect(self.db_file, check_same_thread=False)
+        await self.create_tables()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        if hasattr(self, 'conn'):
+            await self.conn.close()
+
+    async def create_tables(self):
+        async with self.conn.cursor() as cursor:
+            await cursor.execute('''
+                CREATE TABLE IF NOT EXISTS Project (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    uuid TEXT UNIQUE,
+                    title TEXT,
+                    description TEXT,
+                    mc_version TEXT,
+                    mod_loader TEXT,
+                    client_side TEXT,
+                    server_side TEXT,
+                    slug TEXT UNIQUE
+                )''')
+
+            await cursor.execute('''
+                CREATE TABLE IF NOT EXISTS Mod (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    parent_id INTEGER,
+                    project_id TEXT UNIQUE,
+                    title TEXT,
+                    description TEXT,
+                    name TEXT,
+                    changelog TEXT,
+                    version_number TEXT,
+                    mc_versions TEXT,
+                    mod_loaders TEXT,
+                    mod_id TEXT,
+                    date_published TEXT,
+                    dependencies TEXT,
+                    files TEXT,
+                    FOREIGN KEY(parent_id) REFERENCES Project(id)
+                )''')
+            await self.conn.commit()
+
+    async def insert_project(self, project_data: Dict[str, Any]) -> int:
+        async with self.conn.cursor() as cursor:
+            await cursor.execute('''
+                INSERT OR REPLACE INTO Project (
+                    uuid, title, description, mc_version, 
+                    mod_loader, client_side, server_side, slug
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (project_data["uuid"], project_data["title"], project_data["description"], 
+                      project_data["mc_version"], project_data["mod_loader"], project_data["client_side"], 
+                      project_data["server_side"], project_data["slug"]))
+            await self.conn.commit()
+            return cursor.lastrowid
+
+    async def insert_mods(self, parent_id: int, mod_data: List[Mod]):
+        async with self.conn.cursor() as cursor:
+            await cursor.executemany('''
+                INSERT INTO Mod (
+                    parent_id, project_id, title, description, 
+                    name, changelog, version_number, mc_versions, mod_loaders, 
+                    mod_id, date_published, dependencies, files)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', [(
+                    parent_id, mod.project_id, mod.title, mod.description,
+                    mod.name, mod.changelog, mod.version_number, json.dumps(mod.mc_versions), 
+                    json.dumps(mod.mod_loaders, ensure_ascii=False), mod.id, mod.date_published,
+                    json.dumps(mod.dependencies, ensure_ascii=False), json.dumps(mod.files, ensure_ascii=False)
+                ) for mod in mod_data])
+            await self.conn.commit()
+
+    async def fetch_project(self, slug: str) -> tuple[List[tuple], List[str]]:
+        async with self.conn.cursor() as cursor:
+            await cursor.execute("SELECT * FROM Project WHERE slug=?", (slug,))
+            columns = [desc[0] for desc in cursor.description]
+            project_data = await cursor.fetchone()
+            return project_data, columns
+
+    async def fetch_mods(self, parent_id: int) -> tuple[List[tuple], List[str]]:
+        async with self.conn.cursor() as cursor:
+            await cursor.execute("SELECT * FROM Mod WHERE parent_id=?", (parent_id,))
+            columns = [desc[0] for desc in cursor.description]
+            mods_data = await cursor.fetchall()
+            return mods_data, columns
+
+    async def fetch_project_names(self) -> List[str]:
+        
+        async with self.conn.cursor() as cursor:
+            await cursor.execute("SELECT slug FROM Project")
+            files = await cursor.fetchall()
+            return [file[0] for file in files]
+    
 class Project:
-    conn: sqlite3.Connection
     api: ProjectAPI
     metadata: Dict[str, Any] = {
         "loaded": False,
         "saved": True,
-        "filename": "project1",
+        "slug": "project1",
         "uuid": None
     }
     title: str = "Modpack"
@@ -35,54 +133,15 @@ class Project:
     def __init__(self, db_file: str = "project1.db", **kwargs) -> None:
         # Initialize database and create tables
         self.api = ProjectAPI()
-        self.conn = sqlite3.connect(db_file, check_same_thread=False)
-        self.create_tables()
+        self.db_file = db_file
         for key, value in kwargs.items():
             setattr(self, key, value)
         self._processing_mods: set = set()
     
-    def __del__(self):
-        if self.conn:
-            self.conn.close()
-    
-    def create_tables(self):
-        cursor = self.conn.cursor()
-
-        # Create Project table
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Project (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            uuid TEXT UNIQUE,
-            title TEXT,
-            description TEXT,
-            mc_version TEXT,
-            mod_loader TEXT,
-            client_side TEXT,
-            server_side TEXT,
-            filename TEXT UNIQUE
-        )''')
-
-        # Create Mod table
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Mod (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            parent_id INTEGER,
-            project_id TEXT UNIQUE,
-            title TEXT,
-            description TEXT,
-            name TEXT,
-            changelog TEXT,
-            version_number TEXT,
-            mc_versions TEXT,
-            mod_loaders TEXT,
-            mod_id TEXT,
-            date_published TEXT,
-            dependencies TEXT,
-            files TEXT,
-            FOREIGN KEY(parent_id) REFERENCES Project(id)
-        )''')
-        self.conn.commit()
-
+    async def create_tables(self) -> None:
+        async with ProjectDAO(self.db_file) as dao:
+            await dao.create_tables()
+            
     @std.sync_timing
     def is_mod_installed(self, id: str) -> int:
         return std.get_index([m.project_id for m in self.mod_data], id)
@@ -92,6 +151,23 @@ class Project:
         new_mod_date = parser.parse(new_date)
         current_mod_date = parser.parse(current_date)
         return new_mod_date > current_mod_date
+    
+    @std.sync_timing
+    def sort_mods(self) -> None:
+        self.mod_data.sort(key=lambda mod: mod.project_id)
+
+    @std.sync_timing
+    def get_mods_name_ver(self) -> List[str]:
+        return [f"{item.title} - {item.version_number}" for item in self.mod_data]
+
+    @std.sync_timing
+    def get_mods_descriptions(self) -> List[str]:
+        return [item.description for item in self.mod_data]
+
+    async def get_project_files(self) -> list:
+        """Returns a sorted list of JSON files in the current directory."""
+        async with ProjectDAO(self.db_file) as dao:
+            return await dao.fetch_project_names()
 
     @std.sync_timing
     def create_project(self, **kwargs) -> bool:
@@ -111,86 +187,60 @@ class Project:
             return False
     
     @std.async_timing
-    async def load_project(self, filename: str) -> bool:
-        cursor = self.conn.cursor()
-        # Load project metadata from database
-        try:
-            cursor.execute("SELECT * FROM Project WHERE filename=?", (filename,))
-        except sqlite3.DatabaseError as e:
-            std.eprint(f"[ERROR] Database error occurred: {e}")
+    async def load_project(self, slug: str) -> bool:
+        async with ProjectDAO(self.db_file) as dao:
+            project_data, project_columns = await dao.fetch_project(slug)
+            
+            if project_data:
+                # Update metadata with project details
+                self.metadata.update({
+                    "loaded": True,
+                    "saved": True,
+                    "project_id": project_data[1],
+                    "slug": project_data[8]
+                })
+                for key, value in dict(zip(project_columns, project_data)).items():
+                    setattr(self, key, value)
+
+                # Clear existing mods and load new ones
+                self.mod_data.clear()
+                mods_data, mod_columns = await dao.fetch_mods(project_data[0])
+                for mod_row in mods_data:
+                    mod_item = dict(zip(mod_columns, mod_row))
+                    mod = Mod()
+                    mod.load_json(mod_item)
+                    self.mod_data.append(mod)
+
+                return True
             return False
-        
-        project_data = cursor.fetchone()
-
-        if project_data:
-            self.metadata.update({
-                "loaded": True,
-                "saved": True,
-                "project_id": project_data[1],
-                "filename": project_data[8]
-            })
-            for key, value in  {"title": project_data[2],
-                                "description": project_data[3],
-                                "mc_version": project_data[4],
-                                "mod_loader": project_data[5],
-                                "client_side": project_data[6],
-                                "server_side": project_data[7]}.items():
-                setattr(self, key, value)
-                
-            self.mod_data.clear()
-            # Load mods associated with the project
-            cursor.execute("SELECT * FROM Mod WHERE parent_id=?", (project_data[0],))
-            mods_data = cursor.fetchall()
-            for item in [dict(zip([str(c[0]) for c in cursor.description][1:], mod[1:])) for mod in mods_data]:
-                mod = Mod()
-                mod.load_json(item)
-                self.mod_data.append(mod)
-
-            return True
-        return False
 
     @std.async_timing
-    async def save_project(self, filename: str="") -> bool:
-        filename = filename if filename != "" else self.metadata["filename"]
-        cursor = self.conn.cursor()
+    async def save_project(self, slug: str = "") -> bool:
+        slug = slug if slug != "" else self.metadata["slug"]
+        if not self.metadata["loaded"]:
+            std.eprint("[ERROR] Project must be created before saving.")
+            return False
 
-        # Save project metadata
-        cursor.execute('''
-        INSERT OR REPLACE INTO Project (
-            uuid, title, description, mc_version, 
-            mod_loader, client_side, server_side, filename
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (self.metadata["uuid"], self.title, self.description, 
-              self.mc_version, self.mod_loader, self.client_side, 
-              self.server_side, filename))
+        try:
+            async with ProjectDAO(self.db_file) as dao:
+                parent_id = await dao.insert_project({
+                    "uuid": self.metadata["uuid"],
+                    "title": self.title,
+                    "description": self.description,
+                    "mc_version": self.mc_version,
+                    "mod_loader": self.mod_loader,
+                    "client_side": self.client_side,
+                    "server_side": self.server_side,
+                    "slug": slug
+                })
+                await dao.insert_mods(parent_id, self.mod_data)
 
-        parent_id = cursor.lastrowid
-        # Save associated mods
-        cursor.executemany('''
-            INSERT INTO Mod (
-                parent_id, project_id, title, description, 
-                name, changelog, version_number, mc_versions, mod_loaders, 
-                mod_id, date_published, dependencies, files)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', [(
-                parent_id, mod.project_id, mod.title, mod.description,
-                mod.name, mod.changelog, mod.version_number, json.dumps(mod.mc_versions), 
-                json.dumps(mod.mod_loaders, ensure_ascii=False), mod.id, mod.date_published,
-                json.dumps(mod.dependencies, ensure_ascii=False), json.dumps(mod.files, ensure_ascii=False)
-            ) for mod in self.mod_data])
-        
-        # for mod in self.mod_data:
-        #     cursor.execute('''
-        #     INSERT INTO Mod (
-        #         parent_id, project_id, title, description, 
-        #         name, changelog, version_number, mc_versions, mod_loaders, id,
-        #         date_published, dependencies, files)
-        #     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        #     ''', )
-
-        self.conn.commit()
-        self.metadata["saved"] = True
-        return True
+            self.metadata["saved"] = True
+            self.metadata["slug"] = slug
+            return True
+        except Exception as e:
+            std.eprint(f"[ERROR] Failed to save project: {e}")
+            return False
 
     @std.async_timing
     async def search_mods(self, **kwargs) -> dict:
@@ -289,9 +339,9 @@ class Project:
         future = asyncio.run_coroutine_threadsafe(self.api.get_file_from_url(**file_info), loop)
         future.result()
 
-        if not std.check_hash(f'{PROJECT_DIR}/{file_info["filename"]}', file_info["hashes"]):
-            std.eprint(f"[ERROR] Wrong hash for file: {file_info['filename']}")
-            os.remove(f'{PROJECT_DIR}/{file_info["filename"]}')
+        if not std.check_hash(f'{PROJECT_DIR}/{file_info["slug"]}', file_info["hashes"]):
+            std.eprint(f"[ERROR] Wrong hash for file: {file_info['slug']}")
+            os.remove(f'{PROJECT_DIR}/{file_info["slug"]}')
             return False
         return True
 
@@ -330,24 +380,6 @@ class Project:
             "fileSize": mod["size"]
         }
 
-    @std.sync_timing
-    def sort_mods(self) -> None:
-        self.mod_data.sort(key=lambda mod: mod.project_id)
-
-    @std.sync_timing
-    def get_mods_name_ver(self) -> List[str]:
-        return [f"{item.title} - {item.version_number}" for item in self.mod_data]
-
-    @std.sync_timing
-    def get_mods_descriptions(self) -> List[str]:
-        return [item.description for item in self.mod_data]
-
-    def get_project_files(self) -> list:
-        """Returns a sorted list of JSON files in the current directory."""
-        cursor = self.conn.cursor()
-        # Load project metadata from database
-        files = [file[0] for file in cursor.execute("SELECT filename FROM Project")]
-        return files if files else []
 
     @std.async_timing
     async def export_modpack(self, filename: str) -> bool:

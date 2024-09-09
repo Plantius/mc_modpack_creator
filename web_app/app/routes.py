@@ -25,9 +25,9 @@ async def load_project():
         else:
             print('No project file selected!', 'error')
         return redirect(url_for('main.load_project'))
-
+    project_files = await project.get_project_files()
     # List all project files
-    return render_template('load_project.html', project_files=project.get_project_files())
+    return render_template('load_project.html', project_files=project_files)
 
 @bp.route('/save_project', methods=['POST'])
 async def save_project():
