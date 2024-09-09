@@ -19,12 +19,12 @@
                 <button type="submit">Create Project</button>
             </form>
             {% if project.metadata["loaded"] %}
-                <h1>{{ project.modpack.title }}</h1>
+                <h1>{{ project.title }}</h1>
                 <h2>Description</h2>
-                <p>{{ project.modpack.description }}</p>
+                <p>{{ project.description }}</p>
                 <h2>Mods</h2>
                 <ul>
-                    {% for mod in project.modpack.mod_data %}
+                    {% for mod in project.mod_data %}
                         <li>{{ mod.title }} - {{ mod.version_number }}</li>
                     {% endfor %}
                 </ul>

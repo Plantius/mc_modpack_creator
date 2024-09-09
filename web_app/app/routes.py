@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g
-import mc_mp.standard as std
 
 bp = Blueprint('main', __name__)
 
@@ -19,12 +18,12 @@ async def load_project():
             # Run async function in event loop
             success = await project.load_project(filename)
             if success:
-                flash('Project loaded successfully!', 'success')
+                print('Project loaded successfully!', 'success')
                 return redirect(url_for('main.index'))
             else:
-                flash('Failed to load the project!', 'error')
+                print('Failed to load the project!', 'error')
         else:
-            flash('No project file selected!', 'error')
+            print('No project file selected!', 'error')
         return redirect(url_for('main.load_project'))
 
     # List all project files
@@ -58,7 +57,6 @@ async def create_project():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
-        build_date = request.form.get('build_date')
         build_version = request.form.get('build_version')
         mc_version = request.form.get('mc_version')
         mod_loader = request.form.get('mod_loader')
@@ -67,16 +65,16 @@ async def create_project():
 
         if title and description:
             # Run async function in event loop if needed
-            success = await project.create_project(title=title, description=description, build_date=build_date,
-                                                   build_version=build_version, mc_version=mc_version,
-                                                   mod_loader=mod_loader, client_side=client_side, server_side=server_side)
+            success = project.create_project(title=title, description=description,
+                                             build_version=build_version, mc_version=mc_version,
+                                             mod_loader=mod_loader, client_side=client_side, server_side=server_side)
             if success:
                 flash('Modpack created successfully!', 'success')
                 return redirect(url_for('main.index'))
             else:
-                flash('Failed to create the modpack!', 'error')
+                print('Failed to create the modpack!', 'error')
         else:
-            flash('All fields are required!', 'error')
+            print('All fields are required!', 'error')
         return redirect(url_for('main.create_project'))
 
     # Render the create project form

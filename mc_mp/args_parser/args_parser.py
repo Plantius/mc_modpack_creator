@@ -55,6 +55,15 @@ def create_parser() -> ArgumentParser:
         help="List all mods in the current project"
     )
     
+    # Load a specific databse
+    parser.add_argument(
+        "-s",
+        dest="sqlite_database",
+        type=str,
+        required=False,
+        help="Specify the database to load"
+    )
+    
     # Choose which UI to use
     parser.add_argument(
         "--ui",

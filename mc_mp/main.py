@@ -14,25 +14,28 @@ import mc_mp.standard as std
 from web_app.app import create_app
 
 async def main():
+    args = args_parser.parse_arguments()
+    db: str = ""
     # Initialize project and flags
-    p = Project()
+    if args.sqlite_database:
+        db = args.sqlite_database
+    p = Project(db_file=db if db != "" else "project1.db")
 
     # Parse command-line arguments
-    args = args_parser.parse_arguments()
 
     # Handle CLI commands
     if args.debug:
         std.set_debug_flag(args.debug)
-    if args.create_project and args.create_project:
+    if args.create_project:
         p.create_project(args.create_project)
         p.save_project()
-    if args.list_project and args.list_project:
+    if args.list_project:
         print(*p.list_projects(), sep='\n')
-    if args.load_project and args.load_project:
+    if args.load_project:
         await p.load_project(args.load_project)
-    if args.list_mods and args.list_mods:
+    if args.list_mods:
         print(*p.list_mods(), sep='\n')
-    if args.delete_project and args.delete_project:
+    if args.delete_project:
         p.delete_project(args.delete_project)
         
     # Initialize and display ui

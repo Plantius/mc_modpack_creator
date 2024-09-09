@@ -35,7 +35,7 @@ class Project:
     def __init__(self, db_file: str = "project1.db", **kwargs) -> None:
         # Initialize database and create tables
         self.api = ProjectAPI()
-        self.conn = sqlite3.connect(db_file)
+        self.conn = sqlite3.connect(db_file, check_same_thread=False)
         self.create_tables()
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -90,17 +90,23 @@ class Project:
         return new_mod_date > current_mod_date
 
     @std.sync_timing
-    def create_project(self, **kwargs) -> None:
+    def create_project(self, **kwargs) -> bool:
         # Create a new modpack project with provided kwargs
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.metadata.update({
-            "loaded": True,
-            "saved": False,
-            "project_id": std.generate_project_id()
-        })
-        self.mod_data.clear()
-
+        try:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+            self.metadata.update({
+                "loaded": True,
+                "saved": False,
+                "project_id": std.generate_project_id()
+            })
+            self.mod_data.clear()
+            return True
+        except Exception as e:
+            std.eprint(f"[ERROR] Failed to create project: {e}")
+            return False
+    
+    
     @std.async_timing
     async def load_project(self, filename: str) -> bool:
         cursor = self.conn.cursor()
