@@ -131,7 +131,6 @@ class Project:
                     mods_files = [dict(zip(mod_columns_f[2:], mod[2:])) for mod in mods_files]
                     mods_files = [{**m, "hashes": {"sha1": m["sha1"], "sha512": m["sha512"]}}
                                   for m in mods_files]
-                    print(mods_files)
                     
                     mod_item = dict(zip(mod_columns, mod_row))
                     mod_item.update({"dependencies": mods_dependencies,

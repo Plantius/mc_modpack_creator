@@ -31,23 +31,6 @@ async def load_project():
 
 @bp.route('/save_project', methods=['POST'])
 async def save_project():
-    # title = request.form.get('title')
-    # description = request.form.get('description')
-    # build_date = request.form.get('build_date')
-    # build_version = request.form.get('build_version')
-    # mc_version = request.form.get('mc_version')
-    # mod_loader = request.form.get('mod_loader')
-    # client_side = request.form.get('client_side')
-    # server_side = request.form.get('server_side')
-
-    # # Run async functions if needed
-    # loop = asyncio.get_event_loop()
-    # modpack = Modpack(title=title, description=description, build_date=build_date,
-    #                   build_version=build_version, mc_version=mc_version,
-    #                   mod_loader=mod_loader, client_side=client_side, server_side=server_side)
-    # db.session.add(modpack)
-    # db.session.commit()
-    # flash('Modpack saved successfully!', 'success')
     return redirect(url_for('main.index'))
 
 @bp.route('/create_project', methods=['GET', 'POST'])
