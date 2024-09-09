@@ -40,7 +40,7 @@ class Project:
         for key, value in kwargs.items():
             setattr(self, key, value)
         self._processing_mods: set = set()
-
+    
     def create_tables(self):
         cursor = self.conn.cursor()
 

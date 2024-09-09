@@ -82,10 +82,8 @@ async def create_project():
 
 @bp.route('/list_mods')
 async def list_mods():
-    # Run async function if needed
-    # loop = asyncio.get_event_loop()
-    # mods = await loop.run_in_executor(None, lambda: Mod.query.all())
-    return render_template('list_mods.html')
+    project = g.project
+    return render_template('list_mods.html', mods=project.mod_data)
 
 @bp.route('/error')
 def error_page():

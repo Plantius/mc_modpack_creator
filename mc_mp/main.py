@@ -15,11 +15,11 @@ from web_app.app import create_app
 
 async def main():
     args = args_parser.parse_arguments()
-    db: str = ""
     # Initialize project and flags
     if args.sqlite_database:
-        db = args.sqlite_database
-    p = Project(db_file=db if db != "" else "project1.db")
+        p = Project(args.sqlite_database)
+    else :
+        p = Project()
 
     # Parse command-line arguments
 
