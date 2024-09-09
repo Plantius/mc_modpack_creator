@@ -1,3 +1,11 @@
+"""
+Author: Plantius (https://github.com/Plantius)
+Filename: ./mc_mp/modpack/project.py
+Last Edited: 2024-09-10
+
+This module is part of the MC Modpack Creator project. For more details, visit:
+https://github.com/Plantius/mc_modpack_creator
+"""
 from typing import Dict, Any, List
 from mc_mp.constants import (FORMAT_VERSION, 
                              GAME, MAX_WORKERS, MOD_PATH, 
@@ -108,12 +116,31 @@ class Project:
                 # Clear existing mods and load new ones
                 self.mod_data.clear()
                 mods_data, mod_columns = await dao.fetch_mods(project_data[0])
+                
                 for mod_row in mods_data:
+                    mods_dependencies, mod_columns_d = await dao.fetch_mods_dependencies(mod_row[0])
+                    mods_dependencies = [dict(zip(mod_columns_d[2:], mod[2:])) for mod in mods_dependencies]
+                 
+                    mods_loaders, mod_columns_l = await dao.fetch_mods_loaders(mod_row[0])
+                    mods_loaders = [dict(zip(mod_columns_l[2:], mod[2:])) for mod in mods_loaders]
+                 
+                    mods_versions, mod_columns_v = await dao.fetch_mods_versions(mod_row[0])
+                    mods_versions = [dict(zip(mod_columns_v[2:], mod[2:])) for mod in mods_versions]
+                 
+                    mods_files, mod_columns_f = await dao.fetch_mods_files(mod_row[0])
+                    mods_files = [dict(zip(mod_columns_f[2:], mod[2:])) for mod in mods_files]
+                    mods_files = [{**m, "hashes": {"sha1": m["sha1"], "sha512": m["sha512"]}}
+                                  for m in mods_files]
+                    print(mods_files)
+                    
                     mod_item = dict(zip(mod_columns, mod_row))
+                    mod_item.update({"dependencies": mods_dependencies,
+                                     "mc_versions": mods_versions,
+                                     "mod_loaders": mods_loaders,
+                                     "files": mods_files})
                     mod = Mod()
                     mod.load_json(mod_item)
                     self.mod_data.append(mod)
-
                 return True
             return False
 
@@ -238,40 +265,34 @@ class Project:
         ]
         return mods_ver_info
 
-    @std.sync_timing
-    def download_file(self, file_info, loop) -> bool:
-        future = asyncio.run_coroutine_threadsafe(self.api.get_file_from_url(**file_info), loop)
-        future.result()
+    @std.async_timing
+    async def download_file(self, file_info: dict) -> bool:
+        # Directly await the coroutine instead of running it via a future
+        await self.api.get_file_from_url(**file_info)
 
-        if not std.check_hash(f'{PROJECT_DIR}/{file_info["slug"]}', file_info["hashes"]):
-            std.eprint(f"[ERROR] Wrong hash for file: {file_info['slug']}")
-            os.remove(f'{PROJECT_DIR}/{file_info["slug"]}')
+        # Check the hash after the file is downloaded
+        if not std.check_hash(f'{PROJECT_DIR}/{file_info["filename"]}', file_info["hashes"]):
+            std.eprint(f"[ERROR] Wrong hash for file: {file_info['filename']}")
+            os.remove(f'{PROJECT_DIR}/{file_info["filename"]}')
             return False
         return True
 
     @std.async_timing
-    async def download_mods(self, dir_name: str) -> bool:
+    async def download_mods(self) -> bool:
         try:
-            os.makedirs(dir_name)
+            os.makedirs(PROJECT_DIR)
         except FileExistsError:
-            std.eprint("[ERROR] Directory already exists")
-            return False
+            pass
 
-        # Prepare file information
-        files = [file[0] for file in [[file for file in m.files if file["primary"]] for m in self.mod_data]]
+        files = [file[0] for file in [[file for file in m.files if file["primary_flag"]] for m in self.mod_data]]
+        tasks = [self.download_file(file) for file in files]
+        
+        results = await asyncio.gather(*tasks)
 
-        loop = asyncio.get_running_loop()
-        with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            tasks = [
-                loop.run_in_executor(executor, self.download_file, file, loop)
-                for file in files
-            ]
-            results = await asyncio.gather(*tasks)
-
-        # Handle errors
-        if not any(results):
+        if not all(results):
             std.eprint("[ERROR] One or more files failed to download or check correctly.")
             return False
+        print(f"[INFO] Mods downloaded to the {PROJECT_DIR} directory.")
         return True
 
     @std.sync_timing
@@ -306,7 +327,7 @@ class Project:
         }
         for mod in self.mod_data:
             for mod_file in mod.files:
-                if not mod_file["primary"]:
+                if not mod_file["primary_flag"]:
                     continue
                 mod_file["env"] = {
                     "client": self.client_side,

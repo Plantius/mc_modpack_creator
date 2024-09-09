@@ -1,3 +1,11 @@
+"""
+Author: Plantius (https://github.com/Plantius)
+Filename: ./mc_mp/modpack/project_dao.py
+Last Edited: 2024-09-10
+
+This module is part of the MC Modpack Creator project. For more details, visit:
+https://github.com/Plantius/mc_modpack_creator
+"""
 from typing import Dict, Any, List
 import aiosqlite
 from mc_mp.modpack.mod import Mod
@@ -79,8 +87,8 @@ class ProjectDAO:
                 CREATE TABLE IF NOT EXISTS ModFile (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     mod_id INTEGER,
-                    path TEXT,
-                    file_size INTEGER,
+                    filename TEXT,
+                    size INTEGER,
                     url TEXT,
                     sha512 TEXT,
                     sha1 TEXT,
@@ -135,7 +143,7 @@ class ProjectDAO:
 
             # Insert files (files)
             await cursor.executemany('''
-                INSERT INTO ModFile (mod_id, path, file_size, url, sha512, sha1, primary_flag, file_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO ModFile (mod_id, filename, size, url, sha512, sha1, primary_flag, file_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', [
                 (mod_id, file["filename"], file["size"], file["url"], file["hashes"]["sha512"], file["hashes"]["sha1"], file["primary"], file["file_type"])
                 for file in mod.files
@@ -153,6 +161,34 @@ class ProjectDAO:
     async def fetch_mods(self, parent_id: int) -> tuple[List[tuple], List[str]]:
         async with self.conn.cursor() as cursor:
             await cursor.execute("SELECT * FROM Mod WHERE parent_id=?", (parent_id,))
+            columns = [desc[0] for desc in cursor.description]
+            mods_data = await cursor.fetchall()
+            return mods_data, columns
+    
+    async def fetch_mods_dependencies(self, mod_id: int) -> tuple[List[tuple], List[str]]:
+        async with self.conn.cursor() as cursor:
+            await cursor.execute("SELECT * FROM ModDependency WHERE mod_id=?", (mod_id,))
+            columns = [desc[0] for desc in cursor.description]
+            mods_data = await cursor.fetchall()
+            return mods_data, columns
+    
+    async def fetch_mods_loaders(self, mod_id: int) -> tuple[List[tuple], List[str]]:
+        async with self.conn.cursor() as cursor:
+            await cursor.execute("SELECT * FROM ModLoader WHERE mod_id=?", (mod_id,))
+            columns = [desc[0] for desc in cursor.description]
+            mods_data = await cursor.fetchall()
+            return mods_data, columns
+    
+    async def fetch_mods_versions(self, mod_id: int) -> tuple[List[tuple], List[str]]:
+        async with self.conn.cursor() as cursor:
+            await cursor.execute("SELECT * FROM ModVersion WHERE mod_id=?", (mod_id,))
+            columns = [desc[0] for desc in cursor.description]
+            mods_data = await cursor.fetchall()
+            return mods_data, columns
+    
+    async def fetch_mods_files(self, mod_id: int) -> tuple[List[tuple], List[str]]:
+        async with self.conn.cursor() as cursor:
+            await cursor.execute("SELECT * FROM ModFile WHERE mod_id=?", (mod_id,))
             columns = [desc[0] for desc in cursor.description]
             mods_data = await cursor.fetchall()
             return mods_data, columns
