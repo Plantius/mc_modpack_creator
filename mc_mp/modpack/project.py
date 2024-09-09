@@ -41,6 +41,10 @@ class Project:
             setattr(self, key, value)
         self._processing_mods: set = set()
     
+    def __del__(self):
+        if self.conn:
+            self.conn.close()
+    
     def create_tables(self):
         cursor = self.conn.cursor()
 
@@ -61,8 +65,9 @@ class Project:
         # Create Mod table
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Mod (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             parent_id INTEGER,
-            project_id TEXT,
+            project_id TEXT UNIQUE,
             title TEXT,
             description TEXT,
             name TEXT,
@@ -70,11 +75,10 @@ class Project:
             version_number TEXT,
             mc_versions TEXT,
             mod_loaders TEXT,
-            id TEXT,
+            mod_id TEXT,
             date_published TEXT,
             dependencies TEXT,
             files TEXT,
-            PRIMARY KEY (parent_id, project_id),
             FOREIGN KEY(parent_id) REFERENCES Project(id)
         )''')
         self.conn.commit()
@@ -106,12 +110,16 @@ class Project:
             std.eprint(f"[ERROR] Failed to create project: {e}")
             return False
     
-    
     @std.async_timing
     async def load_project(self, filename: str) -> bool:
         cursor = self.conn.cursor()
         # Load project metadata from database
-        cursor.execute("SELECT * FROM Project WHERE filename=?", (filename,))
+        try:
+            cursor.execute("SELECT * FROM Project WHERE filename=?", (filename,))
+        except sqlite3.DatabaseError as e:
+            std.eprint(f"[ERROR] Database error occurred: {e}")
+            return False
+        
         project_data = cursor.fetchone()
 
         if project_data:
@@ -127,13 +135,13 @@ class Project:
                                 "mod_loader": project_data[5],
                                 "client_side": project_data[6],
                                 "server_side": project_data[7]}.items():
-                setattr(self, key, value.replace('\\', ''))
+                setattr(self, key, value)
                 
             self.mod_data.clear()
             # Load mods associated with the project
             cursor.execute("SELECT * FROM Mod WHERE parent_id=?", (project_data[0],))
             mods_data = cursor.fetchall()
-            for item in [dict(zip([str(c[0]) for c in cursor.description][1:], [m.replace('\\', '') for m in mod[1:]])) for mod in mods_data]:
+            for item in [dict(zip([str(c[0]) for c in cursor.description][1:], mod[1:])) for mod in mods_data]:
                 mod = Mod()
                 mod.load_json(item)
                 self.mod_data.append(mod)
@@ -157,21 +165,28 @@ class Project:
               self.server_side, filename))
 
         parent_id = cursor.lastrowid
-
         # Save associated mods
-        for mod in self.mod_data:
-            cursor.execute('''
+        cursor.executemany('''
             INSERT INTO Mod (
                 parent_id, project_id, title, description, 
-                name, changelog, version_number, mc_versions, mod_loaders, id,
-                date_published, dependencies, files)
+                name, changelog, version_number, mc_versions, mod_loaders, 
+                mod_id, date_published, dependencies, files)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
+            ''', [(
                 parent_id, mod.project_id, mod.title, mod.description,
                 mod.name, mod.changelog, mod.version_number, json.dumps(mod.mc_versions), 
                 json.dumps(mod.mod_loaders, ensure_ascii=False), mod.id, mod.date_published,
                 json.dumps(mod.dependencies, ensure_ascii=False), json.dumps(mod.files, ensure_ascii=False)
-            ))
+            ) for mod in self.mod_data])
+        
+        # for mod in self.mod_data:
+        #     cursor.execute('''
+        #     INSERT INTO Mod (
+        #         parent_id, project_id, title, description, 
+        #         name, changelog, version_number, mc_versions, mod_loaders, id,
+        #         date_published, dependencies, files)
+        #     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        #     ''', )
 
         self.conn.commit()
         self.metadata["saved"] = True
@@ -189,18 +204,18 @@ class Project:
             return False
 
         self.mod_data.insert(index, Mod(
-            title=project_info["title"],
-            description=project_info["description"],
-            name=version["name"],
-            changelog=version["changelog"],
-            version_number=version["version_number"],
-            dependencies=version["dependencies"],
-            mc_versions=version["game_versions"],
-            mod_loaders=version["loaders"],
-            id=version["id"],
-            project_id=version["project_id"],
-            date_published=version["date_published"],
-            files=version["files"]
+            title=project_info.get("title", ""),
+            description=project_info.get("description", ""),
+            name=version.get("name", ""),
+            changelog=version.get("changelog", ""),
+            version_number=version.get("version_number", ""),
+            dependencies=version.get("dependencies", []),
+            mc_versions=version.get("game_versions", []),
+            mod_loaders=version.get("loaders", []),
+            id=version.get("id", ""),
+            project_id=version.get("project_id", ""),
+            date_published=version.get("date_published", ""),
+            files=version.get("files", [])
         ))
         self.metadata["saved"] = False
         self.sort_mods()
