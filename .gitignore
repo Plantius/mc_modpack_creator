@@ -166,3 +166,5 @@ cython_debug/
 # Mod files
 *.jar
 *.modpack
+*.db
+
