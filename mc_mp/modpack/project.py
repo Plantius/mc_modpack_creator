@@ -136,7 +136,8 @@ class Project:
                     "server_side": self.server_side,
                     "slug": slug
                 })
-                await dao.insert_mods(parent_id, self.mod_data)
+                for mod in self.mod_data:
+                    await dao.insert_mod(parent_id, mod)
 
             self.metadata["saved"] = True
             self.metadata["slug"] = slug

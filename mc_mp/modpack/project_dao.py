@@ -68,8 +68,10 @@ class ProjectDAO:
                 CREATE TABLE IF NOT EXISTS ModDependency (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     mod_id INTEGER,
-                    dependency_name TEXT,
-                    dependency_version TEXT,
+                    version_id TEXT,
+                    project_id TEXT,
+                    file_name TEXT,
+                    dependency_type TEXT,
                     FOREIGN KEY(mod_id) REFERENCES Mod(id) ON DELETE CASCADE
                 )''')
 
@@ -80,8 +82,10 @@ class ProjectDAO:
                     path TEXT,
                     file_size INTEGER,
                     url TEXT,
-                    hash TEXT,
-                    env TEXT,
+                    sha512 TEXT,
+                    sha1 TEXT,
+                    primary_flag BOOLEAN,
+                    file_type TEXT,
                     FOREIGN KEY(mod_id) REFERENCES Mod(id) ON DELETE CASCADE
                 )''')
 
@@ -102,7 +106,7 @@ class ProjectDAO:
 
     async def insert_mod(self, parent_id: int, mod: Mod):
         async with self.conn.cursor() as cursor:
-            # Insert mod data
+            # Insert mod data into the Mod table
             await cursor.execute('''
                 INSERT INTO Mod (
                     parent_id, project_id, title, description, 
@@ -110,9 +114,9 @@ class ProjectDAO:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 parent_id, mod.project_id, mod.title, mod.description, mod.name,
-                mod.changelog, mod.version_number, mod.id, mod.date_published
+                mod.changelog, mod.version_number, mod.mod_id, mod.date_published
             ))
-            mod_id = cursor.lastrowid
+            mod_id = cursor.lastrowid  # Get the inserted mod ID
 
             # Insert Minecraft versions (mc_versions)
             await cursor.executemany('''
@@ -126,14 +130,14 @@ class ProjectDAO:
 
             # Insert dependencies (dependencies)
             await cursor.executemany('''
-                INSERT INTO ModDependency (mod_id, dependency_name, dependency_version) VALUES (?, ?, ?)
-            ''', [(mod_id, dep["name"], dep["version"]) for dep in mod.dependencies])
+                INSERT INTO ModDependency (mod_id, version_id, project_id, file_name, dependency_type) VALUES (?, ?, ?, ?, ?)
+            ''', [(mod_id, dep["version_id"], dep["project_id"], dep["file_name"], dep["dependency_type"]) for dep in mod.dependencies])
 
             # Insert files (files)
             await cursor.executemany('''
-                INSERT INTO ModFile (mod_id, path, file_size, url, hash, env) VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO ModFile (mod_id, path, file_size, url, sha512, sha1, primary_flag, file_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', [
-                (mod_id, file["filename"], file["size"], file["url"], file["hash"], file["env"])
+                (mod_id, file["filename"], file["size"], file["url"], file["hashes"]["sha512"], file["hashes"]["sha1"], file["primary"], file["file_type"])
                 for file in mod.files
             ])
 
