@@ -30,7 +30,7 @@ class Mod:
     mc_versions: list = field(default_factory=lambda: ["1.19"])
     version_type: str = "release"
     mod_loaders: list = field(default_factory=list)
-    id: str = "IIJJKKLL"
+    mod_id: str = "IIJJKKLL"
     project_id: str = "AABBCCDD"
     date_published: str = ""
     dependencies: list[dict] = field(default_factory=list)
@@ -61,7 +61,7 @@ class Mod:
         self.mc_versions = latest_version.get("game_versions", self.mc_versions)
         self.version_type = latest_version.get("version_type", self.version_type)
         self.mod_loaders = latest_version.get("loaders", self.mod_loaders)
-        self.id = latest_version.get("id", self.id)
+        self.mod_id = latest_version.get("mod_id", self.mod_id)
         self.project_id = latest_version.get("project_id", self.project_id)
         self.date_published = latest_version.get("date_published", self.date_published)
         self.files = latest_version.get("files", self.files)

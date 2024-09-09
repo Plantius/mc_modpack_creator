@@ -165,7 +165,7 @@ class Project:
             dependencies=version.get("dependencies", []),
             mc_versions=version.get("game_versions", []),
             mod_loaders=version.get("loaders", []),
-            id=version.get("id", ""),
+            mod_id=version.get("id", ""),
             project_id=version.get("project_id", ""),
             date_published=version.get("date_published", ""),
             files=version.get("files", [])

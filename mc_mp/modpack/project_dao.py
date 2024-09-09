@@ -1,6 +1,5 @@
 from typing import Dict, Any, List
 import aiosqlite
-import json
 from mc_mp.modpack.mod import Mod
 
 class ProjectDAO:
@@ -18,6 +17,7 @@ class ProjectDAO:
 
     async def create_tables(self):
         async with self.conn.cursor() as cursor:
+            # Project table
             await cursor.execute('''
                 CREATE TABLE IF NOT EXISTS Project (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,6 +31,7 @@ class ProjectDAO:
                     slug TEXT UNIQUE
                 )''')
 
+            # Mod table
             await cursor.execute('''
                 CREATE TABLE IF NOT EXISTS Mod (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,14 +42,49 @@ class ProjectDAO:
                     name TEXT,
                     changelog TEXT,
                     version_number TEXT,
-                    mc_versions TEXT,
-                    mod_loaders TEXT,
                     mod_id TEXT,
                     date_published TEXT,
-                    dependencies TEXT,
-                    files TEXT,
                     FOREIGN KEY(parent_id) REFERENCES Project(id)
                 )''')
+
+            # Separate tables for lists (mod_versions, mod_loaders, dependencies, files)
+            await cursor.execute('''
+                CREATE TABLE IF NOT EXISTS ModVersion (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    mod_id INTEGER,
+                    mc_version TEXT,
+                    FOREIGN KEY(mod_id) REFERENCES Mod(id) ON DELETE CASCADE
+                )''')
+
+            await cursor.execute('''
+                CREATE TABLE IF NOT EXISTS ModLoader (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    mod_id INTEGER,
+                    loader TEXT,
+                    FOREIGN KEY(mod_id) REFERENCES Mod(id) ON DELETE CASCADE
+                )''')
+
+            await cursor.execute('''
+                CREATE TABLE IF NOT EXISTS ModDependency (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    mod_id INTEGER,
+                    dependency_name TEXT,
+                    dependency_version TEXT,
+                    FOREIGN KEY(mod_id) REFERENCES Mod(id) ON DELETE CASCADE
+                )''')
+
+            await cursor.execute('''
+                CREATE TABLE IF NOT EXISTS ModFile (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    mod_id INTEGER,
+                    path TEXT,
+                    file_size INTEGER,
+                    url TEXT,
+                    hash TEXT,
+                    env TEXT,
+                    FOREIGN KEY(mod_id) REFERENCES Mod(id) ON DELETE CASCADE
+                )''')
+
             await self.conn.commit()
 
     async def insert_project(self, project_data: Dict[str, Any]) -> int:
@@ -64,20 +100,43 @@ class ProjectDAO:
             await self.conn.commit()
             return cursor.lastrowid
 
-    async def insert_mods(self, parent_id: int, mod_data: List[Mod]):
+    async def insert_mod(self, parent_id: int, mod: Mod):
         async with self.conn.cursor() as cursor:
-            await cursor.executemany('''
-                INSERT OR REPLACE INTO Mod (
+            # Insert mod data
+            await cursor.execute('''
+                INSERT INTO Mod (
                     parent_id, project_id, title, description, 
-                    name, changelog, version_number, mc_versions, mod_loaders, 
-                    mod_id, date_published, dependencies, files)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', [(
-                    parent_id, mod.project_id, mod.title, mod.description,
-                    mod.name, mod.changelog, mod.version_number, json.dumps(mod.mc_versions), 
-                    json.dumps(mod.mod_loaders, ensure_ascii=False), mod.id, mod.date_published,
-                    json.dumps(mod.dependencies, ensure_ascii=False), json.dumps(mod.files, ensure_ascii=False)
-                ) for mod in mod_data])
+                    name, changelog, version_number, mod_id, date_published
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                parent_id, mod.project_id, mod.title, mod.description, mod.name,
+                mod.changelog, mod.version_number, mod.id, mod.date_published
+            ))
+            mod_id = cursor.lastrowid
+
+            # Insert Minecraft versions (mc_versions)
+            await cursor.executemany('''
+                INSERT INTO ModVersion (mod_id, mc_version) VALUES (?, ?)
+            ''', [(mod_id, version) for version in mod.mc_versions])
+
+            # Insert loaders (mod_loaders)
+            await cursor.executemany('''
+                INSERT INTO ModLoader (mod_id, loader) VALUES (?, ?)
+            ''', [(mod_id, loader) for loader in mod.mod_loaders])
+
+            # Insert dependencies (dependencies)
+            await cursor.executemany('''
+                INSERT INTO ModDependency (mod_id, dependency_name, dependency_version) VALUES (?, ?, ?)
+            ''', [(mod_id, dep["name"], dep["version"]) for dep in mod.dependencies])
+
+            # Insert files (files)
+            await cursor.executemany('''
+                INSERT INTO ModFile (mod_id, path, file_size, url, hash, env) VALUES (?, ?, ?, ?, ?, ?)
+            ''', [
+                (mod_id, file["filename"], file["size"], file["url"], file["hash"], file["env"])
+                for file in mod.files
+            ])
+
             await self.conn.commit()
 
     async def fetch_project(self, slug: str) -> tuple[List[tuple], List[str]]:
@@ -95,7 +154,6 @@ class ProjectDAO:
             return mods_data, columns
 
     async def fetch_project_names(self) -> List[str]:
-        
         async with self.conn.cursor() as cursor:
             await cursor.execute("SELECT slug FROM Project")
             files = await cursor.fetchall()
