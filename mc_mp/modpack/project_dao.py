@@ -9,6 +9,7 @@ https://github.com/Plantius/mc_modpack_creator
 from typing import Dict, Any, List
 import aiosqlite
 from mc_mp.modpack.mod import Mod
+import mc_mp.standard as std
 
 class ProjectDAO:
     def __init__(self, db_file: str) -> None:
@@ -52,7 +53,7 @@ class ProjectDAO:
                     version_number TEXT,
                     mod_id TEXT,
                     date_published TEXT,
-                    FOREIGN KEY(parent_id) REFERENCES Project(id)
+                    FOREIGN KEY(parent_id) REFERENCES Project(id) ON DELETE CASCADE
                 )''')
 
             # Separate tables for lists (mod_versions, mod_loaders, dependencies, files)
@@ -112,11 +113,31 @@ class ProjectDAO:
             await self.conn.commit()
             return cursor.lastrowid
 
+    async def remove_project(self, slug: str) -> bool:
+        """
+        Remove a project and all associated mods, versions, loaders, dependencies, and files
+        based on the project slug.
+        """
+        async with self.conn.cursor() as cursor:
+            # First, fetch the project by slug to ensure it exists
+            await cursor.execute("SELECT id FROM Project WHERE slug=?", (slug,))
+            project = await cursor.fetchone()
+            
+            if not project:
+                # If no project exists with the given slug, return False
+                std.eprint(f"[ERROR] No project found with slug: {slug}")
+                return False
+            
+            # Now delete the project
+            await cursor.execute("DELETE FROM Project WHERE slug=?", (slug,))
+            await self.conn.commit()
+            return True
+    
     async def insert_mod(self, parent_id: int, mod: Mod):
         async with self.conn.cursor() as cursor:
             # Insert mod data into the Mod table
             await cursor.execute('''
-                INSERT INTO Mod (
+                INSERT OR REPLACE INTO Mod (
                     parent_id, project_id, title, description, 
                     name, changelog, version_number, mod_id, date_published
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -128,22 +149,22 @@ class ProjectDAO:
 
             # Insert Minecraft versions (mc_versions)
             await cursor.executemany('''
-                INSERT INTO ModVersion (mod_id, mc_version) VALUES (?, ?)
+                INSERT OR REPLACE INTO ModVersion (mod_id, mc_version) VALUES (?, ?)
             ''', [(mod_id, version) for version in mod.mc_versions])
 
             # Insert loaders (mod_loaders)
             await cursor.executemany('''
-                INSERT INTO ModLoader (mod_id, loader) VALUES (?, ?)
+                INSERT OR REPLACE INTO ModLoader (mod_id, loader) VALUES (?, ?)
             ''', [(mod_id, loader) for loader in mod.mod_loaders])
 
             # Insert dependencies (dependencies)
             await cursor.executemany('''
-                INSERT INTO ModDependency (mod_id, version_id, project_id, file_name, dependency_type) VALUES (?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO ModDependency (mod_id, version_id, project_id, file_name, dependency_type) VALUES (?, ?, ?, ?, ?)
             ''', [(mod_id, dep["version_id"], dep["project_id"], dep["file_name"], dep["dependency_type"]) for dep in mod.dependencies])
 
             # Insert files (files)
             await cursor.executemany('''
-                INSERT INTO ModFile (mod_id, filename, size, url, sha512, sha1, primary_flag, file_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO ModFile (mod_id, filename, size, url, sha512, sha1, primary_flag, file_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', [
                 (mod_id, file["filename"], file["size"], file["url"], file["hashes"]["sha512"], file["hashes"]["sha1"], file["primary"], file["file_type"])
                 for file in mod.files
@@ -151,6 +172,26 @@ class ProjectDAO:
 
             await self.conn.commit()
 
+    async def remove_mods_not_in_list(self, parent_id: int, mod_data: List[Mod]):
+        """
+        Delete mods from the database that are not present in the given mod_data list.
+        """
+        async with self.conn.cursor() as cursor:
+            # Get the current mods in the database for the project
+            await cursor.execute("SELECT mod_id FROM Mod WHERE parent_id=?", (parent_id,))
+            existing_mod_ids = {row[0] for row in await cursor.fetchall()}  # Set of mod_ids from the DB
+
+            # Get the mod_ids from the provided mod_data list
+            current_mod_ids = {mod.mod_id for mod in mod_data}
+
+            # Mods to delete: present in DB but not in the current mod_data list
+            mods_to_delete = existing_mod_ids - current_mod_ids
+
+            # Delete the mods from the database that are not in the current mod_data list
+            if mods_to_delete:
+                await cursor.executemany("DELETE FROM Mod WHERE mod_id=?", [(mod_id,) for mod_id in mods_to_delete])
+                await self.conn.commit()
+    
     async def fetch_project(self, slug: str) -> tuple[List[tuple], List[str]]:
         async with self.conn.cursor() as cursor:
             await cursor.execute("SELECT * FROM Project WHERE slug=?", (slug,))

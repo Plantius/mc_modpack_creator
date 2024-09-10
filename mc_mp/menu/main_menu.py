@@ -59,7 +59,8 @@ class Menu:
         self.actions.clear()
         self.help.clear()
 
-        self.add_option("Load project", self.load_project_action, "Load a project file")
+        self.add_option("Load project", self.load_project_action, "Load a project")
+        self.add_option("Delete project", self.delete_project_action, "Delete a project")
         self.add_option("Save project", self.save_project_action, "Save the current project")
         self.add_option("Create project", self.create_project_action, "Create a new project")
         if self.project.metadata["loaded"]:
@@ -142,20 +143,32 @@ class Menu:
         submenu = Menu(
             project=self.project, 
             title="Which project do you want to load?",
-            menu_entries=[],
+            menu_entries=await self.project.get_project_files(),
             parent_menu=self
         )
-        submenu.menu_entries = await self.project.get_project_files() + ["Enter slug"]
         
         async def handle_selection(selected_index):
-            slug = None
-            if submenu.menu_entries[selected_index] == "Enter slug":
-                slug = std.get_input("Please enter a project slug: ")
-            else:
-                slug = submenu.menu_entries[selected_index]
+            slug = submenu.menu_entries[selected_index]
             if slug:
                 await self.project.load_project(slug)
                 submenu.menu_active = False
+            
+        submenu.handle_selection = handle_selection
+        await submenu.display()
+        return OPEN  # Keep main menu open
+    
+    async def delete_project_action(self) -> bool:
+        submenu = Menu(
+            project=self.project, 
+            title="Which project do you want to delete?",
+            menu_entries=await self.project.get_project_files(),
+            parent_menu=self
+        )
+        
+        async def handle_selection(selected_index):
+            slug = submenu.menu_entries[selected_index]
+            if slug:
+                await self.project.delete_project(slug)
             
         submenu.handle_selection = handle_selection
         await submenu.display()

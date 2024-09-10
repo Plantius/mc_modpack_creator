@@ -89,12 +89,30 @@ class Project:
             self.metadata.update({
                 "loaded": True,
                 "saved": False,
-                "project_id": std.generate_project_id()
+                "uuid": std.generate_project_id()
             })
             self.mod_data.clear()
             return True
         except Exception as e:
             std.eprint(f"[ERROR] Failed to create project: {e}")
+            return False
+    
+    @std.async_timing
+    async def delete_project(self, slug: str) -> bool:
+        """
+        Delete a project and all its associated mods, versions, loaders, dependencies, and files.
+        """
+        try:
+            async with ProjectDAO(self.db_file) as dao:
+                result = await dao.remove_project(slug)
+                if result:
+                    print(f"[INFO] Project '{slug}' and all its associated data have been deleted.")
+                    return True
+                else:
+                    std.eprint(f"[ERROR] Failed to delete project '{slug}'.")
+                    return False
+        except Exception as e:
+            std.eprint(f"[ERROR] Exception while deleting project: {e}")
             return False
     
     @std.async_timing
@@ -162,8 +180,13 @@ class Project:
                     "server_side": self.server_side,
                     "slug": slug
                 })
+                
+                # Insert or update mods in the database
                 for mod in self.mod_data:
                     await dao.insert_mod(parent_id, mod)
+                
+                # Remove mods from the database that are not in the current mod_data list
+                await dao.remove_mods_not_in_list(parent_id, self.mod_data)
 
             self.metadata["saved"] = True
             self.metadata["slug"] = slug
