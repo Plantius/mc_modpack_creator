@@ -1,17 +1,19 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g
 
+from mc_mp.modpack.project import Project
+
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
-    project = g.get('project', None)
+    project: Project = g.get('project', None)
     if project is None:
         return render_template('index.html')
     return render_template('index.html', project=project)
 
 @bp.route('/load_project', methods=['GET', 'POST'])
 async def load_project():
-    project = g.get('project', None)
+    project: Project = g.get('project', None)
     if request.method == 'POST':
         filename = request.form.get('filename')
         if filename:
@@ -29,13 +31,26 @@ async def load_project():
     # List all project files
     return render_template('load_project.html', project_files=project_files)
 
-@bp.route('/save_project', methods=['POST'])
+@bp.route('/save_project', methods=['GET', 'POST'])
 async def save_project():
-    return redirect(url_for('main.index'))
+    project: Project = g.get('project', None)
+    if request.method == "POST":
+        slug = request.form.get('slug')
+        if slug:
+            # Run async function in event loop
+            success = await project.save_project(slug)
+            if success:
+                print('Project loaded successfully!', 'success')
+                return redirect(url_for('main.index'))
+            else:
+                print('Failed to load the project!', 'error')
+        else:
+            print('No project file selected!', 'error')
+    return render_template('save_project.html')
 
 @bp.route('/create_project', methods=['GET', 'POST'])
 async def create_project():
-    project = g.get('project', None)
+    project: Project = g.get('project', None)
     
     if request.method == 'POST':
         title = request.form.get('title')
@@ -65,7 +80,7 @@ async def create_project():
 
 @bp.route('/list_mods')
 async def list_mods():
-    project = g.project
+    project: Project = g.get('project', None)
     return render_template('list_mods.html', mods=project.mod_data)
 
 @bp.route('/error')

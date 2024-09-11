@@ -76,15 +76,13 @@ List current mods.
 ```
 
 ## TODO
-- Add export to modrinth pack functionality
+- Add Javascript to web interface
 - Add export to other modpack launcher functionality
 - Add Web interface
 - Add tests 
-- FIX UPDATE MODS
 - Add upgrade/downgrade mods
   - When up/downgrading, remove mods not supported anymore
   - Ask user to keep outdated mods
-- Rework user input (automatically select yes to prompted input)
 
 
 ## Credit
