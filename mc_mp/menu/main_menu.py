@@ -169,6 +169,7 @@ class Menu:
             slug = submenu.menu_entries[selected_index]
             if slug:
                 await self.project.delete_project(slug)
+                submenu.menu_active = False
             
         submenu.handle_selection = handle_selection
         await submenu.display()

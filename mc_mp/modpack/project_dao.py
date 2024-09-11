@@ -169,7 +169,7 @@ class ProjectDAO:
                 (mod_id, file["filename"], file["size"], file["url"], file["hashes"]["sha512"], file["hashes"]["sha1"], file["primary"], file["file_type"])
                 for file in mod.files
             ])
-
+ 
             await self.conn.commit()
 
     async def remove_mods_not_in_list(self, parent_id: int, mod_data: List[Mod]):
