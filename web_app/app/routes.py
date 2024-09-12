@@ -24,29 +24,26 @@ async def load_project():
                 return redirect(url_for('main.index'))
             else:
                 print('Failed to load the project!', 'error')
-        else:
-            print('No project file selected!', 'error')
         return redirect(url_for('main.load_project'))
     project_files = await project.get_project_files()
     # List all project files
     return render_template('load_project.html', project_files=project_files)
 
-@bp.route('/save_project', methods=['GET', 'POST'])
+@bp.route('/save_project', methods=['POST'])
 async def save_project():
     project: Project = g.get('project', None)
     if request.method == "POST":
         slug = request.form.get('slug')
+        print(slug)
         if slug:
             # Run async function in event loop
             success = await project.save_project(slug)
             if success:
-                print('Project loaded successfully!', 'success')
+                print('Project saved successfully!', 'success')
                 return redirect(url_for('main.index'))
             else:
-                print('Failed to load the project!', 'error')
-        else:
-            print('No project file selected!', 'error')
-    return render_template('save_project.html')
+                print('Failed to save the project!', 'error')
+    return redirect(url_for('main.index'))
 
 @bp.route('/create_project', methods=['GET', 'POST'])
 async def create_project():

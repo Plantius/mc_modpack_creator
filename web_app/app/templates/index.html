@@ -9,18 +9,25 @@
 <body>
     <header>
         <h1>MC Modpack Creator</h1>
+        
     </header>
     <main>
-            <h2>Project Loaded: {{ project.title }}</h2>
-            <form action="{{ url_for('main.load_project') }}" method="post">
-                <button type="submit">Load Project</button>
-            </form>
-            <form action="{{ url_for('main.create_project') }}" method="post">
-                <button type="submit">Create Project</button>
-            </form>
-            <form action="{{ url_for('main.save_project') }}" method="post">
-                <button type="submit">Save Project</button>
-            </form>
+            <div class="settings_box">
+                <h2>Project Loaded: {{ project.title }}</h2>
+                <form action="{{ url_for('main.load_project') }}" method="post">
+                    <button type="submit">Load Project</button>
+                </form>
+                <form action="{{ url_for('main.create_project') }}" method="post">
+                    <button type="submit">Create Project</button>
+                </form>
+                <button type="submit" id="save_project">Save Project</button>
+                <div class="popup_form" id="save_slug">
+                    <form action="{{ url_for('main.save_project') }}" method="post">
+                        <input type="text" id="slug" name="slug" placeholder="Do you want to save with a new slug?">
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
             {% if project.metadata["loaded"] %}
                 <h1>{{ project.title }}</h1>
                 <h2>Description</h2>
@@ -33,5 +40,6 @@
                 </ul>
             {% endif %}
     </main>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
 </body>
 </html>

@@ -149,3 +149,7 @@ a:hover {
         font-size: 0.9rem;
     }
 }
+
+.popup_form{
+    display: none;
+}
