@@ -6,12 +6,11 @@ Last Edited: 2024-09-10
 This module is part of the MC Modpack Creator project. For more details, visit:
 https://github.com/Plantius/mc_modpack_creator
 """
-from mc_mp.constants import DEF_EXT, BUF_SIZE
+from mc_mp.constants import BUF_SIZE
 from enum import Enum, auto
 import os
 import sys
 import inspect
-import glob
 import zipfile
 import hashlib
 import time 
@@ -113,8 +112,6 @@ def get_index(lst: list, item) -> int:
         return lst.index(item)
     except ValueError:
         return -1
-
-
 
 def has_duplicates(lst: list) -> bool:
     """Check if there are duplicates in the list."""

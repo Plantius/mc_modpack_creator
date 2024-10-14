@@ -51,6 +51,11 @@ Configure your **SECRET_KEY** in **standard.py** for encryption and decryption o
 
 Instructions for using the tool:
 
+Run the program from the root directory using:
+```
+python3 -m mc_mp.main
+```
+
 ### Command-Line Interface
 
 Commands available in the CLI:
